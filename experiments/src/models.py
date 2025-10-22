@@ -4,7 +4,7 @@ LLM API integration using LiteLLM for unified interface
 import os
 import time
 import asyncio
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from litellm import acompletion
 import litellm
 from dotenv import load_dotenv
@@ -15,13 +15,13 @@ load_dotenv()
 # Configure LiteLLM
 litellm.set_verbose = False
 
-# Model configurations
+# Model configurations (focusing on working models)
 MODELS = [
     {
         "id": "claude-sonnet-4-5",
         "name": "Claude Sonnet 4.5",
         "provider": "anthropic",
-        "api_model": "claude-3-sonnet-20240229"  # Using available model
+        "api_model": "claude-sonnet-4-5-20250929"
     },
     {
         "id": "gpt-4o",
@@ -30,28 +30,32 @@ MODELS = [
         "api_model": "gpt-4o"
     },
     {
-        "id": "gemini-2-pro",
-        "name": "Gemini 2.0 Pro",
-        "provider": "google",
-        "api_model": "gemini-pro"  # Using available model
-    },
-    {
-        "id": "grok-2",
-        "name": "Grok 2",
-        "provider": "xai",
-        "api_model": "grok-beta"  # Using available model
-    },
-    {
-        "id": "llama-3-2-3b",
-        "name": "Llama 3.2 3B",
+        "id": "llama-3-8b",
+        "name": "Llama 3 8B",
         "provider": "replicate",
-        "api_model": "meta/llama-2-7b-chat"  # Using available model
+        "api_model": "replicate/meta/meta-llama-3-8b-instruct"
+    }
+]
+
+# Additional models to test when available/stable
+ADDITIONAL_MODELS = [
+    {
+        "id": "gemini-2-5-pro",
+        "name": "Gemini 2.5 Pro",
+        "provider": "google",
+        "api_model": "gemini/gemini-2.5-pro"
     },
     {
-        "id": "deepseek-v3",
-        "name": "DeepSeek V3",
+        "id": "grok-3",
+        "name": "Grok 3",
+        "provider": "xai",
+        "api_model": "xai/grok-3"
+    },
+    {
+        "id": "deepseek-chat",
+        "name": "DeepSeek Chat",
         "provider": "deepseek",
-        "api_model": "deepseek-chat"
+        "api_model": "deepseek/deepseek-chat"
     }
 ]
 

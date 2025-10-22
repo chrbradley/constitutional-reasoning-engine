@@ -2,7 +2,7 @@
 Constitutional frameworks for the Constitutional Reasoning Engine
 """
 from typing import List
-from .types import Constitution
+from data_types import Constitution
 
 CONSTITUTIONS: List[Constitution] = [
     Constitution(
