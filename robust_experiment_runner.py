@@ -133,10 +133,10 @@ async def run_single_test(
         
         print(f"\n🔄 Starting: {test_id}")
         
-        # Layer 1: Establish facts (using Claude for consistency)
+        # Layer 1: Establish facts (using GPT-4o for speed and rate limit management)
         fact_prompt = build_fact_establishment_prompt(scenario_data)
         fact_response = await get_model_response(
-            model_id="claude-sonnet-4-5",
+            model_id="gpt-4o",
             prompt=fact_prompt,
             temperature=0.3,
             max_tokens=1000
