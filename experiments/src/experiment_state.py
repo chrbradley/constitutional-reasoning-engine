@@ -224,34 +224,40 @@ class ExperimentManager:
     def mark_test_in_progress(self, test_id: str) -> None:
         """Mark a test as currently running"""
         if test_id in self.test_registry:
+            previous_status = self.test_registry[test_id].status
             self.test_registry[test_id].status = TestStatus.IN_PROGRESS
             self.test_registry[test_id].timestamp = datetime.now().isoformat()
+
+            # Decrement pending count when moving from PENDING to IN_PROGRESS
+            if previous_status == TestStatus.PENDING:
+                self.experiment_state.pending_count -= 1
+                self.experiment_state.updated_at = datetime.now().isoformat()
+                self._save_experiment_state()
+
             self._save_test_registry()
     
     def mark_test_completed(self, test_id: str, result_data: Dict) -> None:
         """Mark a test as completed and save result"""
         if test_id in self.test_registry:
-            # Get previous status to update counts correctly
-            previous_status = self.test_registry[test_id].status
+            # Get test info to check if this was a retry
+            test_result = self.test_registry[test_id]
+            was_retry = test_result.retry_count > 0
 
             # Update registry
-            self.test_registry[test_id].status = TestStatus.COMPLETED
-            self.test_registry[test_id].result_data = result_data
-            self.test_registry[test_id].timestamp = datetime.now().isoformat()
+            test_result.status = TestStatus.COMPLETED
+            test_result.result_data = result_data
+            test_result.timestamp = datetime.now().isoformat()
 
             # Save individual result file
             result_file = self.results_dir / f"{test_id}.json"
             with open(result_file, 'w') as f:
                 json.dump(result_data, f, indent=2)
 
-            # Update experiment state based on previous status
+            # Update experiment state
             self.experiment_state.completed_count += 1
 
-            # Only decrement pending if it was still pending (not if retrying from failed)
-            if previous_status == TestStatus.PENDING:
-                self.experiment_state.pending_count -= 1
-            elif previous_status == TestStatus.FAILED:
-                # Moving from failed to completed - reduce failed count
+            # If this was a retry (test had previously failed), decrement failed count
+            if was_retry:
                 self.experiment_state.failed_count -= 1
 
             self.experiment_state.updated_at = datetime.now().isoformat()
@@ -267,14 +273,15 @@ class ExperimentManager:
             test_result.error_message = error_message
             test_result.retry_count += 1
             test_result.timestamp = datetime.now().isoformat()
-            
+
             # Update experiment state
-            if test_result.retry_count == 1:  # Only count as failed on first failure
+            # Only increment failed_count on first failure
+            # pending_count was already decremented when test went PENDING → IN_PROGRESS
+            if test_result.retry_count == 1:
                 self.experiment_state.failed_count += 1
-                self.experiment_state.pending_count -= 1
-            
+
             self.experiment_state.updated_at = datetime.now().isoformat()
-            
+
             self._save_state()
             print(f"❌ Failed: {test_id} (retry {test_result.retry_count})")
     
