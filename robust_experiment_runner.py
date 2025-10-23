@@ -317,9 +317,19 @@ async def run_batch(
         return {"successful": 0, "failed": 0}
 
 
-def create_batches(tests: List[TestDefinition], batch_size: int = 12) -> List[List[TestDefinition]]:
+def create_batches(tests: List[TestDefinition], batch_size: int = 6) -> List[List[TestDefinition]]:
     """
     Create batches of tests, distributing across models for rate limit management
+
+    Uses round-robin distribution to ensure no batch has multiple tests for the same model.
+    This prevents rate limit issues by spreading API calls across providers.
+
+    Args:
+        tests: All tests to batch
+        batch_size: Target size for each batch (default: 6, reduced from 12 for safety)
+
+    Returns:
+        List of batches, each batch is a list of TestDefinition objects
     """
     # Group by model to ensure even distribution
     model_groups = {}
@@ -327,14 +337,14 @@ def create_batches(tests: List[TestDefinition], batch_size: int = 12) -> List[Li
         if test.model_id not in model_groups:
             model_groups[test.model_id] = []
         model_groups[test.model_id].append(test)
-    
+
     # Create round-robin batches
     batches = []
     current_batch = []
-    
-    # Get iterators for each model group
-    model_iterators = {model_id: iter(tests) for model_id, tests in model_groups.items()}
-    
+
+    # Get iterators for each model group (FIX: use model_tests not tests)
+    model_iterators = {model_id: iter(model_tests) for model_id, model_tests in model_groups.items()}
+
     while model_iterators:
         # Try to add one test from each model to current batch
         added_to_batch = False
@@ -343,21 +353,21 @@ def create_batches(tests: List[TestDefinition], batch_size: int = 12) -> List[Li
                 test = next(model_iterators[model_id])
                 current_batch.append(test)
                 added_to_batch = True
-                
+
                 if len(current_batch) >= batch_size:
                     batches.append(current_batch)
                     current_batch = []
-                    
+
             except StopIteration:
                 del model_iterators[model_id]
-        
+
         if not added_to_batch:
             break
-    
+
     # Add remaining tests
     if current_batch:
         batches.append(current_batch)
-    
+
     return batches
 
 
@@ -400,8 +410,8 @@ async def main():
     models_dict = {m['id']: m for m in models}
     
     # Create batches
-    batches = create_batches(all_tests, batch_size=12)
-    print(f"Created {len(batches)} batches (12 tests per batch)")
+    batches = create_batches(all_tests, batch_size=6)
+    print(f"Created {len(batches)} batches (6 tests per batch, 60s inter-batch delay)")
     
     # Show initial progress
     progress = experiment_manager.get_progress_summary()
@@ -428,8 +438,8 @@ async def main():
             
             # Rate limiting delay between batches
             if i < len(batches):
-                print(f"⏳ Waiting 30 seconds before next batch...")
-                await asyncio.sleep(30)
+                print(f"⏳ Waiting 60 seconds before next batch...")
+                await asyncio.sleep(60)
                 
         except KeyboardInterrupt:
             print(f"\n⏸️  Experiment paused. Resume by running this script again.")

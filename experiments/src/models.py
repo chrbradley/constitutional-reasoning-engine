@@ -65,11 +65,12 @@ async def get_model_response(
     system_prompt: Optional[str] = None,
     temperature: float = 0.7,
     max_tokens: int = 2000,
-    timeout: int = 60
+    timeout: int = 60,
+    max_retries: int = 3
 ) -> str:
     """
-    Unified interface for calling any LLM via LiteLLM
-    
+    Unified interface for calling any LLM via LiteLLM with retry logic
+
     Args:
         model_id: ID from MODELS list
         prompt: User prompt
@@ -77,13 +78,14 @@ async def get_model_response(
         temperature: Response randomness (0.0-1.0)
         max_tokens: Maximum response length
         timeout: Request timeout in seconds
-    
+        max_retries: Maximum number of retry attempts for rate limits (default: 3)
+
     Returns:
         Model response as string
-    
+
     Raises:
         ValueError: If model_id not found
-        Exception: If API call fails
+        Exception: If API call fails after all retries
     """
     # Find model config
     model_config = None
@@ -91,49 +93,69 @@ async def get_model_response(
         if model["id"] == model_id:
             model_config = model
             break
-    
+
     if not model_config:
         raise ValueError(f"Model ID '{model_id}' not found in MODELS list")
-    
+
     # Build messages
     messages = []
-    
+
     if system_prompt:
         messages.append({
             "role": "system",
             "content": system_prompt
         })
-    
+
     messages.append({
         "role": "user",
         "content": prompt
     })
-    
-    # Record timing
-    start_time = time.time()
-    
-    try:
-        # Make API call
-        response = await acompletion(
-            model=model_config["api_model"],
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            timeout=timeout
-        )
-        
-        response_time_ms = int((time.time() - start_time) * 1000)
-        
-        content = response.choices[0].message.content
-        
-        print(f"✓ {model_id}: {response_time_ms}ms")
-        
-        return content
-        
-    except Exception as e:
-        response_time_ms = int((time.time() - start_time) * 1000)
-        print(f"✗ {model_id}: {response_time_ms}ms - Error: {str(e)}")
-        raise Exception(f"Error calling {model_id}: {str(e)}")
+
+    # Retry loop with exponential backoff
+    for attempt in range(max_retries):
+        start_time = time.time()
+
+        try:
+            # Make API call
+            response = await acompletion(
+                model=model_config["api_model"],
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                timeout=timeout
+            )
+
+            response_time_ms = int((time.time() - start_time) * 1000)
+
+            content = response.choices[0].message.content
+
+            print(f"✓ {model_id}: {response_time_ms}ms")
+
+            return content
+
+        except Exception as e:
+            response_time_ms = int((time.time() - start_time) * 1000)
+            error_str = str(e).lower()
+
+            # Check if this is a rate limit error
+            is_rate_limit = any(phrase in error_str for phrase in [
+                'rate limit', 'too many requests', '429', 'quota',
+                'rate_limit_exceeded', 'resource_exhausted'
+            ])
+
+            # Check if this is a timeout
+            is_timeout = 'timeout' in error_str or 'timed out' in error_str
+
+            if (is_rate_limit or is_timeout) and attempt < max_retries - 1:
+                # Exponential backoff: 2s, 4s, 8s
+                wait_time = 2 ** (attempt + 1)
+                print(f"⚠️  {model_id}: {'Rate limit' if is_rate_limit else 'Timeout'} hit, retrying in {wait_time}s (attempt {attempt + 1}/{max_retries})")
+                await asyncio.sleep(wait_time)
+                continue
+            else:
+                # Not a rate limit/timeout, or out of retries
+                print(f"✗ {model_id}: {response_time_ms}ms - Error: {str(e)}")
+                raise Exception(f"Error calling {model_id}: {str(e)}")
 
 
 async def test_model_connectivity(model_id: str) -> Dict[str, Any]:
