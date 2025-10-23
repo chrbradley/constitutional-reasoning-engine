@@ -608,6 +608,66 @@ Create data/SCENARIOS.md with all 16 scenario specifications following dimension
 
 ---
 
+## October 23, 2025 (continued)
+
+### Entry 18: Human-Readable Manifest System
+**Time:** 10:35 AM
+**Category:** Feature | Setup
+**Summary:** Implemented per-experiment MANIFEST.txt files for human-readable test tracking
+
+**Details:**
+Created `manifest_generator.py` to generate human-readable experiment manifests:
+- Shows all tests with status symbols (✅ completed, ❌ failed, ⏳ pending, 🔄 in-progress)
+- Displays integrity scores for completed tests
+- Groups tests by scenario → constitution → model
+- Includes timestamps and error messages
+- Saves to experiment-specific directory: `results/runs/exp_YYYYMMDD_HHMMSS/MANIFEST.txt`
+- Auto-updates after each batch in robust_experiment_runner.py
+- Provides legend for quick reference
+
+**Root Cause of Initial Issue:**
+- ExperimentManager was not setting `self.experiment_id` from loaded state
+- Directory structure was being set up before state was loaded
+- Manifest generator couldn't find experiment_id to create proper path
+
+**Fix Applied:**
+Reordered ExperimentManager initialization (experiment_state.py:70-101):
+1. Load experiment state first
+2. Set experiment_id from loaded state or provided parameter
+3. Set up directory structure based on experiment_id
+4. This ensures manifest saves to correct experiment-specific directory
+
+**Impact:**
+- ✅ Each experiment run now has a human-readable summary file
+- ✅ Easy to eyeball which tests completed, failed, or are pending
+- ✅ No central file overwriting - each experiment tracked individually
+- ✅ Manifest persists with experiment results for long-term reference
+- ✅ Supports experiment resumption by showing exact test status
+
+**Example Output:**
+```
+================================================================================
+EXPERIMENT MANIFEST: exp_20251023_075133
+================================================================================
+Created:  2025-10-23T07:51:33.789665
+Status:   in_progress
+Progress: 30/30 completed (100.0%)
+
+SCENARIO: parking-lot-altercation
+  harm-minimization:
+    ✅ claude-sonnet-4-5    (96/100)       [2025-10-23T07:52:15]
+    ✅ gpt-4o               (92/100)       [2025-10-23T07:51:58]
+    ...
+```
+
+**Testing:**
+- Created test script to validate manifest generation
+- Confirmed manifest saves to experiment-specific directory
+- Verified format is clean and human-readable
+- Tested with existing experiment data (30 completed tests)
+
+---
+
 ## Next Steps
 
 - [x] All 6 models added and tested individually
@@ -617,6 +677,8 @@ Create data/SCENARIOS.md with all 16 scenario specifications following dimension
 - [x] Fix state management pending_count bug
 - [x] Validate hybrid architecture end-to-end (clean run)
 - [x] Synthesize unified PROJECT_BRIEF.md with dimensional framework
+- [x] Implement human-readable manifest system (MANIFEST.txt per experiment)
+- [x] Fix ExperimentManager initialization to properly load experiment_id
 - [ ] Create complete SCENARIOS.md with 16 scenario specifications
 - [ ] Fix facts parsing bug (all tests flagged for manual review - low priority)
 - [ ] Scale to full 16 scenarios (480 tests)

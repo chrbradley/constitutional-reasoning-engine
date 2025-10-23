@@ -71,27 +71,34 @@ class ExperimentManager:
         self.base_dir = Path(base_dir)
         self.state_dir = self.base_dir / "state"
 
-        # Use experiment_id to organize results by run
-        # If experiment_id is provided, use it; otherwise will be set in create_experiment
-        self.experiment_id = experiment_id
-        if experiment_id:
-            self.results_dir = self.base_dir / "runs" / experiment_id / "raw"
-            self.charts_dir = self.base_dir / "runs" / experiment_id / "charts"
+        # Load or initialize state first
+        self.state_file = self.state_dir / "experiment_state.json"
+        self.test_registry_file = self.state_dir / "test_registry.json"
+
+        # Create state directory if needed
+        self.state_dir.mkdir(parents=True, exist_ok=True)
+
+        self.experiment_state = self._load_experiment_state()
+        self.test_registry = self._load_test_registry()
+
+        # Set experiment_id from loaded state or provided parameter
+        if self.experiment_state:
+            self.experiment_id = self.experiment_state.experiment_id
+        else:
+            self.experiment_id = experiment_id
+
+        # Set up directory structure based on experiment_id
+        if self.experiment_id:
+            self.results_dir = self.base_dir / "runs" / self.experiment_id / "raw"
+            self.charts_dir = self.base_dir / "runs" / self.experiment_id / "charts"
         else:
             # Fallback to legacy structure
             self.results_dir = self.base_dir / "raw"
             self.charts_dir = self.base_dir / "charts"
 
-        # Create directories
-        for dir_path in [self.state_dir, self.results_dir, self.charts_dir]:
+        # Create result directories
+        for dir_path in [self.results_dir, self.charts_dir]:
             dir_path.mkdir(parents=True, exist_ok=True)
-        
-        self.state_file = self.state_dir / "experiment_state.json"
-        self.test_registry_file = self.state_dir / "test_registry.json"
-        
-        # Load or initialize state
-        self.experiment_state = self._load_experiment_state()
-        self.test_registry = self._load_test_registry()
     
     def create_experiment(
         self,

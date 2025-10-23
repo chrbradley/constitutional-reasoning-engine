@@ -23,6 +23,7 @@ from prompts import (
 from experiment_state import ExperimentManager, TestDefinition, TestStatus
 from graceful_parser import GracefulJsonParser, ParseStatus
 from truncation_detector import TruncationDetector
+from manifest_generator import save_manifest
 
 
 def clean_json_response(response: str) -> str:
@@ -306,7 +307,10 @@ async def run_batch(
         failed = sum(1 for r in results if r is False or isinstance(r, Exception))
         
         print(f"\nBatch {batch_num} complete: {successful} successful, {failed} failed")
-        
+
+        # Update manifest after each batch
+        save_manifest(experiment_manager)
+
         return {"successful": successful, "failed": failed}
     else:
         print(f"Batch {batch_num}: All tests already completed")
