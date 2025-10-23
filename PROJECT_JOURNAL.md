@@ -535,6 +535,79 @@ Ready to proceed to full experiment (10 scenarios × 5 constitutions × 6 models
 
 ---
 
+### Entry 15: Project Brief Synthesis - Unified Dimensional Framework
+**Time:** 8:15 AM (October 23, 2025)
+**Category:** Decision
+**Summary:** Synthesized PROJECT_BRIEF.md from v1 (original planning) and v2 (dimensional framework) into unified document reflecting both validated infrastructure and expanded scope
+
+**Background:**
+User created PROJECT_BRIEF_v2.md independently to introduce a rigorous dimensional scenario framework (Scale × Directionality × Severity × Value Conflict Type) expanding from 10 to 16 scenarios. Needed to reconcile with original PROJECT_BRIEF.md while maintaining it as source of truth.
+
+**Key Discrepancies Resolved:**
+
+**1. Scenario Count:**
+- Original: 10 scenarios (Personal: 3, Community: 4, Societal: 3)
+- New: 16 scenarios (Personal: 5, Community: 6, Societal: 5)
+- **Decision:** Adopt 16-scenario framework for greater dimensional rigor and statistical power
+
+**2. Model Specifications:**
+- Original had outdated API identifiers:
+  - gemini-2.0-flash-exp → gemini-2.5-flash (actual working model)
+  - grok-2 → grok-3 (grok-2 deprecated, using grok-3)
+  - llama-3.2-3b → llama-3-8b (actual working model)
+- **Decision:** Updated all model specs to reflect validated implementations
+
+**3. Document Tone:**
+- Original: Pure future-tense planning document
+- New: Needed to reflect completed infrastructure
+- **Decision:** Hybrid structure with status indicators (✅ completed, 🚧 in progress, ⏳ planned)
+
+**4. Infrastructure Documentation:**
+- Original: Planned architecture
+- New: Needed validated infrastructure details (hybrid architecture, truncation detection, graceful parsing, state management)
+- **Decision:** Added "Implementation Status" section and "Validated Hybrid Architecture" details
+
+**Synthesis Approach:**
+1. **Executive Summary:** Updated deliverables with status indicators, added current status line
+2. **New Section:** "Implementation Status" showing completed/in-progress/planned work
+3. **Technical Architecture:** Expanded with validated production patterns and performance data
+4. **Dimensional Framework:** Full integration of Scale × Directionality × Severity framework
+5. **Models Section:** Updated with corrected API identifiers and validated performance table
+6. **Constitutional Frameworks:** Added validation results (bad-faith scores 58-78 vs honest 83-96)
+7. **Implementation Plan:** Updated Week 1 to "COMPLETED", Week 2 to "IN PROGRESS"
+8. **Success Criteria:** Split into Technical (mostly validated) and Empirical (pilot results, full validation pending)
+9. **Risks:** Updated all 5 risks with actual mitigation status
+
+**Dimensional Framework Integration:**
+The unified brief now documents four dimensions for systematic scenario design:
+- **Scale:** Personal (5) / Community (6) / Societal (5) = 16 scenarios
+- **Directionality:** Internal (7) / External (5) / Mixed (4)
+- **Severity:** Low (4) / Medium (5) / Medium-High (3) / High (4)
+- **Value Conflict:** Kidder's 4 paradigms (descriptive, not statistical variable)
+
+**Statistical Design:**
+The 16-scenario framework enables testing:
+1. Whether integrity degrades with severity
+2. Whether directionality affects reasoning (internal vs external consequences)
+3. Whether constitutions perform differently at different scales
+4. Which dimensional combinations reveal motivated reasoning
+
+**Archived Files:**
+- Moved PROJECT_BRIEF_v2.md to docs/PROJECT_BRIEF_v2.md for reference
+
+**Impact:**
+- ✅ Single source of truth combining validated work with rigorous expansion plan
+- ✅ Clear status indicators show what's done vs what's planned
+- ✅ Dimensional framework provides statistical rigor for full experiment
+- ✅ Updated scope: 480 tests (16 × 5 × 6) instead of original 300 (10 × 5 × 6)
+- ✅ Methodology reference for Kidder's ethical paradigms documented
+- 📊 Ready to create complete SCENARIOS.md with 16 scenario specifications
+
+**Next Phase:**
+Create data/SCENARIOS.md with all 16 scenario specifications following dimensional framework.
+
+---
+
 ## Next Steps
 
 - [x] All 6 models added and tested individually
@@ -543,9 +616,11 @@ Ready to proceed to full experiment (10 scenarios × 5 constitutions × 6 models
 - [x] Retry 7 failed tests with new architecture
 - [x] Fix state management pending_count bug
 - [x] Validate hybrid architecture end-to-end (clean run)
+- [x] Synthesize unified PROJECT_BRIEF.md with dimensional framework
+- [ ] Create complete SCENARIOS.md with 16 scenario specifications
 - [ ] Fix facts parsing bug (all tests flagged for manual review - low priority)
-- [ ] Analyze complete 30-test results
-- [ ] Scale to full 10 scenarios (300 tests)
+- [ ] Scale to full 16 scenarios (480 tests)
+- [ ] Statistical analysis across dimensional framework
 - [ ] Consider OpenRouter migration for unified billing/monitoring
 
 ---
