@@ -231,21 +231,31 @@ class ExperimentManager:
     def mark_test_completed(self, test_id: str, result_data: Dict) -> None:
         """Mark a test as completed and save result"""
         if test_id in self.test_registry:
+            # Get previous status to update counts correctly
+            previous_status = self.test_registry[test_id].status
+
             # Update registry
             self.test_registry[test_id].status = TestStatus.COMPLETED
             self.test_registry[test_id].result_data = result_data
             self.test_registry[test_id].timestamp = datetime.now().isoformat()
-            
+
             # Save individual result file
             result_file = self.results_dir / f"{test_id}.json"
             with open(result_file, 'w') as f:
                 json.dump(result_data, f, indent=2)
-            
-            # Update experiment state
+
+            # Update experiment state based on previous status
             self.experiment_state.completed_count += 1
-            self.experiment_state.pending_count -= 1
+
+            # Only decrement pending if it was still pending (not if retrying from failed)
+            if previous_status == TestStatus.PENDING:
+                self.experiment_state.pending_count -= 1
+            elif previous_status == TestStatus.FAILED:
+                # Moving from failed to completed - reduce failed count
+                self.experiment_state.failed_count -= 1
+
             self.experiment_state.updated_at = datetime.now().isoformat()
-            
+
             self._save_state()
             print(f"✅ Completed: {test_id}")
     
