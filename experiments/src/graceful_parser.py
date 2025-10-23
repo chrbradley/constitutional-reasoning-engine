@@ -22,8 +22,12 @@ class GracefulJsonParser:
     Graceful JSON parser that never throws away responses
     """
     
-    def __init__(self, fallback_dir: str = "results/manual_review"):
-        self.fallback_dir = Path(fallback_dir)
+    def __init__(self, fallback_dir: str = "results/manual_review", experiment_id: str = None):
+        if experiment_id:
+            # Organize manual review by experiment run
+            self.fallback_dir = Path(f"results/runs/{experiment_id}/manual_review")
+        else:
+            self.fallback_dir = Path(fallback_dir)
         self.fallback_dir.mkdir(parents=True, exist_ok=True)
     
     def parse_constitutional_response(self, response: str, test_id: str) -> Tuple[Dict[str, Any], ParseStatus]:

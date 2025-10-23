@@ -113,9 +113,9 @@ def robust_json_parse(response: str) -> dict:
 
 
 async def run_single_test(
-    test_def: TestDefinition, 
-    scenario_data: Dict, 
-    constitution_data: Dict, 
+    test_def: TestDefinition,
+    scenario_data: Dict,
+    constitution_data: Dict,
     model_data: Dict,
     experiment_manager: ExperimentManager
 ) -> bool:
@@ -124,7 +124,8 @@ async def run_single_test(
     Returns True if successful, False if failed
     """
     test_id = test_def.test_id
-    parser = GracefulJsonParser()
+    # Use experiment_id for organizing manual review files
+    parser = GracefulJsonParser(experiment_id=experiment_manager.experiment_id)
     
     try:
         # Mark as in progress

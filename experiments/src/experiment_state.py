@@ -67,12 +67,21 @@ class ExperimentState:
 class ExperimentManager:
     """Manages experiment state, tracking, and resumption"""
     
-    def __init__(self, base_dir: str = "results"):
+    def __init__(self, base_dir: str = "results", experiment_id: Optional[str] = None):
         self.base_dir = Path(base_dir)
         self.state_dir = self.base_dir / "state"
-        self.results_dir = self.base_dir / "raw"
-        self.charts_dir = self.base_dir / "charts"
-        
+
+        # Use experiment_id to organize results by run
+        # If experiment_id is provided, use it; otherwise will be set in create_experiment
+        self.experiment_id = experiment_id
+        if experiment_id:
+            self.results_dir = self.base_dir / "runs" / experiment_id / "raw"
+            self.charts_dir = self.base_dir / "runs" / experiment_id / "charts"
+        else:
+            # Fallback to legacy structure
+            self.results_dir = self.base_dir / "raw"
+            self.charts_dir = self.base_dir / "charts"
+
         # Create directories
         for dir_path in [self.state_dir, self.results_dir, self.charts_dir]:
             dir_path.mkdir(parents=True, exist_ok=True)
@@ -85,20 +94,29 @@ class ExperimentManager:
         self.test_registry = self._load_test_registry()
     
     def create_experiment(
-        self, 
-        scenarios: List[Scenario], 
-        constitutions: List[Constitution], 
+        self,
+        scenarios: List[Scenario],
+        constitutions: List[Constitution],
         models: List[Dict]
     ) -> str:
         """Create a new experiment or resume existing one"""
-        
+
         # Generate experiment ID if new
         if not self.experiment_state:
             experiment_id = f"exp_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            
+
+            # Update experiment_id and results directories
+            self.experiment_id = experiment_id
+            self.results_dir = self.base_dir / "runs" / experiment_id / "raw"
+            self.charts_dir = self.base_dir / "runs" / experiment_id / "charts"
+
+            # Create new directories for this experiment run
+            for dir_path in [self.results_dir, self.charts_dir]:
+                dir_path.mkdir(parents=True, exist_ok=True)
+
             # Generate all test combinations
             test_definitions = self._generate_test_combinations(scenarios, constitutions, models)
-            
+
             # Initialize experiment state
             self.experiment_state = ExperimentState(
                 experiment_id=experiment_id,
