@@ -34,17 +34,17 @@ MODELS = [
         "name": "Llama 3 8B",
         "provider": "replicate",
         "api_model": "replicate/meta/meta-llama-3-8b-instruct"
+    },
+    {
+        "id": "gemini-2-5-flash",
+        "name": "Gemini 2.5 Flash",
+        "provider": "google",
+        "api_model": "gemini/gemini-2.5-flash"
     }
 ]
 
 # Additional models to test when available/stable
 ADDITIONAL_MODELS = [
-    {
-        "id": "gemini-2-5-pro",
-        "name": "Gemini 2.5 Pro",
-        "provider": "google",
-        "api_model": "gemini/gemini-2.5-pro"
-    },
     {
         "id": "grok-3",
         "name": "Grok 3",

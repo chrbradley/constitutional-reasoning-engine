@@ -1488,6 +1488,53 @@ Let's start with step 1 - can you help me create the pyproject.toml with all nec
 
 ---
 
+## 🔔 IMPORTANT: Maintaining the Project Journal
+
+**For Claude Code / AI Assistants:**
+
+Throughout the development process, **maintain PROJECT_JOURNAL.md** with regular entries documenting:
+
+### When to Add Journal Entries:
+1. **Major milestones** - Completing a significant component or feature
+2. **Design decisions** - Choosing between alternative approaches
+3. **Issues encountered** - Bugs, API problems, unexpected behaviors
+4. **Configuration changes** - Model selections, parameter adjustments
+5. **Key findings** - Discoveries that affect methodology or interpretation
+6. **Trade-offs** - When constraints force suboptimal choices
+
+### Entry Template:
+```markdown
+### Entry #: [Title]
+**Time:** [Timestamp]
+**Category:** Setup | Bug Fix | Decision | Finding | Configuration
+**Summary:** [One-line description]
+
+**Details:**
+[Full context and explanation]
+
+**Rationale:** [Why this decision/approach was taken]
+
+**Impact:**
+[How this affects the experiment, results, or report]
+```
+
+### Critical Items to Document:
+- ✅ Model availability issues (e.g., API errors, rate limits)
+- ✅ Token limit discoveries and adjustments
+- ✅ Parsing strategy changes
+- ✅ Any data that couldn't be collected
+- ✅ Deviations from original plan
+- ✅ Unexpected model behaviors
+- ✅ Performance characteristics (speed, reliability)
+
+**The journal serves dual purposes:**
+1. Development log for troubleshooting and iteration
+2. Methodology documentation for the final report
+
+**Action:** After each significant step, add a journal entry before proceeding to the next task.
+
+---
+
 **You've got everything you need. Now go build it.**
 
 When you're ready, open Claude Code and paste this entire document. Let's make this real.

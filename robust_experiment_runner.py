@@ -22,6 +22,7 @@ from prompts import (
 )
 from experiment_state import ExperimentManager, TestDefinition, TestStatus
 from graceful_parser import GracefulJsonParser, ParseStatus
+from truncation_detector import TruncationDetector
 
 
 def clean_json_response(response: str) -> str:
@@ -153,28 +154,57 @@ async def run_single_test(
         if 'ambiguousElements' not in facts:
             facts['ambiguousElements'] = ["[MANUAL_REVIEW] See raw response"]
         
-        # Layer 2: Constitutional reasoning
+        # Layer 2: Constitutional reasoning (with truncation detection and retry)
         reasoning_prompt = build_constitutional_reasoning_prompt(
             scenario=scenario_data,
             constitution=constitution_data,
             established_facts=facts['establishedFacts'],
             ambiguous_elements=facts['ambiguousElements']
         )
-        
-        constitutional_response = await get_model_response(
-            model_id=model_data['id'],
-            prompt=reasoning_prompt,
-            system_prompt=constitution_data.system_prompt,
-            temperature=0.7,
-            max_tokens=1500
-        )
-        
-        # Parse constitutional response with graceful fallback
-        response_data, constitutional_status = parser.parse_constitutional_response(constitutional_response, f"{test_id}_constitutional")
+
+        # Try with increasing max_tokens if truncated
+        truncation_detector = TruncationDetector()
+        max_tokens_constitutional = 8000  # Start with baseline
+        max_retries = 3
+
+        for attempt in range(max_retries):
+            constitutional_response = await get_model_response(
+                model_id=model_data['id'],
+                prompt=reasoning_prompt,
+                system_prompt=constitution_data.system_prompt,
+                temperature=0.7,
+                max_tokens=max_tokens_constitutional
+            )
+
+            # Parse constitutional response with graceful fallback
+            response_data, constitutional_status = parser.parse_constitutional_response(constitutional_response, f"{test_id}_constitutional")
+
+            # Check if truncated
+            is_truncated, trunc_reason = truncation_detector.is_truncated(
+                constitutional_response,
+                parse_success=(constitutional_status == ParseStatus.SUCCESS)
+            )
+
+            if not is_truncated or constitutional_status == ParseStatus.SUCCESS:
+                # Success or not truncated - keep the result
+                break
+
+            # Truncated - retry with higher limit
+            if attempt < max_retries - 1:
+                new_limit = truncation_detector.get_next_token_limit(max_tokens_constitutional)
+                print(f"⚠️  Response truncated ({trunc_reason}), retrying with max_tokens={new_limit}")
+                max_tokens_constitutional = new_limit
+            else:
+                print(f"⚠️  Max retries reached, using partial response")
+
         if constitutional_status == ParseStatus.MANUAL_REVIEW:
             print(f"⚠️  Constitutional response parsing needs manual review for {test_id}")
         elif constitutional_status == ParseStatus.PARTIAL_SUCCESS:
             print(f"⚠️  Partial constitutional response extraction for {test_id}")
+
+        # Log the final max_tokens used for this model
+        if max_tokens_constitutional > 8000:
+            print(f"📊 {model_data['id']} required {max_tokens_constitutional} tokens for complete response")
         
         # Layer 3: Integrity evaluation (using Claude for consistency)
         eval_prompt = build_integrity_evaluation_prompt(
