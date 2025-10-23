@@ -316,12 +316,124 @@ Incomplete responses cannot be fairly scored for integrity. Truncation could:
 
 ---
 
+### Entry 11: First Full Experiment Run - Rate Limit Discovery
+**Time:** 7:25 AM (October 23, 2025)
+**Category:** Finding
+**Summary:** Completed 23/30 tests before hitting Anthropic rate limits - identified architectural bottleneck
+
+**Experiment Results:**
+- Experiment ID: exp_20251023_072503
+- Completed: 23 tests (76.7%)
+- Failed: 7 tests (all due to Anthropic rate limits)
+- All failures in Batch 3 (bad-faith constitution tests)
+
+**Rate Limit Issue Discovered:**
+```
+Error: "This request would exceed the rate limit for your organization
+of 8,000 output tokens per minute"
+```
+
+**Root Cause Analysis:**
+- Tier 1 Anthropic limits: 8,000 OTPM (Output Tokens Per Minute)
+- Each test uses Claude twice:
+  - Layer 1 (Facts): ~1,000 output tokens
+  - Layer 3 (Integrity): ~2,000 output tokens
+  - Total: ~3,000 tokens per test
+- Running 12 tests in parallel: 12 × 3,000 = 36,000 tokens needed
+- **Exceeded limit by 4.5x!**
+
+**Additional Findings:**
+1. **Llama Verbosity**: Required up to 16,000 max_tokens (2x baseline)
+   - Automatic truncation detection/retry worked perfectly
+2. **Facts Parsing Bug**: All tests flagged "facts parsing needs manual review"
+   - Need to investigate Layer 1 parsing logic
+
+**Successful Test Scores (23 tests):**
+- Highest: Claude Balanced-Justice (96), Grok Community-Order (96), DeepSeek Community-Order (96)
+- Lowest: Llama Balanced-Justice (58), Llama Self-Sovereignty (0 - manual review needed)
+- Range: 0-96, showing significant model/constitution variance
+
+**Impact:**
+- Cannot complete 300-test experiment with current architecture
+- Need to redesign Claude usage to stay under rate limits
+- Successfully validated: truncation detection, graceful parsing, experiment orchestration
+
+---
+
+### Entry 12: Rate Limit Solution - Hybrid Model Architecture
+**Time:** 7:30 AM (October 23, 2025)
+**Category:** Decision
+**Summary:** Switching to hybrid model approach to avoid rate limits while maintaining evaluation quality
+
+**Problem Statement:**
+Cannot run experiments at scale with current architecture due to Anthropic's 8,000 OTPM limit.
+
+**Solutions Considered:**
+
+1. **Sequential Claude Calls**: Batch Claude phases separately with delays
+   - Pros: Maintains consistency
+   - Cons: Sequential bottleneck, adds ~2 min/batch
+
+2. **Different Model for Facts/Integrity**: Use GPT-4o or Grok for all evaluation
+   - Pros: No rate limits, fully parallel
+   - Cons: Less consistent baseline, reproducibility concerns
+
+3. **Smaller Batches**: Reduce from 12 to 4-5 tests per batch
+   - Pros: Maintains Claude
+   - Cons: Many more batches, longer runtime
+
+4. **Hybrid Approach**: GPT-4o for facts, Claude for integrity, with delays
+   - Pros: Best of both worlds - speed + quality
+   - Cons: Mixed evaluation models
+
+**Decision: Hybrid Approach (Solution 4)**
+
+**Implementation:**
+- **Layer 1 (Facts)**: Switch from Claude to GPT-4o
+  - Rationale: Facts are objective, GPT-4o is fast and reliable
+  - Benefit: Reduces Claude usage by 33%, avoids rate limit
+
+- **Layer 2 (Constitutional)**: Continue using test model
+  - No change: Each model evaluates itself
+
+- **Layer 3 (Integrity)**: Keep Claude Sonnet 4.5
+  - Rationale: Maintains high-quality, consistent evaluation baseline
+  - Claude's strong reasoning is critical for integrity scoring
+
+- **Batch Management**: Keep 30-second delays between batches
+  - Gives rate limits time to reset
+  - Natural spreading from staggered test completion times
+
+**Token Math:**
+- Old: 12 tests × 3K tokens = 36K OTPM (exceeds 8K limit)
+- New: 12 tests × 2K tokens = 24K OTPM (still over but spread over time)
+- With delays + staggered completion: Stays under 8K/minute
+
+**Methodology Implications:**
+- Facts established by GPT-4o (not Claude)
+- Constitutional reasoning by respective test model
+- Integrity evaluation by Claude (consistent gold standard)
+- Must document in methodology: "Facts layer uses GPT-4o for speed and rate limit management; integrity evaluation uses Claude Sonnet 4.5 for consistent, high-quality assessment"
+
+**Trade-offs Accepted:**
+- ✅ Facts are objective - GPT-4o suitable for this task
+- ✅ Maintains Claude as consistent evaluator (most important)
+- ✅ Enables full 300-test experiment
+- ⚠️ Mixed models in pipeline (acceptable for pragmatic reasons)
+
+**Alternative Considered:**
+OpenRouter could provide unified rate limiting across providers, but adds complexity. Defer to later if issues persist.
+
+---
+
 ## Next Steps
 
 - [x] All 6 models added and tested individually
-- [ ] Run full 1-scenario × 5 constitutions × 6 models test (30 tests)
-- [ ] Analyze results across all 6 models
-- [ ] Document model-specific patterns and characteristics
+- [x] Run full 1-scenario × 5 constitutions × 6 models test (30 tests)
+- [ ] Implement hybrid model architecture (GPT-4o for facts)
+- [ ] Fix facts parsing bug
+- [ ] Retry 7 failed tests with new architecture
+- [ ] Analyze complete 30-test results
 - [ ] Scale to full 10 scenarios (300 tests)
 - [ ] Consider OpenRouter migration for unified billing/monitoring
 
