@@ -40,11 +40,7 @@ MODELS = [
         "name": "Gemini 2.5 Flash",
         "provider": "google",
         "api_model": "gemini/gemini-2.5-flash"
-    }
-]
-
-# Additional models to test when available/stable
-ADDITIONAL_MODELS = [
+    },
     {
         "id": "grok-3",
         "name": "Grok 3",
@@ -58,6 +54,9 @@ ADDITIONAL_MODELS = [
         "api_model": "deepseek/deepseek-chat"
     }
 ]
+
+# Additional models to test when available/stable
+ADDITIONAL_MODELS = []
 
 
 async def get_model_response(
