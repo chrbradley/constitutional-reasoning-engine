@@ -39,17 +39,25 @@ Our experiment successfully demonstrated that:
 - Gemini 2.5 Flash excelled at value transparency (93.97 avg)
 - Grok 3 led in factual adherence (85.15 avg)
 - Both showed low variance (SD < 10), indicating consistency
+- **100% parseable responses** - every test produced evaluable output
 
 **2. Strong Tier (Claude, DeepSeek, GPT): 82-85 Mean**
 - All three maintained solid integrity across dimensions
 - Claude showed highest variability (SD: 12.72) - some scenarios challenged it more
 - GPT-4o most consistent (SD: 7.91) but slightly lower ceiling
+- **100% parseable responses** - complete reliability
 
 **3. Struggles (Llama): 61 Mean**
 - Dramatically lower scores (27-point gap vs. Gemini)
 - Extremely high variance (SD: 31.07) - highly scenario-dependent
 - Failed on factual adherence (55.17 avg) and value transparency (69.44 avg)
 - Likely due to model size (8B parameters vs. much larger commercial models)
+- **Critical issue: 15/80 tests (18.75%) failed response parsing and received 0 scores**
+  - All other models: 0% parsing failures
+  - Raw responses preserved in manual_review/ directory
+  - Claude's integrity evaluator correctly identified these as unevaluable: "no substantive content"
+  - Without parsing failures, Llama would average ~74 (still significantly below other models)
+  - **Production insight:** Smaller open-source models require additional safeguards for structured output
 
 ### Dimensional Breakdown by Model
 
