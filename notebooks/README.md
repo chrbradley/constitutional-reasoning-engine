@@ -74,7 +74,7 @@ Each notebook follows this pattern:
 2. **Analysis Sections** - Focused explorations with visualizations
 3. **Summary** - Key takeaways and conclusions
 
-All notebooks use the same dataset: `results/runs/exp_20251023_105245/`
+All notebooks use the same dataset: `results/experiments/exp_20251023_105245/`
 
 ## Data Schema
 

@@ -621,7 +621,7 @@ Created `manifest_generator.py` to generate human-readable experiment manifests:
 - Displays integrity scores for completed tests
 - Groups tests by scenario → constitution → model
 - Includes timestamps and error messages
-- Saves to experiment-specific directory: `results/runs/exp_YYYYMMDD_HHMMSS/MANIFEST.txt`
+- Saves to experiment-specific directory: `results/experiments/exp_YYYYMMDD_HHMMSS/MANIFEST.txt`
 - Auto-updates after each batch in robust_experiment_runner.py
 - Provides legend for quick reference
 
@@ -777,7 +777,7 @@ All models achieved 100% success rate after retry:
 - Demonstrates automatic retry system working as designed
 
 **Data Collection:**
-- All 480 raw responses preserved in results/runs/exp_20251023_105245/raw/
+- All 480 raw responses preserved in results/experiments/exp_20251023_105245/data/tests/
 - Manual review files created for parsing edge cases
 - Complete test registry with full metadata
 - Human-readable MANIFEST.txt generated
@@ -832,6 +832,106 @@ Total valid scenarios: 16
 - All 16 scenarios loaded successfully
 - Clean Pydantic validation
 - Reusable tool for future scenario updates
+
+---
+
+### Entry 23: Directory Structure Cleanup and Deprecation Removal
+**Time:** October 24, 2025, 3:30 PM
+**Category:** Refactoring | Bug Fix
+**Summary:** Removed all deprecated directory references and fixed code that was creating legacy directories
+
+**Background:**
+After reorganizing to the new `results/experiments/` structure, discovered that:
+1. Old directory references remained in documentation and test files
+2. Code was still creating deprecated `results/raw/` and `results/charts/` directories
+3. Inconsistent references across 7 files needed updating
+
+**Problem Identified:**
+In `src/core/experiment_state.py`, the initialization code had a fallback that created legacy directories:
+```python
+# OLD CODE (lines 95-101)
+else:
+    # Fallback to legacy structure
+    self.results_dir = self.base_dir / "raw"          # ❌ Created deprecated dir
+    self.charts_dir = self.base_dir / "charts"        # ❌ Created deprecated dir
+
+# Create result directories (always created both)
+for dir_path in [self.results_dir, self.charts_dir]:
+    dir_path.mkdir(parents=True, exist_ok=True)
+```
+
+This meant every time ExperimentManager was initialized (even without an active experiment), it would create empty `raw/` and `charts/` directories.
+
+**Files Updated:**
+
+1. **src/core/experiment_state.py** (lines 90-101)
+   - Removed legacy fallback paths (`results/raw/`, `results/charts/`)
+   - Changed to only create directories when `experiment_id` exists
+   - Set `results_dir` and `charts_dir` to `None` when no experiment loaded
+
+2. **src/core/graceful_parser.py** (line 25)
+   - Changed default parameter: `results/manual_review` → `results/debug`
+   - Maintains proper fallback within new structure
+
+3. **src/core/manifest_generator.py** (line 115)
+   - Updated MANIFEST path: `results/runs/` → `results/experiments/`
+
+4. **tests/debug/simple_test.py** (line 209)
+   - Changed output directory: `results/raw` → `results/debug`
+
+5. **PROJECT_JOURNAL.md** (2 locations, lines 624, 780)
+   - Updated path references to new structure
+   - Changed: `results/runs/exp_*/MANIFEST.txt` → `results/experiments/exp_*/MANIFEST.txt`
+   - Changed: `results/runs/exp_*/raw/` → `results/experiments/exp_*/data/tests/`
+
+6. **FINDINGS.md** (line 370)
+   - Updated dataset path reference
+
+7. **notebooks/README.md** (line 77)
+   - Updated dataset path reference
+
+**Verification:**
+Ran comprehensive grep searches to confirm no deprecated references remain:
+```bash
+✓ No references to "results/runs/"
+✓ No references to "results/raw/" (except in experiment_run.log)
+✓ No references to "results/charts/"
+✓ No references to "results/manual_review/"
+```
+
+**Testing:**
+1. Cleaned state and launched fresh experiment (`exp_20251024_154501`)
+2. Verified NO deprecated directories created
+3. Confirmed all data saved to correct locations:
+   - Test results: `results/experiments/exp_*/data/tests/`
+   - Debug files: `results/experiments/exp_*/data/debug/`
+   - MANIFEST: `results/experiments/exp_*/MANIFEST.txt`
+
+**Final Directory Structure:**
+```
+results/
+├── aggregate/          [Cross-experiment aggregations]
+├── experiments/        [Self-contained experiment packages]
+│   └── exp_*/
+│       ├── MANIFEST.txt
+│       ├── data/
+│       │   ├── tests/     [Test result JSON files]
+│       │   └── debug/     [Parsing debug files]
+│       └── visualizations/
+└── state/             [Experiment tracking state]
+```
+
+**Impact:**
+- ✅ Eliminated technical debt from incomplete reorganization
+- ✅ Codebase now fully consistent with no legacy paths
+- ✅ Prevents confusion from empty deprecated directories
+- ✅ Self-contained experiment packages properly isolated
+- ✅ Cleaner project structure for analysis and sharing
+
+**Commits:**
+- Fixed deprecated directory creation in experiment_state.py
+- Updated all documentation references to new paths
+- Verified clean experiment run with no legacy directories
 
 ---
 

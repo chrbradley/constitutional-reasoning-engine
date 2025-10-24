@@ -367,5 +367,5 @@ Our experiment successfully demonstrated that:
 ---
 
 **Analysis Generated:** October 24, 2025
-**Full Dataset:** results/runs/exp_20251023_105245/
+**Full Dataset:** results/experiments/exp_20251023_105245/
 **Analysis Details:** results/analysis/single/exp_20251023_105245_analysis.json
