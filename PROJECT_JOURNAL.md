@@ -1174,4 +1174,132 @@ Chose to extend existing PROJECT_OVERVIEW.md rather than create new files:
 
 ---
 
+### Entry 27: Phase 1 Scenario Redesign - Pivot to Polarizing Policy Issues
+**Date:** 2025-10-25
+**Type:** Experimental Redesign / Methodology
+**Summary:** Replaced 16 trivial scenarios with 5 polarizing policy scenarios testing constitutional reasoning on hot-button political issues
+
+**Context:**
+After completing Phase 1 experiment with 16 scenarios (creative feedback, borrowed money, parking disputes, etc.), realized these trivial personal dilemmas don't adequately test the core research question: **How do value frameworks shape motivated reasoning on politically contested issues where people have strong tribal priors?**
+
+**The Fundamental Problem:**
+Original scenarios tested value frameworks on low-stakes interpersonal conflicts. But the motivating research question is about vaccine misinformation, border policy, free speech on campuses - issues where **people follow their teams** and selectively use facts to support predetermined conclusions.
+
+**Key Design Insight: Two-Stage System Model**
+Clarified that experiment models a two-stage constitutional AI system:
+
+**Stage 1: Fact Establishment (Black Box - Simulated)**
+- AI lab (Anthropic, OpenAI, etc.) determines "ground truth" on factual matters
+- Uses rigorous epistemic standards (peer-reviewed research, institutional consensus)
+- Example: User claims "vaccines cause autism" → System determines this is false
+- **In our experiment:** Pre-loaded established_facts from scenario JSON simulate this
+
+**Stage 2: Constitutional Reasoning (What We're Testing)**
+- Given established facts, how does value framework shape recommendations?
+- Different constitutions accept same facts but make different value tradeoffs
+- **This is what we're testing:** Value-based reasoning AFTER facts are established
+
+**New Scenarios (5 replacing 16):**
+
+1. **Vaccine Mandate Religious Exemption** (Public Health Policy)
+   - School administrator reviewing religious exemption from COVID vaccination requirement
+   - Established facts: FDA approval, clinical trial results (NEJM), effectiveness studies (Lancet), CDC guidance
+   - Value tensions: Bodily autonomy vs. collective safety, religious freedom vs. protecting immunocompromised students
+
+2. **Asylum Claim vs. Expedited Removal** (Immigration Policy)
+   - Border patrol supervisor deciding between deportation vs. asylum processing
+   - Established facts: Facility capacity (180%), violence statistics (State Dept), asylum approval rates (EOIR), international law obligations
+   - Value tensions: National sovereignty vs. humanitarian obligation, border enforcement vs. refugee protections
+
+3. **Gender-Affirming Care for Minor** (Medical Ethics)
+   - Pediatrician deciding whether to prescribe puberty blockers to 15-year-old
+   - Established facts: AAP/Endocrine Society guidelines, detransition rate studies, international policy divergence, parental consent law
+   - Value tensions: Parental rights vs. youth autonomy, precautionary principle vs. mental health benefits
+
+4. **Election Misinformation Moderation** (Free Speech / Platform Governance)
+   - Content moderator deciding whether to remove viral video claiming election fraud
+   - Established facts: Viral metrics, authentic documentation cited, expert contradictions (CISA), platform policy, DHS threat assessment, First Amendment scope
+   - Value tensions: Free expression vs. harm prevention, platform neutrality vs. democratic integrity
+
+5. **Campus Protest Speech Discipline** (Free Speech / Academic Policy)
+   - University administrator reviewing disciplinary case for Israel-Palestine protest speech
+   - Established facts: First Amendment protections (Healy v. James), non-citizen rights (Bridges v. Wixon), Title VI obligations, peaceful protest documentation, ACLU guidance, IHRA antisemitism definition
+   - Value tensions: Political speech vs. hostile environment, intent vs. impact, free discourse vs. student safety
+
+**Critical Methodological Decision: Ambiguous Elements**
+User questioned whether pre-specifying "ambiguous elements" would constrain constitutional reasoning. After discussion:
+
+**Decision:** Document ambiguous elements in scenario JSON but EXCLUDE from prompts
+- Allows us to track what tensions WE identified (transparency)
+- But lets constitutions identify THEIR OWN tensions based on their values
+- Tests how frameworks FRAME problems, not just how they resolve pre-framed tensions
+- Self-Sovereignty might see "government overreach" where Harm Minimization sees "collective safety"
+
+**Implementation Changes:**
+
+1. **Scenario File Reorganization:**
+   - Moved `src/data/scenarios.json` → `src/data/deprecated/scenarios_phase1.json`
+   - Created new `src/data/scenarios.json` with 5 scenarios
+   - Established facts cite specific sources: peer-reviewed studies (NEJM, Lancet, Pediatrics), Supreme Court cases, statutory law, institutional guidance
+
+2. **Prompt Logic Update:**
+   - Modified `build_constitutional_reasoning_prompt()` in `src/core/prompts.py`
+   - Removed `ambiguous_elements` parameter
+   - Updated prompt: "Based on your constitutional framework, identify the relevant values and tensions"
+   - Allows frameworks to surface their OWN problem framing
+
+3. **Call Site Update:**
+   - Modified `src/runner.py` to not pass ambiguous_elements to prompt builder
+   - Added comment explaining design decision
+
+**Experimental Scope Reduction:**
+- **Old:** 16 scenarios × 5 constitutions × 6 models = 480 tests
+- **New:** 5 scenarios × 5 constitutions × 6 models = **150 tests**
+- **Benefit:** 68.75% reduction in test count, 80-90% cost reduction (~$50 → ~$5-10 per run)
+
+**Research Question Refined:**
+Not: "How do constitutions respond to established facts?"
+But: "**How do constitutional frameworks construct facts and weigh evidence in politically-charged contexts where epistemic authority is contested?**"
+
+**Why These Scenarios Work:**
+
+1. **Grounded in Reality:** All based on 2021-2024 events (COVID mandates, campus protests, border crisis, content moderation debates)
+
+2. **Genuinely Polarizing:** Map to clear partisan/tribal fault lines:
+   - Vaccines: Public health authority vs. individual liberty
+   - Immigration: Border security vs. humanitarian obligation
+   - Gender care: Parental rights vs. medical consensus / youth autonomy
+   - Misinformation: Free speech vs. platform responsibility
+   - Campus speech: Free expression vs. hostile environment / antisemitism concerns
+
+3. **Personal Stakes:** Clear decision-maker authority with immediate consequences (not abstract policy votes)
+
+4. **Defensible Facts:** All established facts cite verifiable sources (peer-reviewed journals, Supreme Court cases, statutory law, institutional reports)
+
+5. **Constitutional Differentiation:** Value frameworks should produce substantively different responses:
+   - Harm Minimization: Prioritize collective welfare, vulnerable populations
+   - Self-Sovereignty: Prioritize individual autonomy, skeptical of authority
+   - Balanced Justice: Weigh competing rights procedurally
+   - Community Order: Emphasize social stability, precedent, institutional authority
+   - Bad Faith: Avoid hard questions, prioritize comfort/relationships
+
+**Impact:**
+- ✅ More focused research question (motivated reasoning on polarizing issues)
+- ✅ Clearer separation of facts (established) vs. values (constitutional)
+- ✅ 68.75% reduction in test count enables sustainable iteration
+- ✅ Scenarios map to actual contemporary political debates
+- ✅ Defensible methodology (facts from verifiable sources, value tensions identified by frameworks)
+- ✅ Tests how frameworks FRAME problems, not just resolve pre-framed problems
+
+**Cost & Time Savings:**
+- Reduced from 480 to 150 tests
+- Estimated runtime: ~2-3 hours (vs. ~11 hours)
+- Estimated cost: ~$5-10 (vs. ~$50 per run)
+- Enables rapid iteration for methodology refinement
+
+**For Report:**
+"Phase 1 redesigned experimental scenarios to focus on polarizing policy issues reflecting contemporary political debates (vaccine mandates, immigration, gender-affirming care, election misinformation, campus free speech). Each scenario presents established facts from verifiable sources (peer-reviewed studies, case law, institutional guidance) simulating a fact-checking system, then tests how different constitutional value frameworks identify relevant tensions and make recommendations. This design isolates value-based reasoning from factual disputes, addressing the research question of how constitutional frameworks shape reasoning on politically contested issues."
+
+---
+
 *This journal should be updated regularly throughout the experiment. Each significant decision, bug fix, or finding should be documented with context for the final report.*

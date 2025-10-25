@@ -188,11 +188,12 @@ async def run_single_test(
             experiment_manager.save_layer_result(test_id, 1, layer1_data)
         
         # Layer 2: Constitutional reasoning (with truncation detection and retry)
+        # Note: ambiguous_elements are documented in scenario JSON but NOT passed to prompt
+        # This allows constitutional frameworks to identify their own value tensions
         reasoning_prompt = build_constitutional_reasoning_prompt(
             scenario=scenario_data,
             constitution=constitution_data,
-            established_facts=facts['establishedFacts'],
-            ambiguous_elements=facts['ambiguousElements']
+            established_facts=facts['establishedFacts']
         )
 
         # Try with increasing max_tokens if truncated

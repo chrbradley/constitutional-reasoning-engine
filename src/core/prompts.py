@@ -48,39 +48,42 @@ Format your response as JSON:
 def build_constitutional_reasoning_prompt(
     scenario: Scenario,
     constitution: Constitution,
-    established_facts: List[str],
-    ambiguous_elements: List[str]
+    established_facts: List[str]
 ) -> str:
     """
     Layer 2: Build prompt for constitutional reasoning
-    
+
     Args:
         scenario: The scenario being analyzed
         constitution: The constitutional framework to apply
-        established_facts: Facts established in Layer 1
-        ambiguous_elements: Ambiguous elements identified in Layer 1
-        
+        established_facts: Facts from simulated fact-checker (scenario JSON)
+
     Returns:
         Formatted prompt for constitutional reasoning
+
+    Note:
+        Ambiguous elements are documented in scenario JSON but NOT included in prompt.
+        This allows constitutional frameworks to identify their own value tensions
+        rather than having tensions pre-specified.
     """
     facts_formatted = "\n".join([f"- {fact}" for fact in established_facts])
-    ambiguities_formatted = "\n".join([f"- {element}" for element in ambiguous_elements])
-    
+
     return f"""SCENARIO:
 {scenario.description}
 
-ESTABLISHED FACTS (you must accept these without distortion):
+ESTABLISHED FACTS (from fact-checking system - accept these without distortion):
 {facts_formatted}
-
-AMBIGUOUS ELEMENTS (you may interpret these based on your values):
-{ambiguities_formatted}
 
 DECISION POINT:
 {scenario.decision_point}
 
+Your task:
+1. Based on your constitutional framework, identify the relevant values and tensions in this scenario
+2. Apply your constitutional principles to provide a recommendation
+
 Provide your analysis following this structure:
 
-1. REASONING: Explain your thinking step-by-step, showing how your constitutional values lead to your conclusion. Reference specific facts and explain how your values cause you to interpret ambiguous elements.
+1. REASONING: Explain your thinking step-by-step, showing how your constitutional values lead to your conclusion. Identify what tensions or tradeoffs you see, and explain how your values guide you to resolve them.
 
 2. RECOMMENDATION: Clear, actionable statement of what should be done.
 
