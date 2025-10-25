@@ -22,6 +22,9 @@ from src.core.graceful_parser import GracefulJsonParser, ParseStatus
 from src.core.truncation_detector import TruncationDetector
 from src.core.manifest_generator import save_manifest
 
+# Phase 1 Configuration: Skip Layer 1 (facts from scenario JSON)
+SKIP_LAYER_1 = True
+
 
 def clean_json_response(response: str) -> str:
     """Clean JSON response by removing markdown code blocks"""
@@ -131,27 +134,37 @@ async def run_single_test(
         
         print(f"\n🔄 Starting: {test_id}")
         
-        # Layer 1: Establish facts (using GPT-4o for speed and rate limit management)
-        fact_prompt = build_fact_establishment_prompt(scenario_data)
-        fact_response = await get_model_response(
-            model_id="gpt-4o",
-            prompt=fact_prompt,
-            temperature=0.3,
-            max_tokens=1000
-        )
-        
-        # Parse facts with graceful fallback
-        facts, fact_status = parser.parse_constitutional_response(fact_response, f"{test_id}_facts")
-        if fact_status == ParseStatus.MANUAL_REVIEW:
-            print(f"⚠️  Facts parsing needs manual review for {test_id}")
-        elif fact_status == ParseStatus.PARTIAL_SUCCESS:
-            print(f"⚠️  Partial facts extraction for {test_id}")
-        
-        # Ensure we have the basic structure for facts
-        if 'establishedFacts' not in facts:
-            facts['establishedFacts'] = ["[MANUAL_REVIEW] See raw response"]
-        if 'ambiguousElements' not in facts:
-            facts['ambiguousElements'] = ["[MANUAL_REVIEW] See raw response"]
+        # Layer 1: Establish facts
+        if SKIP_LAYER_1:
+            # Phase 1: Use facts directly from scenario JSON
+            facts = {
+                "establishedFacts": scenario_data.established_facts,
+                "ambiguousElements": scenario_data.ambiguous_elements,
+                "keyQuestions": []  # Not present in scenario JSON structure
+            }
+            print(f"📋 Using facts from scenario JSON (Layer 1 bypassed)")
+        else:
+            # Phase 2+: Establish facts via API call
+            fact_prompt = build_fact_establishment_prompt(scenario_data)
+            fact_response = await get_model_response(
+                model_id="gpt-4o",
+                prompt=fact_prompt,
+                temperature=0.3,
+                max_tokens=1000
+            )
+
+            # Parse facts with graceful fallback
+            facts, fact_status = parser.parse_constitutional_response(fact_response, f"{test_id}_facts")
+            if fact_status == ParseStatus.MANUAL_REVIEW:
+                print(f"⚠️  Facts parsing needs manual review for {test_id}")
+            elif fact_status == ParseStatus.PARTIAL_SUCCESS:
+                print(f"⚠️  Partial facts extraction for {test_id}")
+
+            # Ensure we have the basic structure for facts
+            if 'establishedFacts' not in facts:
+                facts['establishedFacts'] = ["[MANUAL_REVIEW] See raw response"]
+            if 'ambiguousElements' not in facts:
+                facts['ambiguousElements'] = ["[MANUAL_REVIEW] See raw response"]
         
         # Layer 2: Constitutional reasoning (with truncation detection and retry)
         reasoning_prompt = build_constitutional_reasoning_prompt(
