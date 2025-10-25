@@ -935,6 +935,74 @@ results/
 
 ---
 
+### Entry 24: Refactor Raw Response Storage System
+**Date:** 2025-10-25
+**Type:** Code Refactoring
+
+**Problem:**
+The `data/debug/` directory with files named `{test_id}_manual_review_needed_{timestamp}.json` created confusion:
+1. Directory name "debug" didn't clearly indicate purpose (raw API response preservation)
+2. Filename suffix `_manual_review_needed` implied ALL files required manual inspection
+3. In reality, files are saved for ALL API calls as data preservation, regardless of parsing success
+4. Timestamp in filename was redundant (experiment folder already timestamped)
+5. No programmatic way to identify which files actually needed manual intervention
+
+**Solution:**
+Refactored `src/core/graceful_parser.py` to use clearer naming and detection mechanism:
+
+1. **Directory Rename:** `data/debug/` → `data/raw/`
+   - More accurately describes purpose (raw API responses)
+   - Clearer intent: complete data preservation
+
+2. **Simplified Filenames:**
+   - Old: `medical_disclosure_transparency_claude_constitutional_manual_review_needed_20251024_153045.json`
+   - New: `medical_disclosure_transparency_claude.constitutional.json`
+   - Format: `{test_id}.{layer}.json` where layer is `facts`, `constitutional`, or `integrity`
+
+3. **Parse Status Field:**
+   - Added `parse_status` field inside each JSON file
+   - Indicates parsing result: `"constitutional_manual_review_needed"`, `"partial_extraction"`, etc.
+   - Enables programmatic detection of files needing intervention
+
+4. **Detection Mechanism:**
+   - New method: `get_files_needing_review()`
+   - Reads all files in `data/raw/`
+   - Returns only files where `parse_status` contains `"manual_review"` or `"partial"`
+   - Separates data preservation (all files) from intervention detection (parse_status check)
+
+**Changes Made:**
+- `src/core/graceful_parser.py`:
+  - Line 28: Changed fallback_dir from `data/debug` to `data/raw`
+  - Lines 326-345: Simplified `_save_raw_response()` method
+  - Lines 346-361: Replaced `get_manual_review_files()` with `get_raw_response_files()` and `get_files_needing_review()`
+  - Updated fallback messages from `[MANUAL_REVIEW_NEEDED]` to `[PARSING FAILED]`
+
+**Benefits:**
+- ✅ Clean, predictable filenames without misleading suffixes
+- ✅ Clear separation: ALL responses preserved, parse_status indicates intervention needs
+- ✅ Self-documenting directory structure (`data/raw/` vs. `data/debug/`)
+- ✅ Programmatic detection of parsing failures
+- ✅ Removed redundant timestamps from filenames
+
+**Example:**
+```json
+// data/raw/medical_disclosure_transparency_claude.constitutional.json
+{
+  "test_id": "medical_disclosure_transparency_claude",
+  "layer": "constitutional",
+  "parse_status": "constitutional_manual_review_needed",
+  "timestamp": "2025-10-24T15:30:45",
+  "raw_response": "{ malformed json here..."
+}
+```
+
+**Impact:**
+- Clearer project organization for future analysis
+- No confusion about which files need manual review
+- Complete data preservation maintained while improving discoverability
+
+---
+
 ## Next Steps
 
 - [x] All 6 models added and tested individually

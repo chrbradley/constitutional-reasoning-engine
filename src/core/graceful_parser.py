@@ -22,10 +22,10 @@ class GracefulJsonParser:
     Graceful JSON parser that never throws away responses
     """
     
-    def __init__(self, fallback_dir: str = "results/debug", experiment_id: str = None):
+    def __init__(self, fallback_dir: str = "results/raw", experiment_id: str = None):
         if experiment_id:
-            # Organize manual review by experiment run
-            self.fallback_dir = Path(f"results/experiments/{experiment_id}/data/debug")
+            # Save raw API responses for complete data preservation
+            self.fallback_dir = Path(f"results/experiments/{experiment_id}/data/raw")
         else:
             self.fallback_dir = Path(fallback_dir)
         self.fallback_dir.mkdir(parents=True, exist_ok=True)
@@ -58,19 +58,19 @@ class GracefulJsonParser:
             pass
         
         # Method 3: Manual review fallback - NEVER lose the response
-        self._save_raw_response(test_id, response, "manual_review_needed")
-        
+        self._save_raw_response(test_id, response, "constitutional_manual_review_needed")
+
         # Return minimal structure with raw response for manual processing
         fallback_data = {
-            "reasoning": f"[MANUAL_REVIEW_NEEDED] Raw response saved to {self.fallback_dir}/{test_id}_manual_review.json",
-            "recommendation": "[MANUAL_REVIEW_NEEDED]",
-            "valuesApplied": ["manual_review_needed"],
+            "reasoning": f"[PARSING FAILED] Raw response saved to data/raw/{test_id}.constitutional.json",
+            "recommendation": "[PARSING FAILED]",
+            "valuesApplied": ["parsing_failed"],
             "tradeoffsAcknowledged": "Response requires manual parsing - see raw response file",
             "_raw_response": response,
             "_parse_status": "manual_review",
             "_timestamp": datetime.now().isoformat()
         }
-        
+
         return fallback_data, ParseStatus.MANUAL_REVIEW
     
     def parse_integrity_response(self, response: str, test_id: str) -> Tuple[Dict[str, Any], ParseStatus]:
@@ -96,31 +96,31 @@ class GracefulJsonParser:
             pass
         
         # Method 3: Manual review fallback
-        self._save_raw_response(test_id, response, "integrity_manual_review")
-        
-        # Return default scores that indicate manual review needed
+        self._save_raw_response(test_id, response, "integrity_manual_review_needed")
+
+        # Return default scores that indicate parsing failed
         fallback_data = {
             "factualAdherence": {
-                "score": -1,  # Special marker for manual review
-                "explanation": "[MANUAL_REVIEW_NEEDED] See raw response file",
-                "examples": ["Manual review required"]
+                "score": -1,  # Special marker for parsing failure
+                "explanation": "[PARSING FAILED] See data/raw/{test_id}.integrity.json",
+                "examples": ["Parsing failed - see raw response"]
             },
             "valueTransparency": {
                 "score": -1,
-                "explanation": "[MANUAL_REVIEW_NEEDED] See raw response file", 
-                "examples": ["Manual review required"]
+                "explanation": "[PARSING FAILED] See data/raw/{test_id}.integrity.json",
+                "examples": ["Parsing failed - see raw response"]
             },
             "logicalCoherence": {
                 "score": -1,
-                "explanation": "[MANUAL_REVIEW_NEEDED] See raw response file",
-                "examples": ["Manual review required"]
+                "explanation": "[PARSING FAILED] See data/raw/{test_id}.integrity.json",
+                "examples": ["Parsing failed - see raw response"]
             },
             "overallScore": -1,
             "_raw_response": response,
             "_parse_status": "manual_review",
             "_timestamp": datetime.now().isoformat()
         }
-        
+
         return fallback_data, ParseStatus.MANUAL_REVIEW
     
     def _robust_json_parse(self, response: str) -> dict:
@@ -324,36 +324,38 @@ class GracefulJsonParser:
         return True
     
     def _save_raw_response(self, test_id: str, response: str, reason: str) -> None:
-        """Save raw response for manual review"""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{test_id}_{reason}_{timestamp}.json"
+        """Save raw API response for data preservation"""
+        # Extract layer type from reason (e.g., "facts_manual_review_needed" -> "facts")
+        layer = reason.split('_')[0] if '_' in reason else reason
+
+        # Simple filename without timestamp: test_id.layer.json
+        filename = f"{test_id}.{layer}.json"
         filepath = self.fallback_dir / filename
-        
+
         save_data = {
             "test_id": test_id,
-            "reason": reason,
+            "layer": layer,
+            "parse_status": reason,
             "timestamp": datetime.now().isoformat(),
-            "raw_response": response,
-            "instructions": {
-                "manual_parsing": "This response could not be automatically parsed",
-                "next_steps": [
-                    "1. Review the raw_response field",
-                    "2. Manually extract the required fields",
-                    "3. Update the test result with correct data",
-                    "4. Consider improving the parser for this pattern"
-                ]
-            }
+            "raw_response": response
         }
-        
+
         with open(filepath, 'w') as f:
             json.dump(save_data, f, indent=2)
-        
-        print(f"📁 Saved raw response: {filename}")
     
-    def get_manual_review_files(self) -> list:
-        """Get list of files that need manual review"""
-        return list(self.fallback_dir.glob("*manual_review*.json"))
-    
-    def get_partial_extraction_files(self) -> list:
-        """Get list of files with partial extraction"""
-        return list(self.fallback_dir.glob("*partial*.json"))
+    def get_raw_response_files(self) -> list:
+        """Get list of all raw response files"""
+        return list(self.fallback_dir.glob("*.json"))
+
+    def get_files_needing_review(self) -> list:
+        """Get list of files where parsing failed (indicated by parse_status)"""
+        files_needing_review = []
+        for filepath in self.fallback_dir.glob("*.json"):
+            try:
+                with open(filepath, 'r') as f:
+                    data = json.load(f)
+                    if 'manual_review' in data.get('parse_status', '') or 'partial' in data.get('parse_status', ''):
+                        files_needing_review.append(filepath)
+            except:
+                pass
+        return files_needing_review
