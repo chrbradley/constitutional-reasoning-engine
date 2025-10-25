@@ -464,8 +464,8 @@ async def main():
     models_dict = {m['id']: m for m in models}
     
     # Create batches
-    batches = create_batches(all_tests, batch_size=6)
-    print(f"Created {len(batches)} batches (6 tests per batch, 60s inter-batch delay)")
+    batches = create_batches(all_tests, batch_size=12)
+    print(f"Created {len(batches)} batches (12 tests per batch, 20s inter-batch delay)")
     
     # Show initial progress
     progress = experiment_manager.get_progress_summary()
@@ -492,8 +492,8 @@ async def main():
             
             # Rate limiting delay between batches
             if i < len(batches):
-                print(f"⏳ Waiting 60 seconds before next batch...")
-                await asyncio.sleep(60)
+                print(f"⏳ Waiting 20 seconds before next batch...")
+                await asyncio.sleep(20)
                 
         except KeyboardInterrupt:
             print(f"\n⏸️  Experiment paused. Resume by running this script again.")
