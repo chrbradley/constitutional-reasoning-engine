@@ -1003,6 +1003,80 @@ Refactored `src/core/graceful_parser.py` to use clearer naming and detection mec
 
 ---
 
+### Entry 25: Experimental Scope Clarification and Research Roadmap
+**Date:** 2025-10-25
+**Type:** Methodology / Documentation
+
+**Context:**
+After completing METHODOLOGY.md updates, needed to step back and clarify what the current experiment actually tests versus the broader research goals around misinformation resistance and factual integrity.
+
+**The Recalibration:**
+
+1. **Initial Confusion:**
+   - Layer 1 seemed redundant (asking GPT-4o to regurgitate pre-curated facts from JSON)
+   - Unclear how current experiment relates to vaccine misinformation problem
+   - Question: "What is the purpose of Layer 1?"
+
+2. **Key Realizations:**
+
+   **Current Experiment (Phase 1):**
+   - Tests: Can models maintain factual honesty when applying different value systems?
+   - Setup: Pre-curated scenarios, uncontested facts, single-shot reasoning
+   - Layer 1: Currently bypassed (facts from JSON passed directly to Layer 2)
+   - What it proves: Constitutional constraints CAN work in ideal conditions
+   - Control: Bad-Faith constitution should score lower on factual adherence
+
+   **NOT testing:** Resistance to user pressure to deny facts (that's Phase 3)
+   **NOT testing:** Real-time fact grounding mechanisms (that's Phase 2)
+
+3. **Broader Research Vision:**
+
+   The vaccine misinformation problem requires a multi-phase research program:
+
+   **Phase 1 (Current):** Single-shot constitutional reasoning
+   - Prove constitutional constraints work in principle
+   - Cooperative scenarios, no adversarial pressure
+
+   **Phase 2 (Future):** Real-time factual grounding
+   - How to inject authoritative facts into reasoning (RAG, citations, provenance)
+   - Test different grounding mechanisms
+   - Layer 1 would be ACTIVATED for this
+
+   **Phase 3 (Future):** Multi-turn adversarial resistance
+   - Can models resist user badgering to deny facts?
+   - Measure capitulation points, resilience scores
+   - Layer 2 expands to multi-turn conversations with adversarial strategies
+
+4. **Why This Matters:**
+
+   **If Phase 1 fails:** Constitutional AI is fundamentally broken (can't stay honest even when it's easy)
+
+   **If Phase 1 succeeds but Phase 3 fails:** Constitutional constraints work for neutral facts but collapse under adversarial pressure
+
+   **If all three succeed:** We've demonstrated robust, adversarially-resistant constitutional AI
+
+**Solution:**
+- Documented three-phase research roadmap in PROJECT_OVERVIEW.md
+- Added "Research Roadmap" section clarifying progression
+- Provides breadcrumbs for future recalibration
+- Minimal documentation change (one section added to existing file)
+
+**Impact:**
+- ✅ Clear understanding of what Phase 1 tests vs. doesn't test
+- ✅ Roadmap shows how to get from "prove it works" to "vaccine misinformation resistance"
+- ✅ Layer 1 redundancy explained (needed for Phase 2, not Phase 1)
+- ✅ Framework for future experimental design
+- ✅ Prevents scope drift while maintaining broader vision
+
+**Documentation Strategy:**
+Chose to extend existing PROJECT_OVERVIEW.md rather than create new files:
+- Maintains single source of truth for project vision
+- Easy to update as phases progress (just change status emojis)
+- Avoids documentation fragmentation
+- Logical placement (roadmap follows current status)
+
+---
+
 ## Next Steps
 
 - [x] All 6 models added and tested individually
