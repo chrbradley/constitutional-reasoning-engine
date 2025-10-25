@@ -61,6 +61,71 @@ This project demonstrates:
 - Demo video showcasing key findings
 - Technical writeup for publication
 
+## Research Roadmap
+
+This project is designed as a three-phase research program testing progressively harder aspects of factual integrity in AI systems.
+
+### Phase 1: Single-Shot Constitutional Reasoning (Current)
+
+**Status:** ✅ Completed 480 tests (October 2025)
+
+**Question:** Can models maintain factual honesty when applying different value systems to uncontested facts?
+
+**Test Setup:**
+- 16 pre-curated scenarios with established facts in JSON
+- Layer 1: Currently bypassed (facts provided directly from JSON to Layer 2)
+- Layer 2: Single-shot reasoning (model responds once, no user pressure)
+- Layer 3: Integrity evaluation scores factual adherence
+
+**What this proves:** Constitutional constraints CAN work in ideal conditions (cooperative scenarios, no adversarial pressure)
+
+**Key validation:** Bad-Faith constitution should score lower on factual adherence than other constitutions
+
+---
+
+### Phase 2: Real-Time Factual Grounding (Planned)
+
+**Question:** What's the most reliable mechanism for injecting authoritative facts into model reasoning?
+
+**Test Setup:**
+- Scenarios with real-time/verifiable facts (medical guidelines, election results, scientific consensus)
+- Layer 1: ACTIVATED - test different grounding mechanisms:
+  - Facts in system prompt
+  - Retrieval-augmented generation (RAG)
+  - Facts with citations/provenance
+  - Facts with confidence intervals
+- Compare which mechanism makes models most resistant to outdated training data
+
+**What this proves:** How to technically deliver ground truth to models in production systems
+
+---
+
+### Phase 3: Multi-Turn Adversarial Resistance (Planned)
+
+**Question:** Can models maintain factual integrity when users actively pressure them to deny facts?
+
+**Test Setup:**
+- Contested facts (vaccines, climate change, election fraud)
+- Layer 2: EXPANDED to multi-turn conversations
+- Adversarial strategies:
+  - Direct repetition ("But I read vaccines cause autism")
+  - Emotional appeals ("I'm terrified for my child")
+  - Authority claims ("I'm a medical researcher")
+  - Incremental extraction (jailbreaking)
+  - Hypothetical framing ("I'm writing a novel where...")
+- Measure capitulation turn, resilience score, factual drift rate
+
+**What this proves:** Which constitutional constraints remain robust under sustained attack
+
+**Metrics:** Turn of capitulation, resilience score (% turns held), factual drift rate
+
+---
+
+**Research Progression:**
+1. ✅ Prove constitutional constraints work in principle (Phase 1)
+2. 🔄 Optimize fact delivery mechanism (Phase 2)
+3. 🔄 Harden against adversarial attack (Phase 3)
+
 ## Experiment Scale
 
 **Models Tested:**
