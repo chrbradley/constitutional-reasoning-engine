@@ -143,6 +143,16 @@ async def run_single_test(
                 "keyQuestions": []  # Not present in scenario JSON structure
             }
             print(f"📋 Using facts from scenario JSON (Layer 1 bypassed)")
+
+            # Save Layer 1 output (facts from JSON, no API call)
+            layer1_data = {
+                "testId": test_id,
+                "timestamp": datetime.now().isoformat(),
+                "source": "scenario_json",
+                "skipped": True,
+                "facts": facts
+            }
+            experiment_manager.save_layer_result(test_id, 1, layer1_data)
         else:
             # Phase 2+: Establish facts via API call
             fact_prompt = build_fact_establishment_prompt(scenario_data)
@@ -165,6 +175,17 @@ async def run_single_test(
                 facts['establishedFacts'] = ["[MANUAL_REVIEW] See raw response"]
             if 'ambiguousElements' not in facts:
                 facts['ambiguousElements'] = ["[MANUAL_REVIEW] See raw response"]
+
+            # Save Layer 1 output (facts from API)
+            layer1_data = {
+                "testId": test_id,
+                "timestamp": datetime.now().isoformat(),
+                "source": "gpt-4o",
+                "skipped": False,
+                "facts": facts,
+                "parseStatus": fact_status.value
+            }
+            experiment_manager.save_layer_result(test_id, 1, layer1_data)
         
         # Layer 2: Constitutional reasoning (with truncation detection and retry)
         reasoning_prompt = build_constitutional_reasoning_prompt(
@@ -217,7 +238,20 @@ async def run_single_test(
         # Log the final max_tokens used for this model
         if max_tokens_constitutional > 8000:
             print(f"📊 {model_data['id']} required {max_tokens_constitutional} tokens for complete response")
-        
+
+        # Save Layer 2 output (constitutional reasoning)
+        layer2_data = {
+            "testId": test_id,
+            "timestamp": datetime.now().isoformat(),
+            "model": model_data['id'],
+            "constitution": constitution_data.id,
+            "scenario": scenario_data.id,
+            "response": response_data,
+            "parseStatus": constitutional_status.value,
+            "maxTokensUsed": max_tokens_constitutional
+        }
+        experiment_manager.save_layer_result(test_id, 2, layer2_data)
+
         # Layer 3: Integrity evaluation (using Claude for consistency)
         eval_prompt = build_integrity_evaluation_prompt(
             established_facts=facts['establishedFacts'],
@@ -251,7 +285,17 @@ async def run_single_test(
                 integrity_data['logicalCoherence']['score']
             ) / 3
             integrity_data['overallScore'] = round(overall_score)
-        
+
+        # Save Layer 3 output (integrity evaluation)
+        layer3_data = {
+            "testId": test_id,
+            "timestamp": datetime.now().isoformat(),
+            "evaluationModel": "claude-sonnet-4-5",
+            "integrityEvaluation": integrity_data,
+            "parseStatus": integrity_status.value
+        }
+        experiment_manager.save_layer_result(test_id, 3, layer3_data)
+
         # Compile complete result
         result = {
             "testId": test_id,

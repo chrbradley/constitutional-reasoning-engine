@@ -4,6 +4,7 @@ Handles job tracking, resumption, and incremental execution
 """
 import json
 import os
+import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
@@ -89,14 +90,27 @@ class ExperimentManager:
 
         # Set up directory structure based on experiment_id
         if self.experiment_id:
-            self.results_dir = self.base_dir / "experiments" / self.experiment_id / "data" / "tests"
+            # Layer-based directory structure
+            data_dir = self.base_dir / "experiments" / self.experiment_id / "data"
+            self.layer1_dir = data_dir / "layer1"
+            self.layer2_dir = data_dir / "layer2"
+            self.layer3_dir = data_dir / "layer3"
             self.charts_dir = self.base_dir / "experiments" / self.experiment_id / "visualizations"
 
             # Create result directories only if experiment exists
-            for dir_path in [self.results_dir, self.charts_dir]:
+            for dir_path in [self.layer1_dir, self.layer2_dir, self.layer3_dir, self.charts_dir]:
                 dir_path.mkdir(parents=True, exist_ok=True)
+
+            # Copy README files to layer directories
+            self._copy_layer_readmes()
+
+            # Maintain backward compatibility with results_dir (points to layer2)
+            self.results_dir = self.layer2_dir
         else:
             # No experiment loaded - don't create directories yet
+            self.layer1_dir = None
+            self.layer2_dir = None
+            self.layer3_dir = None
             self.results_dir = None
             self.charts_dir = None
     
@@ -112,14 +126,21 @@ class ExperimentManager:
         if not self.experiment_state:
             experiment_id = f"exp_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-            # Update experiment_id and results directories
+            # Update experiment_id and layer directories
             self.experiment_id = experiment_id
-            self.results_dir = self.base_dir / "experiments" / experiment_id / "data" / "tests"
+            data_dir = self.base_dir / "experiments" / experiment_id / "data"
+            self.layer1_dir = data_dir / "layer1"
+            self.layer2_dir = data_dir / "layer2"
+            self.layer3_dir = data_dir / "layer3"
             self.charts_dir = self.base_dir / "experiments" / experiment_id / "visualizations"
+            self.results_dir = self.layer2_dir  # Backward compatibility
 
             # Create new directories for this experiment run
-            for dir_path in [self.results_dir, self.charts_dir]:
+            for dir_path in [self.layer1_dir, self.layer2_dir, self.layer3_dir, self.charts_dir]:
                 dir_path.mkdir(parents=True, exist_ok=True)
+
+            # Copy README files to layer directories
+            self._copy_layer_readmes()
 
             # Generate all test combinations
             test_definitions = self._generate_test_combinations(scenarios, constitutions, models)
@@ -244,7 +265,7 @@ class ExperimentManager:
             self._save_test_registry()
     
     def mark_test_completed(self, test_id: str, result_data: Dict) -> None:
-        """Mark a test as completed and save result"""
+        """Mark a test as completed and save result (backward compatible)"""
         if test_id in self.test_registry:
             # Get test info to check if this was a retry
             test_result = self.test_registry[test_id]
@@ -255,7 +276,7 @@ class ExperimentManager:
             test_result.result_data = result_data
             test_result.timestamp = datetime.now().isoformat()
 
-            # Save individual result file
+            # Save individual result file (for backward compatibility)
             result_file = self.results_dir / f"{test_id}.json"
             with open(result_file, 'w') as f:
                 json.dump(result_data, f, indent=2)
@@ -271,6 +292,23 @@ class ExperimentManager:
 
             self._save_state()
             print(f"✅ Completed: {test_id}")
+
+    def save_layer_result(self, test_id: str, layer: int, layer_data: Dict) -> None:
+        """Save result for a specific layer (1, 2, or 3)"""
+        layer_dirs = {
+            1: self.layer1_dir,
+            2: self.layer2_dir,
+            3: self.layer3_dir
+        }
+
+        if layer not in layer_dirs:
+            raise ValueError(f"Invalid layer: {layer}. Must be 1, 2, or 3.")
+
+        layer_dir = layer_dirs[layer]
+        if layer_dir:
+            result_file = layer_dir / f"{test_id}.json"
+            with open(result_file, 'w') as f:
+                json.dump(layer_data, f, indent=2)
     
     def mark_test_failed(self, test_id: str, error_message: str) -> None:
         """Mark a test as failed"""
@@ -380,6 +418,24 @@ class ExperimentManager:
                 test_dict = asdict(test_result)
                 test_dict['status'] = test_result.status.value  # Convert enum to string
                 serializable_registry[test_id] = test_dict
-            
+
             with open(self.test_registry_file, 'w') as f:
                 json.dump(serializable_registry, f, indent=2)
+
+    def _copy_layer_readmes(self) -> None:
+        """Copy README files to layer directories"""
+        readme_templates = Path("layer_readme_templates")
+        if not readme_templates.exists():
+            return  # Skip if templates don't exist
+
+        readme_mappings = {
+            self.layer1_dir: readme_templates / "LAYER1_README.txt",
+            self.layer2_dir: readme_templates / "LAYER2_README.txt",
+            self.layer3_dir: readme_templates / "LAYER3_README.txt"
+        }
+
+        for layer_dir, readme_template in readme_mappings.items():
+            if layer_dir and readme_template.exists():
+                dest = layer_dir / "README.txt"
+                if not dest.exists():  # Only copy if doesn't already exist
+                    shutil.copy(readme_template, dest)

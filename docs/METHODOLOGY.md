@@ -65,26 +65,26 @@ Scenarios are systematically designed along four dimensions to ensure comprehens
 
 ## 16 Test Scenarios
 
-| # | Scenario | Scale | Direction | Severity | Conflict |
-|---|----------|-------|-----------|----------|----------|
-| 1 | Found Wallet | Personal | Mixed | Low | Truth vs. Loyalty |
-| 2 | Noisy Neighbor | Personal | External | Low | Individual vs. Community |
-| 3 | Workplace Injury | Community | External | Medium-High | Short-term vs. Long-term |
-| 4 | Partner's Infidelity | Personal | Internal | Medium | Truth vs. Loyalty |
-| 5 | Parking Lot Altercation | Personal | Mixed | Low-Medium | Justice vs. Mercy |
-| 6 | Friend's Job Application | Personal | Mixed | Medium | Truth vs. Loyalty |
-| 7 | Elderly Parent Care | Personal | Mixed | High | Individual vs. Community |
-| 8 | Whistleblowing | Societal | Mixed | High | Short-term vs. Long-term |
-| 9 | Undocumented Worker | Community | External | Medium-High | Justice vs. Mercy |
-| 10 | Company Layoffs | Community | External | High | Individual vs. Community |
-| 11 | Stolen Medication | Personal | Mixed | Medium | Justice vs. Mercy |
-| 12 | Academic Cheating | Community | Mixed | Medium | Truth vs. Loyalty |
-| 13 | Discriminatory Joke | Community | External | Low-Medium | Truth vs. Loyalty |
-| 14 | Disabled Parking | Community | External | Low | Individual vs. Community |
-| 15 | Assisted Suicide | Personal | Mixed | High | Justice vs. Mercy |
-| 16 | Barking Dog | Personal | External | Low | Individual vs. Community |
+| # | Scenario ID | Title | Category |
+|---|-------------|-------|----------|
+| 1 | creative-feedback | Friend's Creative Work Feedback | Personal |
+| 2 | borrowed-money | Borrowed Money Not Returned | Personal |
+| 3 | parking-lot-altercation | Parking Lot Altercation | Personal |
+| 4 | friend-isolation | Friend's Changing Relationship | Personal |
+| 5 | job-application-dilemma | Competing for the Same Opportunity | Personal |
+| 6 | community-garden-dispute | Community Garden Plot Conflict | Community |
+| 7 | barking-dog | Neighbor's Barking Dog | Community |
+| 8 | roommate-expenses | Shared Housing Expense Dispute | Community |
+| 9 | noisy-renovation | Extended Neighbor Renovation | Community |
+| 10 | domestic-violence-neighbor | Suspected Domestic Violence | Community |
+| 11 | workplace-harassment-report | Workplace Harassment Dilemma | Community |
+| 12 | witnessed-shoplifting | Witnessed Shoplifting | Societal |
+| 13 | jury-nullification | Jury Duty: Unjust Law | Societal |
+| 14 | factory-dilemma | Local Factory Pollution | Societal |
+| 15 | medical-malpractice | Colleague's Dangerous Medical Practice | Societal |
+| 16 | whistleblower-dilemma | Discovering Corporate Fraud | Societal |
 
-**Note:** All 16 scenarios are defined in detail in `src/data/scenarios.json`
+**Note:** All 16 scenarios are defined in detail in `src/data/scenarios.json` with established facts, ambiguous elements, and decision points for each.
 
 ---
 
@@ -430,21 +430,25 @@ Certain test results are flagged for manual review:
 - Parse status: MANUAL_REVIEW or PARTIAL_SUCCESS
 - Integrity scores below threshold (< 40)
 
-**Location:** `results/experiments/exp_*/data/debug/`
+**Location:** `results/experiments/exp_*/data/raw/`
 
 **Files:**
-- `{test_id}_facts_manual_review_needed_*.json`
-- `{test_id}_constitutional_manual_review_needed_*.json`
-- `{test_id}_integrity_manual_review_needed_*.json`
+- `{test_id}.facts.json` (with `parse_status` indicating failure)
+- `{test_id}.constitutional.json` (with `parse_status` indicating failure)
+- `{test_id}.integrity.json` (with `parse_status` indicating failure)
+
+**Detection:** Use `get_files_needing_review()` method to programmatically identify files where `parse_status` contains "manual_review" or "partial".
 
 ### Zero Data Loss Principle
 
 **All raw responses saved**, regardless of parsing success:
 - Successful parses: In main test result JSON
-- Failed parses: In debug directory with full raw text
+- Failed parses: In `data/raw/` directory with full raw text
 - Partial parses: Both locations (parsed + raw)
 
 **Philosophy:** Never discard data. Future analysis may need it.
+
+**Storage:** Raw API responses are saved to `results/experiments/exp_*/data/raw/{test_id}.{layer}.json` with `parse_status` field indicating success or failure.
 
 ---
 
