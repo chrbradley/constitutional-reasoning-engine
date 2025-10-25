@@ -15,6 +15,63 @@ Each entry includes:
 
 ---
 
+## October 25, 2025
+
+### Entry 26: Phase 1 Refactoring - Layer 1 Bypass and Output Reorganization
+**Time:** Afternoon
+**Category:** Refactoring / Architecture
+**Summary:** Bypassed redundant Layer 1 API calls and reorganized output structure to layer-based directories
+
+**Context:**
+After clarifying experimental scope (Phase 1 tests single-shot reasoning with uncontested facts), identified that Layer 1 was redundant - asking GPT-4o to regurgitate pre-curated facts from JSON.
+
+**Changes Made:**
+
+1. **Layer 1 Bypass:**
+   - Added `SKIP_LAYER_1 = True` configuration flag in runner.py
+   - Modified `run_single_test()` to use facts directly from scenario JSON in Phase 1
+   - Preserved Layer 1 logic for Phase 2+ (real-time factual grounding experiments)
+   - Saves Layer 1 output noting it was bypassed (`"skipped": true, "source": "scenario_json"`)
+
+2. **Output Structure Reorganization:**
+   - Changed from single `data/tests/` folder to three layer folders:
+     - `data/layer1/` - Fact establishment
+     - `data/layer2/` - Constitutional reasoning
+     - `data/layer3/` - Integrity evaluation
+   - Each layer saves independently for granular inspection
+   - Created README.txt templates explaining each layer's purpose
+   - ExperimentManager automatically copies READMEs to layer directories
+
+3. **Backward Compatibility:**
+   - `results_dir` still points to layer2 for existing analysis scripts
+   - Aggregated results still saved to layer2 (same as old data/tests/)
+   - Analysis scripts work without modification
+
+4. **Documentation Updates:**
+   - Updated TECHNICAL_ARCHITECTURE.md with new directory structure
+   - Updated METHODOLOGY.md to reflect layer-based saves
+   - Added this journal entry
+
+**Rationale:**
+- Layer 1 API calls wasted time, money, and introduced potential inconsistency
+- Layer-based folders provide clear separation for inspection
+- "tests" folder name was misleading (engineering projects associate "tests" with unit tests)
+- On-the-fly aggregation is trivial with 480 files (no need for pre-aggregation)
+- README files in each folder help anyone inspecting the codebase
+
+**Impact:**
+- Phase 1 now uses 2-layer pipeline (constitutional reasoning + integrity evaluation)
+- Faster execution (eliminates 480 redundant API calls to GPT-4o)
+- Cost savings (~ $0.01/call × 480 calls = ~$5 saved per experiment)
+- Better code organization and discoverability
+- Layer 1 preserved for Phase 2 experiments (RAG, citations, provenance testing)
+
+**Commit Messages:**
+1. "Bypass Layer 1 for Phase 1 (facts from JSON)"
+2. "Reorganize output structure to layer-based directories"
+
+---
+
 ## October 22, 2025
 
 ### Entry 1: Project Initialization

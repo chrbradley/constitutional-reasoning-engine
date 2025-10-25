@@ -225,10 +225,13 @@ SCENARIO: parking-lot-altercation
    └─ 16 × 5 × 6 = 480 tests
 
 3. For each test:
-   ├─ Layer 1: GPT-4o establishes facts
+   ├─ Layer 1: Fact establishment (bypassed in Phase 1, facts from JSON)
+   │   └─ Save: results/experiments/exp_*/data/layer1/{test_id}.json
    ├─ Layer 2: Test model reasons with constitution
+   │   └─ Save: results/experiments/exp_*/data/layer2/{test_id}.json
    ├─ Layer 3: Claude evaluates integrity
-   └─ Save: results/experiments/exp_*/data/tests/{test_id}.json
+   │   └─ Save: results/experiments/exp_*/data/layer3/{test_id}.json
+   └─ Each layer folder contains README.txt explaining its purpose
 
 4. Generate Outputs
    ├─ Manifest: results/experiments/exp_*/MANIFEST.txt

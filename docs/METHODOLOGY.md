@@ -319,7 +319,10 @@ for scenario in scenarios (16):
 - Save timestamp
 
 **After test completion:**
-- Save result to `results/experiments/exp_*/data/tests/{test_id}.json`
+- Save layer results:
+  - Layer 1: `results/experiments/exp_*/data/layer1/{test_id}.json`
+  - Layer 2: `results/experiments/exp_*/data/layer2/{test_id}.json`
+  - Layer 3: `results/experiments/exp_*/data/layer3/{test_id}.json`
 - Mark test as COMPLETED
 - Update progress counters
 - Generate manifest
@@ -349,9 +352,18 @@ poetry run python src/runner.py
 
 ### Per-Test Output
 
-**File:** `results/experiments/exp_*/data/tests/{test_id}.json`
+**Note:** Each test saves three separate layer files for granular inspection:
 
-**Structure:**
+**Layer 1 File:** `results/experiments/exp_*/data/layer1/{test_id}.json`
+- Contains fact establishment (from JSON in Phase 1, from API in Phase 2+)
+
+**Layer 2 File:** `results/experiments/exp_*/data/layer2/{test_id}.json`
+- Contains constitutional reasoning response
+
+**Layer 3 File:** `results/experiments/exp_*/data/layer3/{test_id}.json`
+- Contains integrity evaluation scores
+
+**Aggregated Structure (for reference):**
 ```json
 {
   "testId": "parking-lot_harm-minimization_claude-sonnet-4-5",
