@@ -1392,4 +1392,60 @@ Eliminates the persistent workflow friction of stale state files blocking experi
 
 ---
 
+### Entry 29: Bug Fix - Layer 2/3 Data Contamination and Gemini Pro Integration
+**Date:** 2025-10-25
+**Category:** Bug Fix / Model Integration
+**Summary:** Fixed layer2 file contamination with layer3 data, and successfully integrated Gemini 2.5 Pro as replacement for Gemini Flash
+
+**Problem 1: Layer 2/3 Data Contamination**
+User reported that layer2 files contained both constitutional response AND integrity evaluation data, when they should only contain layer2 output.
+
+**Root Cause:**
+In `src/core/experiment_state.py`, the `mark_test_completed()` method was saving the complete result object (containing both `constitutionalResponse` and `integrityEvaluation`) to `self.results_dir`, which points to the layer2 directory for backward compatibility.
+
+Execution flow:
+1. Line 255 in runner.py: `save_layer_result(test_id, 2, layer2_data)` → Clean layer2 ✅
+2. Line 299 in runner.py: `save_layer_result(test_id, 3, layer3_data)` → Clean layer3 ✅
+3. Line 314 in runner.py: `mark_test_completed(test_id, result)` → OVERWRITES layer2 with combined data ❌
+
+**Fix:**
+Removed the backward-compatibility file save (lines 311-314) from `mark_test_completed()` since we now have dedicated layer-specific saves. The test registry still stores complete results for state tracking.
+
+**Verification:**
+- Ran test_single.py successfully
+- Confirmed layer2 file contains ONLY: testId, timestamp, model, constitution, scenario, response, parseStatus, maxTokensUsed
+- Confirmed layer3 file contains ONLY: testId, timestamp, evaluationModel, integrityEvaluation, parseStatus
+- No `integrityEvaluation` in layer2 files ✅
+
+**Problem 2: Gemini Pro Integration**
+Original goal: Replace Gemini Flash with Gemini Pro (larger model comparable to GPT-4o/Claude) for better model parity in experiments.
+
+**Attempts:**
+1. **Gemini 2.0 Pro Exp (free tier)**: Hard quota limit, free tier has 0 requests allowed
+2. **Gemini 2.0 Pro Exp (with billing)**: Still quota exceeded, error suggested migrating to 2.5 Pro
+3. **Gemini 2.5 Pro Preview**: ✅ SUCCESS!
+
+**Solution:**
+Changed model from `gemini/gemini-2.5-flash` to `gemini/gemini-2.5-pro-preview-03-25`
+
+**Results:**
+- ✅ All 6 models now operational and tested
+- ✅ Response times comparable (2001ms for Gemini 2.5 Pro)
+- ✅ Model lineup: Claude Sonnet 4.5, GPT-4o, Llama 3 8B, **Gemini 2.5 Pro**, Grok 3, DeepSeek Chat
+
+**Files Modified:**
+- `src/core/experiment_state.py` - Removed duplicate file save in mark_test_completed()
+- `src/core/models.py` - Updated Gemini model to 2.5 Pro Preview
+
+**Impact:**
+- ✅ Layer separation maintained - each layer file contains only its own data
+- ✅ Proper flagship Gemini model for fair comparison with other frontier models
+- ✅ Ready for Phase 1 experiment: 5 scenarios × 5 constitutions × 6 models = 150 tests
+
+**Next Steps:**
+- Run full Phase 1 experiment
+- Evaluate whether Gemini Flash can replace Claude Sonnet for Layer 3 evaluations (cost savings)
+
+---
+
 *This journal should be updated regularly throughout the experiment. Each significant decision, bug fix, or finding should be documented with context for the final report.*

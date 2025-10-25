@@ -297,7 +297,7 @@ class ExperimentManager:
             self._save_test_registry()
     
     def mark_test_completed(self, test_id: str, result_data: Dict) -> None:
-        """Mark a test as completed and save result (backward compatible)"""
+        """Mark a test as completed and update registry"""
         if test_id in self.test_registry:
             # Get test info to check if this was a retry
             test_result = self.test_registry[test_id]
@@ -308,10 +308,8 @@ class ExperimentManager:
             test_result.result_data = result_data
             test_result.timestamp = datetime.now().isoformat()
 
-            # Save individual result file (for backward compatibility)
-            result_file = self.results_dir / f"{test_id}.json"
-            with open(result_file, 'w') as f:
-                json.dump(result_data, f, indent=2)
+            # Note: Individual layer files are saved via save_layer_result()
+            # No need to save a combined file here (was causing layer2/layer3 contamination)
 
             # Update experiment state
             self.experiment_state.completed_count += 1

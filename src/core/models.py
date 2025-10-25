@@ -36,10 +36,10 @@ MODELS = [
         "api_model": "replicate/meta/meta-llama-3-8b-instruct"
     },
     {
-        "id": "gemini-2-5-flash",
-        "name": "Gemini 2.5 Flash",
+        "id": "gemini-2-5-pro",
+        "name": "Gemini 2.5 Pro",
         "provider": "google",
-        "api_model": "gemini/gemini-2.5-flash"
+        "api_model": "gemini/gemini-2.5-pro-preview-03-25"
     },
     {
         "id": "grok-3",
