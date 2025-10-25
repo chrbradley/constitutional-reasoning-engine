@@ -67,47 +67,65 @@ class ExperimentState:
 
 class ExperimentManager:
     """Manages experiment state, tracking, and resumption"""
-    
+
     def __init__(self, base_dir: str = "results", experiment_id: Optional[str] = None):
         self.base_dir = Path(base_dir)
-        self.state_dir = self.base_dir / "state"
+        self.global_state_dir = self.base_dir / "state"
+        self.current_experiment_file = self.global_state_dir / "current_experiment.json"
 
-        # Load or initialize state first
-        self.state_file = self.state_dir / "experiment_state.json"
-        self.test_registry_file = self.state_dir / "test_registry.json"
+        # Create global state directory
+        self.global_state_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create state directory if needed
-        self.state_dir.mkdir(parents=True, exist_ok=True)
-
-        self.experiment_state = self._load_experiment_state()
-        self.test_registry = self._load_test_registry()
-
-        # Set experiment_id from loaded state or provided parameter
-        if self.experiment_state:
-            self.experiment_id = self.experiment_state.experiment_id
-        else:
+        # Determine which experiment to load
+        if experiment_id:
+            # Explicit experiment_id provided (e.g., --resume flag)
             self.experiment_id = experiment_id
+        else:
+            # Check for current experiment pointer
+            current_exp = self._load_current_experiment_pointer()
+            if current_exp:
+                self.experiment_id = current_exp
+            else:
+                self.experiment_id = None
 
-        # Set up directory structure based on experiment_id
+        # Set up per-experiment state paths
         if self.experiment_id:
-            # Layer-based directory structure
-            data_dir = self.base_dir / "experiments" / self.experiment_id / "data"
+            # State files live INSIDE the experiment directory
+            exp_dir = self.base_dir / "experiments" / self.experiment_id
+            self.state_dir = exp_dir / "state"
+            self.state_file = self.state_dir / "experiment_state.json"
+            self.test_registry_file = self.state_dir / "test_registry.json"
+
+            # Create experiment state directory
+            self.state_dir.mkdir(parents=True, exist_ok=True)
+
+            # Load state from experiment-specific location
+            self.experiment_state = self._load_experiment_state()
+            self.test_registry = self._load_test_registry()
+
+            # Set up layer directories
+            data_dir = exp_dir / "data"
             self.layer1_dir = data_dir / "layer1"
             self.layer2_dir = data_dir / "layer2"
             self.layer3_dir = data_dir / "layer3"
-            self.charts_dir = self.base_dir / "experiments" / self.experiment_id / "visualizations"
+            self.charts_dir = exp_dir / "visualizations"
 
-            # Create result directories only if experiment exists
+            # Create directories
             for dir_path in [self.layer1_dir, self.layer2_dir, self.layer3_dir, self.charts_dir]:
                 dir_path.mkdir(parents=True, exist_ok=True)
 
-            # Copy README files to layer directories
+            # Copy README files
             self._copy_layer_readmes()
 
-            # Maintain backward compatibility with results_dir (points to layer2)
+            # Backward compatibility
             self.results_dir = self.layer2_dir
         else:
-            # No experiment loaded - don't create directories yet
+            # No experiment loaded yet
+            self.state_dir = None
+            self.state_file = None
+            self.test_registry_file = None
+            self.experiment_state = None
+            self.test_registry = {}
             self.layer1_dir = None
             self.layer2_dir = None
             self.layer3_dir = None
@@ -126,16 +144,25 @@ class ExperimentManager:
         if not self.experiment_state:
             experiment_id = f"exp_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-            # Update experiment_id and layer directories
+            # Update experiment_id and set up per-experiment state paths
             self.experiment_id = experiment_id
-            data_dir = self.base_dir / "experiments" / experiment_id / "data"
+            exp_dir = self.base_dir / "experiments" / experiment_id
+
+            # Set up state directory inside experiment
+            self.state_dir = exp_dir / "state"
+            self.state_file = self.state_dir / "experiment_state.json"
+            self.test_registry_file = self.state_dir / "test_registry.json"
+            self.state_dir.mkdir(parents=True, exist_ok=True)
+
+            # Set up data and visualization directories
+            data_dir = exp_dir / "data"
             self.layer1_dir = data_dir / "layer1"
             self.layer2_dir = data_dir / "layer2"
             self.layer3_dir = data_dir / "layer3"
-            self.charts_dir = self.base_dir / "experiments" / experiment_id / "visualizations"
+            self.charts_dir = exp_dir / "visualizations"
             self.results_dir = self.layer2_dir  # Backward compatibility
 
-            # Create new directories for this experiment run
+            # Create directories
             for dir_path in [self.layer1_dir, self.layer2_dir, self.layer3_dir, self.charts_dir]:
                 dir_path.mkdir(parents=True, exist_ok=True)
 
@@ -159,7 +186,7 @@ class ExperimentManager:
                 constitutions=[c.id for c in constitutions],
                 models=[m['id'] for m in models]
             )
-            
+
             # Initialize test registry
             self.test_registry = {
                 test_def.test_id: TestResult(
@@ -172,13 +199,18 @@ class ExperimentManager:
                     retry_count=0
                 ) for test_def in test_definitions
             }
-            
+
+            # Save state to per-experiment location
             self._save_state()
+
+            # Update global pointer to this experiment
+            self._save_current_experiment_pointer(experiment_id)
+
             print(f"Created new experiment: {experiment_id}")
         else:
             experiment_id = self.experiment_state.experiment_id
             print(f"Resuming experiment: {experiment_id}")
-        
+
         return experiment_id
     
     def add_new_models(self, new_models: List[Dict], scenarios: List[Scenario], constitutions: List[Constitution]) -> int:
@@ -339,7 +371,7 @@ class ExperimentManager:
         """Get current experiment progress"""
         if not self.experiment_state:
             return {"status": "No active experiment"}
-        
+
         return {
             "experiment_id": self.experiment_state.experiment_id,
             "status": self.experiment_state.status,
@@ -353,11 +385,24 @@ class ExperimentManager:
             "created_at": self.experiment_state.created_at,
             "updated_at": self.experiment_state.updated_at
         }
-    
+
+    def finalize_experiment(self, clear_pointer: bool = True) -> None:
+        """Mark experiment as complete and optionally clear pointer"""
+        if self.experiment_state:
+            self.experiment_state.status = "completed"
+            self.experiment_state.updated_at = datetime.now().isoformat()
+            self._save_state()
+
+            if clear_pointer:
+                self._clear_current_experiment_pointer()
+                print(f"✅ Experiment {self.experiment_id} completed and finalized")
+            else:
+                print(f"✅ Experiment {self.experiment_id} completed (pointer preserved for easy resume)")
+
     def _generate_test_combinations(
-        self, 
-        scenarios: List[Scenario], 
-        constitutions: List[Constitution], 
+        self,
+        scenarios: List[Scenario],
+        constitutions: List[Constitution],
         models: List[Dict]
     ) -> List[TestDefinition]:
         """Generate all test combinations"""
@@ -371,10 +416,31 @@ class ExperimentManager:
                         model_id=model['id']
                     ))
         return combinations
-    
+
+    def _load_current_experiment_pointer(self) -> Optional[str]:
+        """Load current experiment ID from pointer file"""
+        if self.current_experiment_file.exists():
+            try:
+                with open(self.current_experiment_file, 'r') as f:
+                    data = json.load(f)
+                return data.get('experiment_id')
+            except Exception as e:
+                print(f"Warning: Could not load current experiment pointer: {e}")
+        return None
+
+    def _save_current_experiment_pointer(self, experiment_id: str) -> None:
+        """Save current experiment ID to pointer file"""
+        with open(self.current_experiment_file, 'w') as f:
+            json.dump({"experiment_id": experiment_id}, f, indent=2)
+
+    def _clear_current_experiment_pointer(self) -> None:
+        """Clear current experiment pointer (experiment complete)"""
+        if self.current_experiment_file.exists():
+            os.remove(self.current_experiment_file)
+
     def _load_experiment_state(self) -> Optional[ExperimentState]:
         """Load experiment state from file"""
-        if self.state_file.exists():
+        if self.state_file and self.state_file.exists():
             try:
                 with open(self.state_file, 'r') as f:
                     data = json.load(f)
@@ -382,10 +448,10 @@ class ExperimentManager:
             except Exception as e:
                 print(f"Warning: Could not load experiment state: {e}")
         return None
-    
+
     def _load_test_registry(self) -> Dict[str, TestResult]:
         """Load test registry from file"""
-        if self.test_registry_file.exists():
+        if self.test_registry_file and self.test_registry_file.exists():
             try:
                 with open(self.test_registry_file, 'r') as f:
                     data = json.load(f)

@@ -1,6 +1,7 @@
 """
 Robust experiment runner with state management, batching, and resumption
 """
+import argparse
 import asyncio
 import json
 import sys
@@ -430,21 +431,83 @@ async def main():
     """
     Main experiment runner with state management
     """
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        description='Constitutional Reasoning Experiment Runner',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python -m src.runner              # Smart: resume if incomplete, start new if none active
+  python -m src.runner --new        # Force start new experiment
+  python -m src.runner --resume exp_20251023_105245  # Resume specific experiment
+        """
+    )
+    parser.add_argument('--new', action='store_true',
+                       help='Force start a new experiment (ignores current pointer)')
+    parser.add_argument('--resume', type=str, metavar='EXP_ID',
+                       help='Resume a specific experiment by ID')
+
+    args = parser.parse_args()
+
     print("Constitutional Reasoning Engine - Robust Experiment Runner")
     print("=" * 70)
-    
-    # Initialize experiment manager
-    experiment_manager = ExperimentManager()
-    
+
     # Load data
     scenarios = load_scenarios()
     constitutions = CONSTITUTIONS
     models = MODELS
-    
+
     print(f"Loaded: {len(scenarios)} scenarios, {len(constitutions)} constitutions, {len(models)} models")
-    
-    # Create or resume experiment
-    experiment_id = experiment_manager.create_experiment(scenarios, constitutions, models)
+
+    # Determine which experiment to run
+    experiment_id = None
+    force_new = args.new
+
+    if args.resume:
+        # Explicit resume of specific experiment
+        experiment_id = args.resume
+        print(f"📂 Resuming experiment: {experiment_id}")
+        experiment_manager = ExperimentManager(experiment_id=experiment_id)
+
+        # Verify experiment exists
+        if not experiment_manager.experiment_state:
+            print(f"❌ Error: Experiment {experiment_id} not found")
+            sys.exit(1)
+
+    elif force_new:
+        # Force new experiment
+        print("🆕 Starting new experiment (--new flag)")
+        experiment_manager = ExperimentManager()
+        experiment_id = experiment_manager.create_experiment(scenarios, constitutions, models)
+
+    else:
+        # Smart mode: check for incomplete experiment
+        experiment_manager = ExperimentManager()
+
+        if experiment_manager.experiment_id and experiment_manager.experiment_state:
+            # Found existing experiment via pointer
+            current_status = experiment_manager.experiment_state.status
+            pending_count = experiment_manager.experiment_state.pending_count
+
+            if current_status == "completed":
+                # Old experiment is complete, start new one
+                print(f"✅ Previous experiment {experiment_manager.experiment_id} is complete")
+                print("🆕 Starting new experiment")
+                experiment_id = experiment_manager.create_experiment(scenarios, constitutions, models)
+            elif pending_count > 0:
+                # Resume incomplete experiment
+                print(f"📂 Resuming incomplete experiment: {experiment_manager.experiment_id}")
+                print(f"   Status: {current_status}, Pending: {pending_count} tests")
+                experiment_id = experiment_manager.experiment_id
+            else:
+                # Edge case: in_progress but no pending (all failed?)
+                print(f"⚠️  Experiment {experiment_manager.experiment_id} has no pending tests")
+                print("🆕 Starting new experiment")
+                experiment_id = experiment_manager.create_experiment(scenarios, constitutions, models)
+        else:
+            # No current experiment, start new one
+            print("🆕 No active experiment found, starting new one")
+            experiment_id = experiment_manager.create_experiment(scenarios, constitutions, models)
     
     # Get pending and retryable tests
     pending_tests = experiment_manager.get_pending_tests()
@@ -508,15 +571,19 @@ async def main():
     print(f"\n{'='*70}")
     print("EXPERIMENT SUMMARY")
     print(f"{'='*70}")
-    
+
     final_progress = experiment_manager.get_progress_summary()
     print(f"Experiment ID: {final_progress['experiment_id']}")
     print(f"Status: {final_progress['status']}")
     print(f"Progress: {final_progress['progress']}")
     print(f"Session results: {total_successful} successful, {total_failed} failed")
-    
+
     if final_progress['progress']['pending'] == 0:
+        # All tests complete - finalize experiment
+        experiment_manager.finalize_experiment(clear_pointer=True)
         print("\n🎉 Experiment completed successfully!")
+        print("   State preserved in experiment directory for debugging")
+        print("   Run 'python -m src.runner' to start a new experiment")
     else:
         print(f"\n⏸️  Experiment paused with {final_progress['progress']['pending']} tests remaining.")
         print("Run this script again to resume.")

@@ -1302,4 +1302,94 @@ But: "**How do constitutional frameworks construct facts and weigh evidence in p
 
 ---
 
+### Entry 28: State Management Refactoring - Per-Experiment State with Global Pointer
+**Time:** Late afternoon
+**Category:** Refactoring / Architecture / Bug Fix
+**Summary:** Refactored experiment state management to use per-experiment directories with global pointer, eliminating state file blocking issues
+
+**Problem Identified:**
+User reported persistent state management issues: "whenever we are getting ready to run an experiment, there is a state file that is invariably incorrect" requiring manual cleanup (`rm -rf results/state`) before each experiment.
+
+**Root Cause Analysis:**
+1. **Global State Files:** experiment_state.json and test_registry.json stored in global `results/state/` directory
+2. **No Cleanup on Completion:** State files persisted indefinitely, never marked as "completed"
+3. **State Collision:** test_single.py and full experiments competed for same state files
+4. **Blocking Behavior:** Stale state files blocked new experiment startup
+5. **Manual Intervention Required:** User had to manually delete state files between runs
+
+**Architecture Solution - Pointer Pattern:**
+
+**New Structure:**
+```
+results/
+├── state/
+│   └── current_experiment.json          # Global pointer to active experiment
+└── experiments/
+    ├── exp_20251025_121451/
+    │   ├── data/                        # Layer outputs
+    │   ├── state/                       # Per-experiment state
+    │   │   ├── experiment_state.json
+    │   │   └── test_registry.json
+    │   └── visualizations/
+    └── exp_20251023_105245/             # Previous experiment (preserved)
+        ├── data/
+        └── state/
+```
+
+**Changes Made:**
+
+**1. ExperimentManager Refactoring (src/core/experiment_state.py):**
+   - Added `global_state_dir` and `current_experiment_file` paths
+   - Modified `__init__` to load experiment from pointer file or explicit experiment_id
+   - Changed state file paths from global to per-experiment: `results/experiments/{exp_id}/state/`
+   - Added helper methods:
+     - `_load_current_experiment_pointer()` - Read global pointer
+     - `_save_current_experiment_pointer()` - Update global pointer
+     - `_clear_current_experiment_pointer()` - Clear pointer on completion
+   - Added `finalize_experiment()` method to mark complete and clear pointer
+   - Fixed null-safety in `_load_experiment_state()` and `_load_test_registry()`
+
+**2. Runner Updates (src/runner.py):**
+   - Added argparse support for command-line flags:
+     - `--new` - Force start new experiment (ignore pointer)
+     - `--resume <exp_id>` - Resume specific experiment by ID
+   - Implemented smart start/resume logic in `main()`:
+     - Check pointer for active experiment
+     - If complete or no pending → start new
+     - If incomplete → auto-resume
+   - Added completion handling: calls `finalize_experiment()` when all tests complete
+   - Preserves state in experiment directory for debugging
+
+**3. Test Updates (test_single.py):**
+   - Uses standard `results/` directory (not separate test directory)
+   - Leverages per-experiment state architecture (no collision)
+   - Tests actual production pipeline behavior
+
+**Command-Line Interface:**
+```bash
+python -m src.runner                     # Smart: resume incomplete or start new
+python -m src.runner --new               # Force new experiment
+python -m src.runner --resume exp_id     # Resume specific experiment
+python -m src.runner --help              # Show usage
+```
+
+**Benefits:**
+- ✅ **No Manual Cleanup:** State files automatically managed per-experiment
+- ✅ **Audit Trail:** All experiment states preserved for debugging
+- ✅ **No Blocking:** Completed experiments don't block new ones
+- ✅ **Easy Resume:** Automatic resume of incomplete experiments
+- ✅ **Explicit Control:** Force new or resume specific experiment via flags
+- ✅ **No Collision:** Tests and production experiments coexist peacefully
+
+**Testing:**
+- Ran test_single.py successfully
+- Verified proper directory structure: `results/experiments/{exp_id}/state/`
+- Confirmed pointer file creation: `results/state/current_experiment.json`
+- Validated argparse --help output
+
+**Impact:**
+Eliminates the persistent workflow friction of stale state files blocking experiment startup. State management now supports multiple concurrent experiments with clean lifecycle (create → run → complete → preserve).
+
+---
+
 *This journal should be updated regularly throughout the experiment. Each significant decision, bug fix, or finding should be documented with context for the final report.*

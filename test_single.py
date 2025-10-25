@@ -34,14 +34,8 @@ async def main():
     print(f"  Model:        {model['id']}")
     print()
 
-    # Create fresh test experiment (delete existing state first)
-    from pathlib import Path
-    import shutil
-    state_dir = Path("results/state")
-    if state_dir.exists():
-        print("Clearing existing experiment state for fresh test...")
-        shutil.rmtree(state_dir)
-
+    # Create test experiment using standard results/ directory
+    # The per-experiment state architecture prevents collision with other experiments
     experiment_manager = ExperimentManager()
     experiment_id = experiment_manager.create_experiment([scenario], [constitution], [model])
 
