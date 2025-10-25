@@ -47,6 +47,7 @@ class TestResult:
     result_data: Optional[Dict] = None
     error_message: Optional[str] = None
     retry_count: int = 0
+    layer_status: Optional[Dict[str, Dict[str, str]]] = None  # {"layer1": {"status": "skipped", "model": None}, "layer2": {...}, "layer3": {...}}
 
 
 @dataclass
@@ -295,7 +296,36 @@ class ExperimentManager:
                 self._save_experiment_state()
 
             self._save_test_registry()
-    
+
+    def update_layer_status(self, test_id: str, layer_num: int, status: str, model_id: str = None, error: str = None) -> None:
+        """Update status for a specific layer of a test
+
+        Args:
+            test_id: Test identifier
+            layer_num: Layer number (1, 2, or 3)
+            status: Status string ("pending", "completed", "failed", "skipped")
+            model_id: Model used for this layer (optional)
+            error: Error message if failed (optional)
+        """
+        if test_id in self.test_registry:
+            test_result = self.test_registry[test_id]
+
+            # Initialize layer_status if not exists
+            if test_result.layer_status is None:
+                test_result.layer_status = {}
+
+            # Update layer status
+            layer_key = f"layer{layer_num}"
+            test_result.layer_status[layer_key] = {
+                "status": status,
+                "model": model_id
+            }
+
+            if error:
+                test_result.layer_status[layer_key]["error"] = error
+
+            self._save_test_registry()
+
     def mark_test_completed(self, test_id: str, result_data: Dict) -> None:
         """Mark a test as completed and update registry"""
         if test_id in self.test_registry:

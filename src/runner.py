@@ -132,189 +132,217 @@ async def run_single_test(
     try:
         # Mark as in progress
         experiment_manager.mark_test_in_progress(test_id)
-        
+
         print(f"\n🔄 Starting: {test_id}")
-        
+
         # Layer 1: Establish facts
-        if SKIP_LAYER_1:
-            # Phase 1: Use facts directly from scenario JSON
-            facts = {
-                "establishedFacts": scenario_data.established_facts,
-                "ambiguousElements": scenario_data.ambiguous_elements,
-                "keyQuestions": []  # Not present in scenario JSON structure
-            }
-            print(f"📋 Using facts from scenario JSON (Layer 1 bypassed)")
+        try:
+            if SKIP_LAYER_1:
+                # Phase 1: Use facts directly from scenario JSON
+                facts = {
+                    "establishedFacts": scenario_data.established_facts,
+                    "ambiguousElements": scenario_data.ambiguous_elements,
+                    "keyQuestions": []  # Not present in scenario JSON structure
+                }
+                print(f"📋 Using facts from scenario JSON (Layer 1 bypassed)")
 
-            # Save Layer 1 output (facts from JSON, no API call)
-            layer1_data = {
-                "testId": test_id,
-                "timestamp": datetime.now().isoformat(),
-                "source": "scenario_json",
-                "skipped": True,
-                "facts": facts
-            }
-            experiment_manager.save_layer_result(test_id, 1, layer1_data)
-        else:
-            # Phase 2+: Establish facts via API call
-            fact_prompt = build_fact_establishment_prompt(scenario_data)
-            fact_response = await get_model_response(
-                model_id="gpt-4o",
-                prompt=fact_prompt,
-                temperature=0.3,
-                max_tokens=1000
-            )
-
-            # Parse facts with graceful fallback
-            facts, fact_status = parser.parse_constitutional_response(fact_response, f"{test_id}_facts")
-            if fact_status == ParseStatus.MANUAL_REVIEW:
-                print(f"⚠️  Facts parsing needs manual review for {test_id}")
-            elif fact_status == ParseStatus.PARTIAL_SUCCESS:
-                print(f"⚠️  Partial facts extraction for {test_id}")
-
-            # Ensure we have the basic structure for facts
-            if 'establishedFacts' not in facts:
-                facts['establishedFacts'] = ["[MANUAL_REVIEW] See raw response"]
-            if 'ambiguousElements' not in facts:
-                facts['ambiguousElements'] = ["[MANUAL_REVIEW] See raw response"]
-
-            # Save Layer 1 output (facts from API)
-            layer1_data = {
-                "testId": test_id,
-                "timestamp": datetime.now().isoformat(),
-                "source": "gpt-4o",
-                "skipped": False,
-                "facts": facts,
-                "parseStatus": fact_status.value
-            }
-            experiment_manager.save_layer_result(test_id, 1, layer1_data)
-        
-        # Layer 2: Constitutional reasoning (with truncation detection and retry)
-        # Note: ambiguous_elements are documented in scenario JSON but NOT passed to prompt
-        # This allows constitutional frameworks to identify their own value tensions
-        reasoning_prompt = build_constitutional_reasoning_prompt(
-            scenario=scenario_data,
-            constitution=constitution_data,
-            established_facts=facts['establishedFacts']
-        )
-
-        # Try with increasing max_tokens if truncated
-        truncation_detector = TruncationDetector()
-        max_tokens_constitutional = 8000  # Start with baseline
-        max_retries = 3
-
-        for attempt in range(max_retries):
-            constitutional_response = await get_model_response(
-                model_id=model_data['id'],
-                prompt=reasoning_prompt,
-                system_prompt=constitution_data.system_prompt,
-                temperature=0.7,
-                max_tokens=max_tokens_constitutional
-            )
-
-            # Parse constitutional response with graceful fallback
-            response_data, constitutional_status = parser.parse_constitutional_response(constitutional_response, f"{test_id}_constitutional")
-
-            # Check if truncated
-            is_truncated, trunc_reason = truncation_detector.is_truncated(
-                constitutional_response,
-                parse_success=(constitutional_status == ParseStatus.SUCCESS)
-            )
-
-            if not is_truncated or constitutional_status == ParseStatus.SUCCESS:
-                # Success or not truncated - keep the result
-                break
-
-            # Truncated - retry with higher limit
-            if attempt < max_retries - 1:
-                new_limit = truncation_detector.get_next_token_limit(max_tokens_constitutional)
-                print(f"⚠️  Response truncated ({trunc_reason}), retrying with max_tokens={new_limit}")
-                max_tokens_constitutional = new_limit
+                # Save Layer 1 output (facts from JSON, no API call)
+                layer1_data = {
+                    "testId": test_id,
+                    "timestamp": datetime.now().isoformat(),
+                    "source": "scenario_json",
+                    "skipped": True,
+                    "facts": facts
+                }
+                experiment_manager.save_layer_result(test_id, 1, layer1_data)
+                experiment_manager.update_layer_status(test_id, 1, "skipped")
             else:
-                print(f"⚠️  Max retries reached, using partial response")
+                # Phase 2+: Establish facts via API call
+                fact_prompt = build_fact_establishment_prompt(scenario_data)
+                fact_response = await get_model_response(
+                    model_id="gpt-4o",
+                    prompt=fact_prompt,
+                    temperature=0.3,
+                    max_tokens=1000
+                )
 
-        if constitutional_status == ParseStatus.MANUAL_REVIEW:
-            print(f"⚠️  Constitutional response parsing needs manual review for {test_id}")
-        elif constitutional_status == ParseStatus.PARTIAL_SUCCESS:
-            print(f"⚠️  Partial constitutional response extraction for {test_id}")
+                # Parse facts with graceful fallback
+                facts, fact_status = parser.parse_constitutional_response(fact_response, f"{test_id}_facts")
+                if fact_status == ParseStatus.MANUAL_REVIEW:
+                    print(f"⚠️  Facts parsing needs manual review for {test_id}")
+                elif fact_status == ParseStatus.PARTIAL_SUCCESS:
+                    print(f"⚠️  Partial facts extraction for {test_id}")
 
-        # Log the final max_tokens used for this model
-        if max_tokens_constitutional > 8000:
-            print(f"📊 {model_data['id']} required {max_tokens_constitutional} tokens for complete response")
+                # Ensure we have the basic structure for facts
+                if 'establishedFacts' not in facts:
+                    facts['establishedFacts'] = ["[MANUAL_REVIEW] See raw response"]
+                if 'ambiguousElements' not in facts:
+                    facts['ambiguousElements'] = ["[MANUAL_REVIEW] See raw response"]
 
-        # Save Layer 2 output (constitutional reasoning)
-        layer2_data = {
-            "testId": test_id,
-            "timestamp": datetime.now().isoformat(),
-            "model": model_data['id'],
-            "constitution": constitution_data.id,
-            "scenario": scenario_data.id,
-            "response": response_data,
-            "parseStatus": constitutional_status.value,
-            "maxTokensUsed": max_tokens_constitutional
-        }
-        experiment_manager.save_layer_result(test_id, 2, layer2_data)
+                # Save Layer 1 output (facts from API)
+                layer1_data = {
+                    "testId": test_id,
+                    "timestamp": datetime.now().isoformat(),
+                    "source": "gpt-4o",
+                    "skipped": False,
+                    "facts": facts,
+                    "parseStatus": fact_status.value
+                }
+                experiment_manager.save_layer_result(test_id, 1, layer1_data)
+                experiment_manager.update_layer_status(test_id, 1, "completed", "gpt-4o")
+
+        except Exception as e:
+            error_msg = f"Layer 1 (fact establishment) failed: {str(e)}"
+            experiment_manager.update_layer_status(test_id, 1, "failed", "gpt-4o", error_msg)
+            experiment_manager.mark_test_failed(test_id, error_msg)
+            print(f"❌ {test_id} - {error_msg}")
+            return False
+
+        # Layer 2: Constitutional reasoning (with truncation detection and retry)
+        try:
+            # Note: ambiguous_elements are documented in scenario JSON but NOT passed to prompt
+            # This allows constitutional frameworks to identify their own value tensions
+            reasoning_prompt = build_constitutional_reasoning_prompt(
+                scenario=scenario_data,
+                constitution=constitution_data,
+                established_facts=facts['establishedFacts']
+            )
+
+            # Try with increasing max_tokens if truncated
+            truncation_detector = TruncationDetector()
+            max_tokens_constitutional = 8000  # Start with baseline
+            max_retries = 3
+
+            for attempt in range(max_retries):
+                constitutional_response = await get_model_response(
+                    model_id=model_data['id'],
+                    prompt=reasoning_prompt,
+                    system_prompt=constitution_data.system_prompt,
+                    temperature=0.7,
+                    max_tokens=max_tokens_constitutional
+                )
+
+                # Parse constitutional response with graceful fallback
+                response_data, constitutional_status = parser.parse_constitutional_response(constitutional_response, f"{test_id}_constitutional")
+
+                # Check if truncated
+                is_truncated, trunc_reason = truncation_detector.is_truncated(
+                    constitutional_response,
+                    parse_success=(constitutional_status == ParseStatus.SUCCESS)
+                )
+
+                if not is_truncated or constitutional_status == ParseStatus.SUCCESS:
+                    # Success or not truncated - keep the result
+                    break
+
+                # Truncated - retry with higher limit
+                if attempt < max_retries - 1:
+                    new_limit = truncation_detector.get_next_token_limit(max_tokens_constitutional)
+                    print(f"⚠️  Response truncated ({trunc_reason}), retrying with max_tokens={new_limit}")
+                    max_tokens_constitutional = new_limit
+                else:
+                    print(f"⚠️  Max retries reached, using partial response")
+
+            if constitutional_status == ParseStatus.MANUAL_REVIEW:
+                print(f"⚠️  Constitutional response parsing needs manual review for {test_id}")
+            elif constitutional_status == ParseStatus.PARTIAL_SUCCESS:
+                print(f"⚠️  Partial constitutional response extraction for {test_id}")
+
+            # Log the final max_tokens used for this model
+            if max_tokens_constitutional > 8000:
+                print(f"📊 {model_data['id']} required {max_tokens_constitutional} tokens for complete response")
+
+            # Save Layer 2 output (constitutional reasoning)
+            layer2_data = {
+                "testId": test_id,
+                "timestamp": datetime.now().isoformat(),
+                "model": model_data['id'],
+                "constitution": constitution_data.id,
+                "scenario": scenario_data.id,
+                "response": response_data,
+                "parseStatus": constitutional_status.value,
+                "maxTokensUsed": max_tokens_constitutional
+            }
+            experiment_manager.save_layer_result(test_id, 2, layer2_data)
+            experiment_manager.update_layer_status(test_id, 2, "completed", model_data['id'])
+
+        except Exception as e:
+            error_msg = f"Layer 2 (constitutional reasoning with {model_data['id']}) failed: {str(e)}"
+            experiment_manager.update_layer_status(test_id, 2, "failed", model_data['id'], error_msg)
+            experiment_manager.mark_test_failed(test_id, error_msg)
+            print(f"❌ {test_id} - {error_msg}")
+            return False
 
         # Layer 3: Integrity evaluation (using Claude for consistency)
-        eval_prompt = build_integrity_evaluation_prompt(
-            established_facts=facts['establishedFacts'],
-            ambiguous_elements=facts['ambiguousElements'],
-            constitutional_response=response_data
-        )
-        
-        integrity_response = await get_model_response(
-            model_id="claude-sonnet-4-5",
-            prompt=eval_prompt,
-            temperature=0.3,
-            max_tokens=2000
-        )
-        
-        # Parse integrity response with graceful fallback
-        integrity_data, integrity_status = parser.parse_integrity_response(integrity_response, f"{test_id}_integrity")
-        if integrity_status == ParseStatus.MANUAL_REVIEW:
-            print(f"⚠️  Integrity response parsing needs manual review for {test_id}")
-        elif integrity_status == ParseStatus.PARTIAL_SUCCESS:
-            print(f"⚠️  Partial integrity response extraction for {test_id}")
-        
-        # Calculate overall score (handle manual review cases)
-        if integrity_status == ParseStatus.MANUAL_REVIEW:
-            # Use -1 scores for manual review (already set in fallback)
-            overall_score = -1
-        else:
-            # Calculate normal score
-            overall_score = (
-                integrity_data['factualAdherence']['score'] +
-                integrity_data['valueTransparency']['score'] +
-                integrity_data['logicalCoherence']['score']
-            ) / 3
-            integrity_data['overallScore'] = round(overall_score)
+        try:
+            eval_prompt = build_integrity_evaluation_prompt(
+                established_facts=facts['establishedFacts'],
+                ambiguous_elements=facts['ambiguousElements'],
+                constitutional_response=response_data
+            )
 
-        # Save Layer 3 output (integrity evaluation)
-        layer3_data = {
-            "testId": test_id,
-            "timestamp": datetime.now().isoformat(),
-            "evaluationModel": "claude-sonnet-4-5",
-            "integrityEvaluation": integrity_data,
-            "parseStatus": integrity_status.value
-        }
-        experiment_manager.save_layer_result(test_id, 3, layer3_data)
+            integrity_response = await get_model_response(
+                model_id="claude-sonnet-4-5",
+                prompt=eval_prompt,
+                temperature=0.3,
+                max_tokens=2000
+            )
 
-        # Compile complete result
-        result = {
-            "testId": test_id,
-            "timestamp": datetime.now().isoformat(),
-            "scenario": scenario_data.model_dump(),
-            "constitution": constitution_data.id,
-            "model": model_data['id'],
-            "facts": facts,
-            "constitutionalResponse": response_data,
-            "integrityEvaluation": integrity_data
-        }
-        
-        # Mark as completed
-        experiment_manager.mark_test_completed(test_id, result)
-        
-        print(f"✅ {test_id} - Score: {integrity_data['overallScore']}/100")
-        return True
+            # Parse integrity response with graceful fallback
+            integrity_data, integrity_status = parser.parse_integrity_response(integrity_response, f"{test_id}_integrity")
+            if integrity_status == ParseStatus.MANUAL_REVIEW:
+                print(f"⚠️  Integrity response parsing needs manual review for {test_id}")
+            elif integrity_status == ParseStatus.PARTIAL_SUCCESS:
+                print(f"⚠️  Partial integrity response extraction for {test_id}")
+
+            # Calculate overall score (handle manual review cases)
+            if integrity_status == ParseStatus.MANUAL_REVIEW:
+                # Use -1 scores for manual review (already set in fallback)
+                overall_score = -1
+            else:
+                # Calculate normal score
+                overall_score = (
+                    integrity_data['factualAdherence']['score'] +
+                    integrity_data['valueTransparency']['score'] +
+                    integrity_data['logicalCoherence']['score']
+                ) / 3
+                integrity_data['overallScore'] = round(overall_score)
+
+            # Save Layer 3 output (integrity evaluation)
+            layer3_data = {
+                "testId": test_id,
+                "timestamp": datetime.now().isoformat(),
+                "evaluationModel": "claude-sonnet-4-5",
+                "integrityEvaluation": integrity_data,
+                "parseStatus": integrity_status.value
+            }
+            experiment_manager.save_layer_result(test_id, 3, layer3_data)
+            experiment_manager.update_layer_status(test_id, 3, "completed", "claude-sonnet-4-5")
+
+            # Compile complete result
+            result = {
+                "testId": test_id,
+                "timestamp": datetime.now().isoformat(),
+                "scenario": scenario_data.model_dump(),
+                "constitution": constitution_data.id,
+                "model": model_data['id'],
+                "facts": facts,
+                "constitutionalResponse": response_data,
+                "integrityEvaluation": integrity_data
+            }
+
+            # Mark as completed
+            experiment_manager.mark_test_completed(test_id, result)
+
+            print(f"✅ {test_id} - Score: {integrity_data['overallScore']}/100")
+            return True
+
+        except Exception as e:
+            error_msg = f"Layer 3 (integrity evaluation with claude-sonnet-4-5) failed: {str(e)}"
+            experiment_manager.update_layer_status(test_id, 3, "failed", "claude-sonnet-4-5", error_msg)
+            experiment_manager.mark_test_failed(test_id, error_msg)
+            print(f"❌ {test_id} - {error_msg}")
+            return False
         
     except Exception as e:
         error_msg = f"{type(e).__name__}: {str(e)}"

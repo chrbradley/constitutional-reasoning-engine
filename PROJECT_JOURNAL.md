@@ -5,6 +5,75 @@
 
 ---
 
+## October 25, 2025 (continued)
+
+### Entry 30: Per-Layer Error Handling and Enhanced Manifest Display
+**Time:** Early afternoon
+**Category:** Bug Fix / Enhancement
+**Summary:** Implemented per-layer error handling with granular status tracking and enhanced manifest to show layer-by-layer breakdown
+
+**Problem Identified:**
+User reported misleading error messages in manifest - when Layer 3 (integrity evaluation using Claude) failed, the error showed "Error calling claude-sonnet-4-5" for tests using completely different models (deepseek-chat, gemini-2-5-pro). This made it impossible to identify which layer actually failed.
+
+**Root Cause:**
+- Single try/except block wrapped all three layers in runner.py
+- When Layer 3 failed, error message didn't distinguish which layer or model had the issue
+- Manifest had no layer-by-layer visibility
+
+**Changes Implemented:**
+
+1. **experiment_state.py (TestResult dataclass):**
+   - Added `layer_status` field: `Optional[Dict[str, Dict[str, str]]]`
+   - Structure: `{"layer1": {"status": "skipped", "model": None}, "layer2": {...}, "layer3": {...}}`
+   - Added `update_layer_status()` method to track status/model/error for each layer
+
+2. **models.py (Retry Logic):**
+   - Added 'overloaded' to retry detection list
+   - Anthropic API "Overloaded" errors now trigger exponential backoff retries (2s, 4s, 8s)
+
+3. **runner.py (Error Handling Restructure):**
+   - Separated single try/except into three distinct blocks (one per layer)
+   - Layer 1: Tracks fact establishment (currently skipped)
+   - Layer 2: Tracks constitutional reasoning with specific model
+   - Layer 3: Tracks integrity evaluation with Claude Sonnet
+   - Each layer calls `update_layer_status()` on completion or failure
+   - Error messages now specify: "Layer X (description with model_id) failed: {error}"
+
+4. **manifest_generator.py (Display Enhancement):**
+   - Added layer-by-layer breakdown for each test
+   - Shows L1, L2, L3 with status symbols (✅ completed, ❌ failed, ⏭️ skipped, ❓ unknown)
+   - Displays model used for each layer
+   - Shows error preview for failed layers (truncated to 60 chars)
+   - Fixed bug where `layer_model=None` caused TypeError
+
+**Example Manifest Output:**
+```
+✅ llama-3-8b           (85/100)       [2025-10-25T13:30:29]
+   L1: ⏭️  N/A
+   L2: ✅ llama-3-8b
+   L3: ✅ claude-sonnet-4-5
+```
+
+**Testing:**
+- Ran fresh single test after clearing all experiment data
+- Test: vaccine-mandate-religious-exemption / self-sovereignty / llama-3-8b
+- Result: ✅ Score 85/100
+- Manifest correctly showed layer breakdown with proper model attribution
+
+**Impact:**
+- **Debugging Efficiency:** Can immediately identify which layer failed
+- **Error Clarity:** Error messages now explicitly state layer, operation, and model
+- **Retry Reliability:** Anthropic overload errors no longer cause permanent failures
+- **Production Readiness:** System ready for full 150-test Phase 1 experiment
+
+**Files Modified:**
+- `src/core/experiment_state.py` - Layer status tracking
+- `src/core/models.py` - Retry detection
+- `src/runner.py` - Per-layer error handling
+- `src/core/manifest_generator.py` - Layer breakdown display
+
+---
+
 ## Journal Entry Format
 Each entry includes:
 - **Date/Time:** When the event occurred

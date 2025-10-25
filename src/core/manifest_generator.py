@@ -79,8 +79,36 @@ def generate_manifest(experiment_manager: ExperimentManager) -> str:
                     timestamp = test_result.timestamp[:19] if test_result.timestamp else "no timestamp"
                     lines.append(f"    {symbol} {model_id:20s}{score:15s} [{timestamp}]")
 
-                    # Add error message for failed tests
-                    if status == TestStatus.FAILED and test_result.error_message:
+                    # Add layer-by-layer status if available
+                    if test_result.layer_status:
+                        for layer_num in [1, 2, 3]:
+                            layer_key = f"layer{layer_num}"
+                            if layer_key in test_result.layer_status:
+                                layer_info = test_result.layer_status[layer_key]
+                                layer_status = layer_info.get('status', 'unknown')
+                                layer_model = layer_info.get('model', 'N/A')
+                                layer_error = layer_info.get('error', '')
+
+                                # Choose symbol based on status
+                                if layer_status == "completed":
+                                    layer_symbol = "✅"
+                                elif layer_status == "failed":
+                                    layer_symbol = "❌"
+                                elif layer_status == "skipped":
+                                    layer_symbol = "⏭️ "
+                                else:
+                                    layer_symbol = "❓"
+
+                                # Format layer line
+                                model_display = layer_model if layer_model else "N/A"
+                                if layer_error:
+                                    error_preview = layer_error[:60] + "..." if len(layer_error) > 60 else layer_error
+                                    lines.append(f"       L{layer_num}: {layer_symbol} {model_display:20s} - {error_preview}")
+                                else:
+                                    lines.append(f"       L{layer_num}: {layer_symbol} {model_display:20s}")
+
+                    # Add error message for failed tests (fallback if no layer status)
+                    elif status == TestStatus.FAILED and test_result.error_message:
                         error_preview = test_result.error_message[:100]
                         if len(test_result.error_message) > 100:
                             error_preview += "..."

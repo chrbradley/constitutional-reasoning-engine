@@ -140,7 +140,7 @@ async def get_model_response(
             # Check if this is a rate limit error
             is_rate_limit = any(phrase in error_str for phrase in [
                 'rate limit', 'too many requests', '429', 'quota',
-                'rate_limit_exceeded', 'resource_exhausted'
+                'rate_limit_exceeded', 'resource_exhausted', 'overloaded'
             ])
 
             # Check if this is a timeout
