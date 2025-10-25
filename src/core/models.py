@@ -2,8 +2,10 @@
 LLM API integration using LiteLLM for unified interface
 """
 import os
+import json
 import time
 import asyncio
+from pathlib import Path
 from typing import Optional, Dict, Any, List
 from litellm import acompletion
 import litellm
@@ -15,48 +17,61 @@ load_dotenv()
 # Configure LiteLLM
 litellm.set_verbose = False
 
-# Model configurations (focusing on working models)
-MODELS = [
-    {
-        "id": "claude-sonnet-4-5",
-        "name": "Claude Sonnet 4.5",
-        "provider": "anthropic",
-        "api_model": "claude-sonnet-4-5-20250929"
-    },
-    {
-        "id": "gpt-4o",
-        "name": "GPT-4o",
-        "provider": "openai",
-        "api_model": "gpt-4o"
-    },
-    {
-        "id": "llama-3-8b",
-        "name": "Llama 3 8B",
-        "provider": "replicate",
-        "api_model": "replicate/meta/meta-llama-3-8b-instruct"
-    },
-    {
-        "id": "gemini-2-5-pro",
-        "name": "Gemini 2.5 Pro",
-        "provider": "google",
-        "api_model": "gemini/gemini-2.5-pro-preview-03-25"
-    },
-    {
-        "id": "grok-3",
-        "name": "Grok 3",
-        "provider": "xai",
-        "api_model": "xai/grok-3"
-    },
-    {
-        "id": "deepseek-chat",
-        "name": "DeepSeek Chat",
-        "provider": "deepseek",
-        "api_model": "deepseek/deepseek-chat"
-    }
-]
 
-# Additional models to test when available/stable
-ADDITIONAL_MODELS = []
+def load_models() -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Load models from JSON file and filter by capability
+
+    Returns:
+        Dict with keys:
+            'all': All models
+            'layer2': Models that can do Layer 2 reasoning
+            'layer3': Models that can do Layer 3 evaluation
+
+    Raises:
+        FileNotFoundError: If models.json not found
+        ValueError: If JSON is malformed
+    """
+    json_path = Path(__file__).parent.parent / "data" / "models.json"
+
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+
+    all_models = data['models']
+
+    # Filter by capability
+    layer2_models = [m for m in all_models if m.get('can_layer2', False)]
+    layer3_models = [m for m in all_models if m.get('can_layer3', False)]
+
+    return {
+        'all': all_models,
+        'layer2': layer2_models,
+        'layer3': layer3_models
+    }
+
+
+def get_default_layer3_evaluator(models: List[Dict[str, Any]] = None) -> str:
+    """
+    Get the default Layer 3 evaluator model ID
+
+    Args:
+        models: Optional list of models to search. If None, loads from JSON.
+
+    Returns:
+        Model ID marked with is_default_layer3=True
+
+    Raises:
+        ValueError: If no default is configured
+    """
+    if models is None:
+        models_data = load_models()
+        models = models_data['all']
+
+    for model in models:
+        if model.get('is_default_layer3', False):
+            return model['id']
+
+    raise ValueError("No default Layer 3 evaluator configured in models.json")
 
 
 async def get_model_response(

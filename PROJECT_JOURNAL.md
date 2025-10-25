@@ -7,6 +7,78 @@
 
 ## October 25, 2025 (continued)
 
+### Entry 31: Unified Data Loading Pattern - Migrate to JSON Configuration
+**Time:** Late afternoon
+**Category:** Architecture / Refactoring
+**Summary:** Unified data loading by migrating constitutions and models from Python constants to JSON files with capability-based filtering
+
+**Problem:**
+Inconsistent data loading patterns made the codebase confusing:
+- Scenarios: loaded via `load_scenarios()` from JSON
+- Constitutions: hardcoded as `CONSTITUTIONS` Python constant
+- Models: hardcoded as `MODELS` Python constant
+
+**Solution:**
+Migrated all configuration data to JSON files in `src/data/` with unified loader functions.
+
+**Changes Implemented:**
+
+1. **Created `src/data/constitutions.json`:**
+   - Migrated all 5 constitutional frameworks from Python to JSON
+   - Structure: `{"constitutions": [{id, name, description, core_values, system_prompt}, ...]}`
+   - Maintains all original data with proper JSON escaping
+
+2. **Created `src/data/models.json`:**
+   - Migrated all 8 models from Python to JSON
+   - Added capability flags: `can_layer2`, `can_layer3`, `is_default_layer3`
+   - Structure: `{"models": [{id, name, provider, api_model, can_layer2, can_layer3, is_default_layer3}, ...]}`
+   - Layer 2 models (reasoning): claude-sonnet-4-5, gpt-4o, llama-3-8b, gemini-2-5-pro, grok-3, deepseek-chat
+   - Layer 3 models (evaluation): claude-sonnet-4-5, claude-3-5-haiku-20241022, gemini-2-5-flash
+   - Default Layer 3: claude-sonnet-4-5
+
+3. **Updated `src/core/constitutions.py`:**
+   - Added `load_constitutions()` function - loads from JSON with Pydantic validation
+   - Removed `CONSTITUTIONS` constant
+   - Updated helper functions (`get_constitution_by_id`, `list_constitution_ids`, `list_constitution_names`) to accept optional list or load from JSON
+
+4. **Updated `src/core/models.py`:**
+   - Added `load_models()` function - returns dict with 'all', 'layer2', 'layer3' keys
+   - Filters models by capability flags: `can_layer2` and `can_layer3`
+   - Removed `MODELS` constant
+   - Updated `get_default_layer3_evaluator()` to accept optional list or load from JSON
+
+5. **Updated `src/runner.py`:**
+   - Changed imports: `from src.core.models import load_models` (not MODELS)
+   - Changed imports: `from src.core.constitutions import load_constitutions` (not CONSTITUTIONS)
+   - Unified loading pattern: `load_scenarios()`, `load_constitutions()`, `load_models()`
+   - Uses `models_data['layer2']` for Layer 2 model filtering
+   - Uses `models_data['layer3']` for Layer 3 evaluator validation
+
+6. **Enhanced argument validation:**
+   - Layer 3 evaluators validated against `models_data['layer3']` (capability-aware)
+   - Clear error messages showing available Layer 3 evaluators when invalid ID provided
+
+**Benefits:**
+- **Consistency:** All experiment data now loads from JSON files in `src/data/`
+- **Maintainability:** Researchers can add models/constitutions by editing JSON (no Python code changes)
+- **Capability-based filtering:** Automatic separation of Layer 2 reasoning models vs Layer 3 evaluation models
+- **Extensibility:** Easy to add new capabilities (future: `can_layer1` for fact-checking model comparison)
+- **Type safety:** Pydantic validation for constitutions, structured dicts for models
+
+**Files Modified:**
+- `src/data/constitutions.json` - NEW
+- `src/data/models.json` - NEW
+- `src/core/constitutions.py` - Added loader, removed constant
+- `src/core/models.py` - Added loader, removed constant
+- `src/runner.py` - Updated to use loaders
+
+**Impact:**
+- Cleaner separation between code (src/core/) and data (src/data/)
+- Foundation for plug-and-play model/constitution management
+- Prepares for upcoming CLI argument enhancements (--layer2-models, --layer3-evaluators)
+
+---
+
 ### Entry 30: Per-Layer Error Handling and Enhanced Manifest Display
 **Time:** Early afternoon
 **Category:** Bug Fix / Enhancement

@@ -10,9 +10,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
 
-from src.core.models import get_model_response, MODELS
+from src.core.models import get_model_response, load_models, get_default_layer3_evaluator
 from src.core.scenarios import load_scenarios
-from src.core.constitutions import CONSTITUTIONS
+from src.core.constitutions import load_constitutions
 from src.core.prompts import (
     build_fact_establishment_prompt,
     build_constitutional_reasoning_prompt,
@@ -457,7 +457,7 @@ def create_batches(tests: List[TestDefinition], batch_size: int = 6) -> List[Lis
 
 async def main():
     """
-    Main experiment runner with state management
+    Main experiment runner with full configurability
     """
     # Parse command-line arguments
     parser = argparse.ArgumentParser(
@@ -465,27 +465,134 @@ async def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python -m src.runner              # Smart: resume if incomplete, start new if none active
-  python -m src.runner --new        # Force start new experiment
-  python -m src.runner --resume exp_20251023_105245  # Resume specific experiment
+  # Run full experiment with all defaults
+  python -m src.runner
+
+  # Filter scenarios and constitutions
+  python -m src.runner --scenarios vaccine-mandate asylum-claim --constitutions pragmatic utilitarian
+
+  # Filter Layer 2 models
+  python -m src.runner --layer2-models gpt-4o claude-sonnet-4-5
+
+  # Specify multiple Layer 3 evaluators
+  python -m src.runner --layer3-evaluators claude-sonnet-4-5 claude-3-5-haiku-20241022
+
+  # Smart resume (picks up incomplete tests)
+  python -m src.runner --resume exp_20251023_105245
+
+  # Force rerun specific layer with specific model(s)
+  python -m src.runner --resume exp_20251023_105245 --layer 3 --models claude-3-5-haiku-20241022
+  python -m src.runner --resume exp_20251023_105245 --layer 2 --models gemini-2-5-pro
         """
     )
+
+    # Experiment control
     parser.add_argument('--new', action='store_true',
                        help='Force start a new experiment (ignores current pointer)')
     parser.add_argument('--resume', type=str, metavar='EXP_ID',
                        help='Resume a specific experiment by ID')
 
+    # Data filtering (for new runs)
+    parser.add_argument('--scenarios', type=str, nargs='+', metavar='ID',
+                       help='Scenario IDs to run (default: all)')
+    parser.add_argument('--constitutions', type=str, nargs='+', metavar='ID',
+                       help='Constitution IDs to run (default: all)')
+    parser.add_argument('--layer2-models', type=str, nargs='+', metavar='MODEL_ID',
+                       help='Model IDs for Layer 2 reasoning (default: all)')
+    parser.add_argument('--layer3-evaluators', type=str, nargs='+', metavar='MODEL_ID',
+                       help='Model IDs for Layer 3 evaluation (default: primary evaluator)')
+
+    # Single-layer mode (for resume with forced rerun)
+    parser.add_argument('--layer', type=int, choices=[1, 2, 3],
+                       help='Run only specific layer (requires --resume and --models)')
+    parser.add_argument('--models', type=str, nargs='+', metavar='MODEL_ID',
+                       help='Model IDs to use with --layer')
+
     args = parser.parse_args()
 
-    print("Constitutional Reasoning Engine - Robust Experiment Runner")
+    print("Constitutional Reasoning Engine - Experiment Runner")
     print("=" * 70)
 
-    # Load data
-    scenarios = load_scenarios()
-    constitutions = CONSTITUTIONS
-    models = MODELS
+    # Validate argument combinations
+    if args.layer and not args.resume:
+        print("❌ Error: --layer requires --resume")
+        sys.exit(1)
 
-    print(f"Loaded: {len(scenarios)} scenarios, {len(constitutions)} constitutions, {len(models)} models")
+    if args.layer and not args.models:
+        print("❌ Error: --layer requires --models")
+        sys.exit(1)
+
+    if args.models and not args.layer:
+        print("❌ Error: --models requires --layer")
+        sys.exit(1)
+
+    # Load all available data
+    all_scenarios = load_scenarios()
+    all_constitutions = load_constitutions()
+    models_data = load_models()
+    all_models = models_data['layer2']  # Layer 2 models for experiment creation
+
+    print(f"Available: {len(all_scenarios)} scenarios, {len(all_constitutions)} constitutions, {len(all_models)} layer2 models, {len(models_data['layer3'])} layer3 evaluators")
+
+    # ============================================================================
+    # Filter data based on arguments
+    # ============================================================================
+
+    # Filter scenarios
+    if args.scenarios:
+        scenarios = [s for s in all_scenarios if s.id in args.scenarios]
+        if len(scenarios) != len(args.scenarios):
+            found_ids = {s.id for s in scenarios}
+            missing = set(args.scenarios) - found_ids
+            print(f"❌ Error: Scenarios not found: {missing}")
+            sys.exit(1)
+    else:
+        scenarios = all_scenarios
+
+    # Filter constitutions
+    if args.constitutions:
+        constitutions = [c for c in all_constitutions if c.id in args.constitutions]
+        if len(constitutions) != len(args.constitutions):
+            found_ids = {c.id for c in constitutions}
+            missing = set(args.constitutions) - found_ids
+            print(f"❌ Error: Constitutions not found: {missing}")
+            sys.exit(1)
+    else:
+        constitutions = all_constitutions
+
+    # Filter Layer 2 models
+    if args.layer2_models:
+        layer2_models = [m for m in all_models if m['id'] in args.layer2_models]
+        if len(layer2_models) != len(args.layer2_models):
+            found_ids = {m['id'] for m in layer2_models}
+            missing = set(args.layer2_models) - found_ids
+            print(f"❌ Error: Layer 2 models not found: {missing}")
+            sys.exit(1)
+    else:
+        layer2_models = all_models
+
+    # Set Layer 3 evaluators
+    if args.layer3_evaluators:
+        layer3_evaluators = args.layer3_evaluators
+        # Validate they exist in models and can do layer3
+        valid_layer3_ids = {m['id'] for m in models_data['layer3']}
+        invalid = [e for e in layer3_evaluators if e not in valid_layer3_ids]
+        if invalid:
+            print(f"❌ Error: Layer 3 evaluators not found or not capable: {invalid}")
+            print(f"    Available Layer 3 evaluators: {', '.join(valid_layer3_ids)}")
+            sys.exit(1)
+    else:
+        # Use default Layer 3 evaluator
+        layer3_evaluators = [get_default_layer3_evaluator(models_data['all'])]
+
+    print(f"\nConfiguration:")
+    print(f"  Scenarios: {len(scenarios)} ({', '.join(s.id for s in scenarios[:3])}{'...' if len(scenarios) > 3 else ''})")
+    print(f"  Constitutions: {len(constitutions)} ({', '.join(c.id for c in constitutions[:3])}{'...' if len(constitutions) > 3 else ''})")
+    print(f"  Layer 2 models: {len(layer2_models)} ({', '.join(m['id'] for m in layer2_models[:3])}{'...' if len(layer2_models) > 3 else ''})")
+    print(f"  Layer 3 evaluators: {', '.join(layer3_evaluators)}")
+    if args.layer:
+        print(f"  Mode: Single-layer ({args.layer}) with models: {', '.join(args.models)}")
+    print()
 
     # Determine which experiment to run
     experiment_id = None
@@ -506,7 +613,7 @@ Examples:
         # Force new experiment
         print("🆕 Starting new experiment (--new flag)")
         experiment_manager = ExperimentManager()
-        experiment_id = experiment_manager.create_experiment(scenarios, constitutions, models)
+        experiment_id = experiment_manager.create_experiment(scenarios, constitutions, layer2_models)
 
     else:
         # Smart mode: check for incomplete experiment
@@ -521,7 +628,7 @@ Examples:
                 # Old experiment is complete, start new one
                 print(f"✅ Previous experiment {experiment_manager.experiment_id} is complete")
                 print("🆕 Starting new experiment")
-                experiment_id = experiment_manager.create_experiment(scenarios, constitutions, models)
+                experiment_id = experiment_manager.create_experiment(scenarios, constitutions, layer2_models)
             elif pending_count > 0:
                 # Resume incomplete experiment
                 print(f"📂 Resuming incomplete experiment: {experiment_manager.experiment_id}")
@@ -531,11 +638,11 @@ Examples:
                 # Edge case: in_progress but no pending (all failed?)
                 print(f"⚠️  Experiment {experiment_manager.experiment_id} has no pending tests")
                 print("🆕 Starting new experiment")
-                experiment_id = experiment_manager.create_experiment(scenarios, constitutions, models)
+                experiment_id = experiment_manager.create_experiment(scenarios, constitutions, layer2_models)
         else:
             # No current experiment, start new one
             print("🆕 No active experiment found, starting new one")
-            experiment_id = experiment_manager.create_experiment(scenarios, constitutions, models)
+            experiment_id = experiment_manager.create_experiment(scenarios, constitutions, layer2_models)
     
     # Get pending and retryable tests
     pending_tests = experiment_manager.get_pending_tests()
@@ -553,7 +660,7 @@ Examples:
     # Create lookup dictionaries
     scenarios_dict = {s.id: s for s in scenarios}
     constitutions_dict = {c.id: c for c in constitutions}
-    models_dict = {m['id']: m for m in models}
+    models_dict = {m['id']: m for m in layer2_models}
     
     # Create batches
     batches = create_batches(all_tests, batch_size=12)
