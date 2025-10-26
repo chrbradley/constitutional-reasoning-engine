@@ -16,6 +16,8 @@ load_dotenv()
 
 # Configure LiteLLM
 litellm.set_verbose = False
+# Enable client-side JSON validation for models without native response_format support
+litellm.enable_json_schema_validation = True
 
 
 def load_models() -> Dict[str, List[Dict[str, Any]]]:
@@ -81,7 +83,8 @@ async def get_model_response(
     temperature: float = 0.7,
     max_tokens: int = 2000,
     timeout: int = 60,
-    max_retries: int = 3
+    max_retries: int = 3,
+    use_response_format: bool = False
 ) -> str:
     """
     Unified interface for calling any LLM via LiteLLM with retry logic
@@ -94,6 +97,7 @@ async def get_model_response(
         max_tokens: Maximum response length
         timeout: Request timeout in seconds
         max_retries: Maximum number of retry attempts for rate limits (default: 3)
+        use_response_format: Enable JSON mode via response_format parameter (default: False)
 
     Returns:
         Model response as string
@@ -134,20 +138,28 @@ async def get_model_response(
         start_time = time.time()
 
         try:
+            # Build API call parameters
+            api_params = {
+                "model": model_config["api_model"],
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "timeout": timeout
+            }
+
+            # Only add response_format if explicitly requested
+            if use_response_format:
+                api_params["response_format"] = {"type": "json_object"}
+
             # Make API call
-            response = await acompletion(
-                model=model_config["api_model"],
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                timeout=timeout
-            )
+            response = await acompletion(**api_params)
 
             response_time_ms = int((time.time() - start_time) * 1000)
 
             content = response.choices[0].message.content
 
-            print(f"✓ {model_id}: {response_time_ms}ms")
+            # Suppress verbose per-API-call logging (runner shows trial summaries)
+            # print(f"✓ {model_id}: {response_time_ms}ms")
 
             return content
 

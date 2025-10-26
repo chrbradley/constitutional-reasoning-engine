@@ -111,9 +111,8 @@ class ExperimentManager:
             self.layer3_dir = data_dir / "layer3"
             self.charts_dir = exp_dir / "visualizations"
 
-            # Create directories
-            for dir_path in [self.layer1_dir, self.layer2_dir, self.layer3_dir, self.charts_dir]:
-                dir_path.mkdir(parents=True, exist_ok=True)
+            # Create raw/ and parsed/ subdirectories for each layer
+            self._create_layer_subdirectories()
 
             # Copy README files
             self._copy_layer_readmes()
@@ -163,9 +162,8 @@ class ExperimentManager:
             self.charts_dir = exp_dir / "visualizations"
             self.results_dir = self.layer2_dir  # Backward compatibility
 
-            # Create directories
-            for dir_path in [self.layer1_dir, self.layer2_dir, self.layer3_dir, self.charts_dir]:
-                dir_path.mkdir(parents=True, exist_ok=True)
+            # Create raw/ and parsed/ subdirectories for each layer
+            self._create_layer_subdirectories()
 
             # Copy README files to layer directories
             self._copy_layer_readmes()
@@ -351,10 +349,11 @@ class ExperimentManager:
             self.experiment_state.updated_at = datetime.now().isoformat()
 
             self._save_state()
-            print(f"✅ Completed: {trial_id}")
+            # Suppress verbose completion log (runner shows compact trial summaries)
+            # print(f"✅ Completed: {trial_id}")
 
-    def save_layer_result(self, trial_id: str, layer: int, layer_data: Dict) -> None:
-        """Save result for a specific layer (1, 2, or 3)"""
+    def save_raw_response(self, trial_id: str, layer: int, raw_content: str) -> None:
+        """Save raw API response for a specific layer (1, 2, or 3)"""
         layer_dirs = {
             1: self.layer1_dir,
             2: self.layer2_dir,
@@ -366,7 +365,26 @@ class ExperimentManager:
 
         layer_dir = layer_dirs[layer]
         if layer_dir:
-            result_file = layer_dir / f"{trial_id}.json"
+            raw_dir = layer_dir / "raw"
+            raw_file = raw_dir / f"{trial_id}.txt"
+            with open(raw_file, 'w') as f:
+                f.write(raw_content)
+
+    def save_layer_result(self, trial_id: str, layer: int, layer_data: Dict) -> None:
+        """Save parsed result for a specific layer (1, 2, or 3)"""
+        layer_dirs = {
+            1: self.layer1_dir,
+            2: self.layer2_dir,
+            3: self.layer3_dir
+        }
+
+        if layer not in layer_dirs:
+            raise ValueError(f"Invalid layer: {layer}. Must be 1, 2, or 3.")
+
+        layer_dir = layer_dirs[layer]
+        if layer_dir:
+            parsed_dir = layer_dir / "parsed"
+            result_file = parsed_dir / f"{trial_id}.json"
             with open(result_file, 'w') as f:
                 json.dump(layer_data, f, indent=2)
     
@@ -515,6 +533,14 @@ class ExperimentManager:
 
             with open(self.trial_registry_file, 'w') as f:
                 json.dump(serializable_registry, f, indent=2)
+
+    def _create_layer_subdirectories(self) -> None:
+        """Create raw/ and parsed/ subdirectories for each layer"""
+        for layer_dir in [self.layer1_dir, self.layer2_dir, self.layer3_dir]:
+            if layer_dir:
+                layer_dir.mkdir(parents=True, exist_ok=True)
+                (layer_dir / "raw").mkdir(parents=True, exist_ok=True)
+                (layer_dir / "parsed").mkdir(parents=True, exist_ok=True)
 
     def _copy_layer_readmes(self) -> None:
         """Copy README files to layer directories"""

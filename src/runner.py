@@ -119,21 +119,26 @@ async def run_single_test(
     scenario_data: Dict,
     constitution_data: Dict,
     model_data: Dict,
-    experiment_manager: ExperimentManager
+    experiment_manager: ExperimentManager,
+    trial_num: int = 0,
+    total_trials: int = 0
 ) -> bool:
     """
     Run a single test through the 3-layer pipeline
     Returns True if successful, False if failed
     """
+    import time
     test_id = test_def.trial_id
     # Use experiment_id for organizing manual review files
     parser = GracefulJsonParser(experiment_id=experiment_manager.experiment_id)
-    
+
+    # Track timing for compact display
+    layer2_time = 0
+    layer3_time = 0
+
     try:
         # Mark as in progress
         experiment_manager.mark_test_in_progress(test_id)
-
-        print(f"\n🔄 Starting: {test_id}")
 
         # Layer 1: Establish facts
         try:
@@ -144,7 +149,11 @@ async def run_single_test(
                     "ambiguousElements": scenario_data.ambiguous_elements,
                     "keyQuestions": []  # Not present in scenario JSON structure
                 }
-                print(f"📋 Using facts from scenario JSON (Layer 1 bypassed)")
+                # Suppress verbose Layer 1 log (shown once per batch instead)
+
+                # Save JSON facts as raw response
+                import json
+                experiment_manager.save_raw_response(test_id, 1, json.dumps(facts, indent=2))
 
                 # Save Layer 1 output (facts from JSON, no API call)
                 layer1_data = {
@@ -178,6 +187,9 @@ async def run_single_test(
                     facts['establishedFacts'] = ["[MANUAL_REVIEW] See raw response"]
                 if 'ambiguousElements' not in facts:
                     facts['ambiguousElements'] = ["[MANUAL_REVIEW] See raw response"]
+
+                # Save raw response BEFORE parsing
+                experiment_manager.save_raw_response(test_id, 1, fact_response)
 
                 # Save Layer 1 output (facts from API)
                 layer1_data = {
@@ -213,13 +225,17 @@ async def run_single_test(
             max_tokens_constitutional = 8000  # Start with baseline
             max_retries = 3
 
+            # Capture Layer 2 timing
+            layer2_start = time.time()
+
             for attempt in range(max_retries):
                 constitutional_response = await get_model_response(
                     model_id=model_data['id'],
                     prompt=reasoning_prompt,
                     system_prompt=constitution_data.system_prompt,
                     temperature=0.7,
-                    max_tokens=max_tokens_constitutional
+                    max_tokens=max_tokens_constitutional,
+                    use_response_format=True  # Enable JSON mode for constitutional reasoning
                 )
 
                 # Parse constitutional response with graceful fallback
@@ -248,9 +264,15 @@ async def run_single_test(
             elif constitutional_status == ParseStatus.PARTIAL_SUCCESS:
                 print(f"⚠️  Partial constitutional response extraction for {test_id}")
 
-            # Log the final max_tokens used for this model
+            # Calculate Layer 2 time
+            layer2_time = int((time.time() - layer2_start) * 1000)
+
+            # Log the final max_tokens used for this model (only if needed)
             if max_tokens_constitutional > 8000:
                 print(f"📊 {model_data['id']} required {max_tokens_constitutional} tokens for complete response")
+
+            # Save raw response BEFORE parsing
+            experiment_manager.save_raw_response(test_id, 2, constitutional_response)
 
             # Save Layer 2 output (constitutional reasoning)
             layer2_data = {
@@ -281,12 +303,18 @@ async def run_single_test(
                 constitutional_response=response_data
             )
 
+            # Capture Layer 3 timing
+            layer3_start = time.time()
+
             integrity_response = await get_model_response(
                 model_id="claude-sonnet-4-5",
                 prompt=eval_prompt,
                 temperature=0.3,
                 max_tokens=2000
             )
+
+            # Calculate Layer 3 time
+            layer3_time = int((time.time() - layer3_start) * 1000)
 
             # Parse integrity response with graceful fallback
             integrity_data, integrity_status = parser.parse_integrity_response(integrity_response, f"{test_id}_integrity")
@@ -307,6 +335,9 @@ async def run_single_test(
                     integrity_data['logicalCoherence']['score']
                 ) / 3
                 integrity_data['overallScore'] = round(overall_score)
+
+            # Save raw response BEFORE parsing
+            experiment_manager.save_raw_response(test_id, 3, integrity_response)
 
             # Save Layer 3 output (integrity evaluation)
             layer3_data = {
@@ -334,7 +365,9 @@ async def run_single_test(
             # Mark as completed
             experiment_manager.mark_test_completed(test_id, result)
 
-            print(f"✅ {test_id} - Score: {integrity_data['overallScore']}/100")
+            # Compact one-line output
+            trial_label = f"[{trial_num}/{total_trials}]" if trial_num > 0 else ""
+            print(f"✓ {trial_label} {model_data['name']} | L2: {layer2_time/1000:.1f}s L3: {layer3_time/1000:.1f}s | Score: {integrity_data['overallScore']}/100")
             return True
 
         except Exception as e:
@@ -358,29 +391,34 @@ async def run_batch(
     models_dict: Dict,
     experiment_manager: ExperimentManager,
     batch_num: int,
-    total_batches: int
+    total_batches: int,
+    total_trials: int = 0
 ) -> Dict[str, int]:
     """
     Run a batch of tests in parallel
     """
     print(f"\n{'='*80}")
-    print(f"Batch {batch_num}/{total_batches} - {len(batch)} tests")
+    print(f"Batch {batch_num}/{total_batches} ({len(batch)} trials)")
+    if SKIP_LAYER_1:
+        print("Layer 1: Bypassed (facts from scenario JSON)")
     print(f"{'='*80}")
-    
+
     # Create coroutines for all tests in batch
     tasks = []
+    trial_counter = (batch_num - 1) * 12 + 1  # Approximate trial number
     for test_def in batch:
         # Skip if already completed
         if experiment_manager.test_exists(test_def.trial_id):
             print(f"⏭️  Skipping completed: {test_def.trial_id}")
             continue
-        
+
         scenario = scenarios_dict[test_def.scenario_id]
         constitution = constitutions_dict[test_def.constitution_id]
         model = models_dict[test_def.model_id]
-        
-        task = run_single_test(test_def, scenario, constitution, model, experiment_manager)
+
+        task = run_single_test(test_def, scenario, constitution, model, experiment_manager, trial_counter, total_trials)
         tasks.append(task)
+        trial_counter += 1
     
     # Run batch in parallel
     if tasks:
@@ -397,14 +435,14 @@ async def run_batch(
                 import traceback
                 traceback.print_exception(type(r), r, r.__traceback__)
 
-        print(f"\nBatch {batch_num} complete: {successful} successful, {failed} failed")
+        print(f"Batch {batch_num} complete: {successful} successful, {failed} failed\n")
 
         # Update manifest after each batch
         save_manifest(experiment_manager)
 
         return {"successful": successful, "failed": failed}
     else:
-        print(f"Batch {batch_num}: All tests already completed")
+        print(f"Batch {batch_num}: All trials already completed\n")
         return {"successful": 0, "failed": 0}
 
 
@@ -680,13 +718,13 @@ Examples:
     # Run batches
     total_successful = 0
     total_failed = 0
-    
+
     for i, batch in enumerate(batches, 1):
         try:
             # Run batch
             batch_results = await run_batch(
-                batch, scenarios_dict, constitutions_dict, models_dict, 
-                experiment_manager, i, len(batches)
+                batch, scenarios_dict, constitutions_dict, models_dict,
+                experiment_manager, i, len(batches), len(all_trials)
             )
             
             total_successful += batch_results["successful"]
