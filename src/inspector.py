@@ -11,7 +11,7 @@ from src.core.experiment_state import ExperimentManager
 def print_progress_bar(completed: int, total: int, width: int = 50) -> str:
     """Create a text progress bar"""
     if total == 0:
-        return "No tests"
+        return "No trials"
     
     progress = completed / total
     filled = int(width * progress)
@@ -53,48 +53,48 @@ def main():
     print(f"  Total:     {prog_data['total']:4d}")
     print()
     
-    # Show pending tests
-    pending_tests = experiment_manager.get_pending_tests()
-    if pending_tests:
-        print(f"NEXT {min(10, len(pending_tests))} PENDING TESTS:")
-        for i, test in enumerate(pending_tests[:10]):
-            print(f"  {i+1:2d}. {test.test_id}")
-        if len(pending_tests) > 10:
-            print(f"     ... and {len(pending_tests) - 10} more")
+    # Show pending trials
+    pending_trials = experiment_manager.get_pending_trials()
+    if pending_trials:
+        print(f"NEXT {min(10, len(pending_trials))} PENDING TRIALS:")
+        for i, trial in enumerate(pending_trials[:10]):
+            print(f"  {i+1:2d}. {trial.trial_id}")
+        if len(pending_trials) > 10:
+            print(f"     ... and {len(pending_trials) - 10} more")
         print()
     
-    # Show failed tests that can be retried
-    failed_tests = experiment_manager.get_failed_tests(max_retries=3)
-    if failed_tests:
-        print(f"RETRYABLE FAILED TESTS ({len(failed_tests)}):")
-        for i, test in enumerate(failed_tests[:5]):
-            retry_count = experiment_manager.test_registry[test.test_id].retry_count
-            error = experiment_manager.test_registry[test.test_id].error_message
-            print(f"  {i+1}. {test.test_id} (retry {retry_count})")
+    # Show failed trials that can be retried
+    failed_trials = experiment_manager.get_failed_trials(max_retries=3)
+    if failed_trials:
+        print(f"RETRYABLE FAILED TRIALS ({len(failed_trials)}):")
+        for i, trial in enumerate(failed_trials[:5]):
+            retry_count = experiment_manager.trial_registry[trial.trial_id].retry_count
+            error = experiment_manager.trial_registry[trial.trial_id].error_message
+            print(f"  {i+1}. {trial.trial_id} (retry {retry_count})")
             print(f"     Error: {error[:60]}...")
-        if len(failed_tests) > 5:
-            print(f"     ... and {len(failed_tests) - 5} more")
+        if len(failed_trials) > 5:
+            print(f"     ... and {len(failed_trials) - 5} more")
         print()
     
-    # Show completed tests breakdown
+    # Show completed trials breakdown
     if prog_data['completed'] > 0:
-        print("RECENT COMPLETED TESTS:")
-        completed_tests = [
-            (test_id, result) for test_id, result in experiment_manager.test_registry.items()
+        print("RECENT COMPLETED TRIALS:")
+        completed_trials = [
+            (trial_id, result) for trial_id, result in experiment_manager.trial_registry.items()
             if result.status.value == "completed"
         ]
         
         # Sort by timestamp, show last 5
-        completed_tests.sort(key=lambda x: x[1].timestamp, reverse=True)
+        completed_trials.sort(key=lambda x: x[1].timestamp, reverse=True)
         
-        for test_id, result in completed_tests[:5]:
+        for trial_id, result in completed_trials[:5]:
             score = "N/A"
             if result.result_data and 'integrityEvaluation' in result.result_data:
                 score = f"{result.result_data['integrityEvaluation'].get('overallScore', 'N/A')}/100"
-            print(f"  ✅ {test_id} - Score: {score}")
+            print(f"  ✅ {trial_id} - Score: {score}")
         
-        if len(completed_tests) > 5:
-            print(f"     ... and {len(completed_tests) - 5} more")
+        if len(completed_trials) > 5:
+            print(f"     ... and {len(completed_trials) - 5} more")
         print()
     
     # Show summary by model and constitution
@@ -103,7 +103,7 @@ def main():
         model_stats = {}
         constitution_stats = {}
         
-        for test_id, result in experiment_manager.test_registry.items():
+        for trial_id, result in experiment_manager.trial_registry.items():
             # Model stats
             model_id = result.model_id
             if model_id not in model_stats:

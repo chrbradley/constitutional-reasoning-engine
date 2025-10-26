@@ -30,7 +30,7 @@ class GracefulJsonParser:
             self.fallback_dir = Path(fallback_dir)
         self.fallback_dir.mkdir(parents=True, exist_ok=True)
     
-    def parse_constitutional_response(self, response: str, test_id: str) -> Tuple[Dict[str, Any], ParseStatus]:
+    def parse_constitutional_response(self, response: str, trial_id: str) -> Tuple[Dict[str, Any], ParseStatus]:
         """
         Parse constitutional response with graceful fallback
         
@@ -52,17 +52,17 @@ class GracefulJsonParser:
         try:
             partial = self._extract_partial_fields(response)
             if partial and len(partial) >= 2:  # At least 2 fields
-                self._save_raw_response(test_id, response, "partial_extraction")
+                self._save_raw_response(trial_id, response, "partial_extraction")
                 return partial, ParseStatus.PARTIAL_SUCCESS
         except:
             pass
         
         # Method 3: Manual review fallback - NEVER lose the response
-        self._save_raw_response(test_id, response, "constitutional_manual_review_needed")
+        self._save_raw_response(trial_id, response, "constitutional_manual_review_needed")
 
         # Return minimal structure with raw response for manual processing
         fallback_data = {
-            "reasoning": f"[PARSING FAILED] Raw response saved to data/raw/{test_id}.constitutional.json",
+            "reasoning": f"[PARSING FAILED] Raw response saved to data/raw/{trial_id}.constitutional.json",
             "recommendation": "[PARSING FAILED]",
             "valuesApplied": ["parsing_failed"],
             "tradeoffsAcknowledged": "Response requires manual parsing - see raw response file",
@@ -73,7 +73,7 @@ class GracefulJsonParser:
 
         return fallback_data, ParseStatus.MANUAL_REVIEW
     
-    def parse_integrity_response(self, response: str, test_id: str) -> Tuple[Dict[str, Any], ParseStatus]:
+    def parse_integrity_response(self, response: str, trial_id: str) -> Tuple[Dict[str, Any], ParseStatus]:
         """
         Parse integrity evaluation response with graceful fallback
         """
@@ -90,29 +90,29 @@ class GracefulJsonParser:
         try:
             partial = self._extract_partial_integrity(response)
             if partial and 'factualAdherence' in partial:
-                self._save_raw_response(test_id, response, "partial_integrity")
+                self._save_raw_response(trial_id, response, "partial_integrity")
                 return partial, ParseStatus.PARTIAL_SUCCESS
         except:
             pass
         
         # Method 3: Manual review fallback
-        self._save_raw_response(test_id, response, "integrity_manual_review_needed")
+        self._save_raw_response(trial_id, response, "integrity_manual_review_needed")
 
         # Return default scores that indicate parsing failed
         fallback_data = {
             "factualAdherence": {
                 "score": -1,  # Special marker for parsing failure
-                "explanation": "[PARSING FAILED] See data/raw/{test_id}.integrity.json",
+                "explanation": "[PARSING FAILED] See data/raw/{trial_id}.integrity.json",
                 "examples": ["Parsing failed - see raw response"]
             },
             "valueTransparency": {
                 "score": -1,
-                "explanation": "[PARSING FAILED] See data/raw/{test_id}.integrity.json",
+                "explanation": "[PARSING FAILED] See data/raw/{trial_id}.integrity.json",
                 "examples": ["Parsing failed - see raw response"]
             },
             "logicalCoherence": {
                 "score": -1,
-                "explanation": "[PARSING FAILED] See data/raw/{test_id}.integrity.json",
+                "explanation": "[PARSING FAILED] See data/raw/{trial_id}.integrity.json",
                 "examples": ["Parsing failed - see raw response"]
             },
             "overallScore": -1,
@@ -323,17 +323,17 @@ class GracefulJsonParser:
         
         return True
     
-    def _save_raw_response(self, test_id: str, response: str, reason: str) -> None:
+    def _save_raw_response(self, trial_id: str, response: str, reason: str) -> None:
         """Save raw API response for data preservation"""
         # Extract layer type from reason (e.g., "facts_manual_review_needed" -> "facts")
         layer = reason.split('_')[0] if '_' in reason else reason
 
-        # Simple filename without timestamp: test_id.layer.json
-        filename = f"{test_id}.{layer}.json"
+        # Simple filename without timestamp: trial_id.layer.json
+        filename = f"{trial_id}.{layer}.json"
         filepath = self.fallback_dir / filename
 
         save_data = {
-            "test_id": test_id,
+            "trial_id": trial_id,
             "layer": layer,
             "parse_status": reason,
             "timestamp": datetime.now().isoformat(),

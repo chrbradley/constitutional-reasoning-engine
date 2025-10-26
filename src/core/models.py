@@ -102,15 +102,18 @@ async def get_model_response(
         ValueError: If model_id not found
         Exception: If API call fails after all retries
     """
-    # Find model config
+    # Load and find model config
+    models_data = load_models()
+    all_models = models_data['all']
+
     model_config = None
-    for model in MODELS:
+    for model in all_models:
         if model["id"] == model_id:
             model_config = model
             break
 
     if not model_config:
-        raise ValueError(f"Model ID '{model_id}' not found in MODELS list")
+        raise ValueError(f"Model ID '{model_id}' not found in models list")
 
     # Build messages
     messages = []
@@ -216,31 +219,35 @@ async def test_model_connectivity(model_id: str) -> Dict[str, Any]:
 async def test_all_models() -> List[Dict[str, Any]]:
     """
     Test connectivity to all configured models
-    
+
     Returns:
         List of test results for each model
     """
     print("Testing connectivity to all models...")
     print("=" * 50)
-    
+
+    # Load models
+    models_data = load_models()
+    all_models = models_data['all']
+
     # Test all models concurrently (with some rate limiting)
     results = []
-    
-    for model in MODELS:
+
+    for model in all_models:
         print(f"Testing {model['name']} ({model['id']})...")
         result = await test_model_connectivity(model['id'])
         results.append(result)
-        
+
         # Small delay to avoid rate limits
         await asyncio.sleep(1)
-    
+
     print("=" * 50)
-    
+
     # Summary
     successful = [r for r in results if r['status'] == 'success']
     failed = [r for r in results if r['status'] == 'error']
-    
-    print(f"Summary: {len(successful)}/{len(MODELS)} models accessible")
+
+    print(f"Summary: {len(successful)}/{len(all_models)} models accessible")
     
     if failed:
         print("\nFailed models:")

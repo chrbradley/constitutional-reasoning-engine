@@ -20,7 +20,7 @@ from src.core.scenarios import load_scenarios
 @dataclass
 class TestResult:
     """Single test result with all metadata"""
-    test_id: str
+    trial_id: str
     experiment_id: str
     scenario_id: str
     constitution_id: str
@@ -84,7 +84,7 @@ class ExperimentAnalyzer:
                     data = json.load(f)
 
                 # Extract test metadata
-                test_id = data.get("testId")
+                trial_id = data.get("testId")
                 scenario_id = data["scenario"]["id"]
                 constitution_id = data["constitution"]
                 model_id = data["model"]
@@ -96,7 +96,7 @@ class ExperimentAnalyzer:
                 integrity = data["integrityEvaluation"]
 
                 result = TestResult(
-                    test_id=test_id,
+                    trial_id=trial_id,
                     experiment_id=experiment_id,
                     scenario_id=scenario_id,
                     constitution_id=constitution_id,
@@ -368,7 +368,7 @@ class ExperimentAnalyzer:
         sorted_results = sorted(results, key=lambda r: r.overall_score, reverse=True)
 
         return [{
-            "test_id": r.test_id,
+            "trial_id": r.trial_id,
             "scenario": r.scenario_id,
             "constitution": r.constitution_id,
             "model": r.model_id,
@@ -380,7 +380,7 @@ class ExperimentAnalyzer:
         sorted_results = sorted(results, key=lambda r: r.overall_score)
 
         return [{
-            "test_id": r.test_id,
+            "trial_id": r.trial_id,
             "scenario": r.scenario_id,
             "constitution": r.constitution_id,
             "model": r.model_id,

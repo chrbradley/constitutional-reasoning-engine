@@ -7,6 +7,134 @@
 
 ## October 25, 2025 (continued)
 
+### Entry 32: Complete Trial Terminology Refactoring and Minimal Test Script
+**Time:** Evening
+**Category:** Bug Fix / Testing Infrastructure
+**Summary:** Fixed all remaining test→trial terminology issues and created minimal incremental test script. Successfully verified end-to-end pipeline with 1 scenario × 1 constitution × 1 model.
+
+**Context:**
+User manually refactored most test→trial terminology but some references remained, causing runtime errors. Goal was to create a minimal test script for incremental validation before scaling up.
+
+**Issues Discovered:**
+Multiple critical bugs from incomplete refactoring:
+
+1. **File path mismatch in experiment_state.py:**
+   - Line 98: New experiments created `trial_registry.json`
+   - Line 155: Resume loaded from `test_registry.json`
+   - **Result:** Could not load existing trials, always showed "All trials completed!"
+
+2. **Variable naming mismatches (parameter vs body):**
+   - Methods had `trial_id` parameters but used `test_id` in bodies
+   - Affected: `mark_test_in_progress()`, `update_layer_status()`, `mark_test_completed()`, `save_layer_result()`, `mark_test_failed()`, `test_exists()`
+   - **Result:** `NameError: name 'test_id' is not defined`
+
+3. **Method naming inconsistency:**
+   - `_generate_test_combinations()` vs caller using `_generate_trial_combinations()`
+   - `get_pending_tests()` vs caller using `get_pending_trials()`
+   - `get_failed_tests()` vs caller using `get_failed_trials()`
+   - **Result:** `AttributeError: object has no attribute`
+
+4. **Attribute naming in ExperimentState:**
+   - `total_tests` vs `total_trials`
+   - Used in progress tracking and manifest generation
+   - **Result:** `AttributeError: 'ExperimentState' object has no attribute`
+
+5. **MODELS constant references:**
+   - `get_model_response()` and `test_all_models()` still used `MODELS` constant
+   - Should use `load_models()` from Entry 31 changes
+   - **Result:** `NameError: name 'MODELS' is not defined`
+
+6. **Runner property references:**
+   - `test_def.test_id` vs `test_def.trial_id`
+   - `experiment_manager.test_registry` vs `experiment_manager.trial_registry`
+
+**Changes Implemented:**
+
+1. **Created minimal test script:**
+   - `scripts/test_minimal.sh` - Bash script for 1×1×1 test
+   - Configuration: vaccine-mandate-religious-exemption × harm-minimization × claude-sonnet-4-5
+   - Uses full poetry path: `~/.local/bin/poetry run python -m src.runner`
+   - Deleted obsolete `test_single.py` from project root
+
+2. **Fixed experiment_state.py:**
+   - Unified registry file: `trial_registry.json` (both create and resume)
+   - Fixed all method parameter/body mismatches: `test_id` → `trial_id`
+   - Renamed methods: `get_pending_tests()` → `get_pending_trials()`, etc.
+   - Renamed internal method: `_generate_test_combinations()` → `_generate_trial_combinations()`
+   - Fixed attribute: `total_tests` → `total_trials`
+
+3. **Fixed models.py:**
+   - `get_model_response()`: Load models with `load_models()['all']`
+   - `test_all_models()`: Load models with `load_models()['all']`
+   - Removed all MODELS constant references
+
+4. **Fixed runner.py:**
+   - Property access: `test_def.test_id` → `test_def.trial_id`
+   - Added exception printing to `run_batch()` for debugging (print stack traces for failed tasks)
+
+5. **Fixed manifest_generator.py:**
+   - Registry access: `experiment_manager.test_registry` → `experiment_manager.trial_registry`
+   - Attribute: `state.total_tests` → `state.total_trials`
+   - All status checks: `TestStatus` → `TrialStatus`
+
+**Testing Process:**
+Iterative debugging with 9 attempts:
+1. Initial run: Found `trial_registry_file` path mismatch
+2. Fixed paths: Found `TestDefinition` not defined (missed in previous refactor)
+3. Fixed definition refs: Found `test_id` parameter mismatch in `mark_test_in_progress()`
+4. Fixed mark methods: Found same in `update_layer_status()` and `mark_test_completed()`
+5. Fixed layer methods: Found `trial_registry` vs `test_registry` attribute mismatch
+6. Fixed attributes: Found `total_tests` vs `total_trials` mismatch
+7. Fixed experiment state: Found MODELS constant reference in `get_model_response()`
+8. Fixed models.py: Found MODELS in `test_all_models()`
+9. **SUCCESS:** Full 3-layer pipeline completed
+
+**Final Test Results:**
+```
+Experiment: exp_20251025_200428
+Trial: vaccine-mandate-religious-exemption_harm-minimization_claude-sonnet-4-5
+Layer 1: Facts from JSON (bypassed) ✅
+Layer 2: Constitutional reasoning (27s) ✅
+Layer 3: Integrity evaluation (26s) ✅
+Final Score: 92/100 ✅
+Status: 100% complete
+```
+
+**Output Files Generated:**
+```
+results/experiments/exp_20251025_200428/
+├── data/
+│   ├── layer1/vaccine-mandate-religious-exemption_harm-minimization_claude-sonnet-4-5.json
+│   ├── layer2/vaccine-mandate-religious-exemption_harm-minimization_claude-sonnet-4-5.json
+│   └── layer3/vaccine-mandate-religious-exemption_harm-minimization_claude-sonnet-4-5.json
+├── state/
+│   ├── experiment_state.json
+│   └── trial_registry.json
+└── MANIFEST.txt
+```
+
+**Files Modified:**
+- `scripts/test_minimal.sh` - NEW (minimal test configuration)
+- `test_single.py` - DELETED (obsolete, wrong location)
+- `src/core/experiment_state.py` - Fixed all test_id/trial_id mismatches, method names, attributes
+- `src/core/models.py` - Removed MODELS constant references
+- `src/runner.py` - Fixed property access, added exception printing
+- `src/core/manifest_generator.py` - Fixed registry access and attributes
+
+**Impact:**
+- ✅ Complete test→trial terminology refactoring
+- ✅ End-to-end pipeline verification
+- ✅ Foundation for incremental testing (can easily scale to more scenarios/constitutions/models)
+- ✅ Better error reporting (exceptions now printed with stack traces)
+
+**Next Steps:**
+Incrementally scale testing:
+- Phase 1: 1 scenario × 1 constitution × all 6 layer2 models
+- Phase 2: 1 scenario × all 5 constitutions × all 6 models
+- Phase 3: All 5 scenarios × all 5 constitutions × all 6 models (150 trials)
+
+---
+
 ### Entry 31: Unified Data Loading Pattern - Migrate to JSON Configuration
 **Time:** Late afternoon
 **Category:** Architecture / Refactoring

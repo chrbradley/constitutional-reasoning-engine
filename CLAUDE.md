@@ -66,27 +66,27 @@ poetry run flake8 src/ analysis/ tests/
 
 ## Architecture: Three-Layer Pipeline
 
-The experiment runs each test through three distinct layers:
+The experiment runs each trial through three distinct layers:
 
 ### Layer 1: Fact Establishment (Currently Bypassed in Phase 1)
 - **Status:** `SKIP_LAYER_1 = True` in `src/runner.py`
 - **Phase 1:** Facts loaded directly from `src/data/scenarios.json`
 - **Future Phases:** Will test different fact-grounding mechanisms (RAG, citations, etc.)
-- **Output:** `results/experiments/{exp_id}/data/layer1/{test_id}.json`
+- **Output:** `results/experiments/{exp_id}/data/layer1/{trial_id}.json`
 
 ### Layer 2: Constitutional Reasoning
 - **Input:** Established facts + constitutional framework
 - **Process:** Model applies assigned values to facts
 - **Key Feature:** Truncation detection with automatic retry (8K → 12K → 16K tokens)
-- **Output:** `results/experiments/{exp_id}/data/layer2/{test_id}.json`
+- **Output:** `results/experiments/{exp_id}/data/layer2/{trial_id}.json`
 
 ### Layer 3: Integrity Evaluation
-- **Evaluator:** Claude Sonnet 4.5 (consistent across all tests)
+- **Evaluator:** Claude Sonnet 4.5 (consistent across all trials)
 - **Scores 3 dimensions:**
   - Factual Adherence (0-100): Did it accept facts without distortion?
   - Value Transparency (0-100): Did it explicitly state values/tradeoffs?
   - Logical Coherence (0-100): Does conclusion follow from values?
-- **Output:** `results/experiments/{exp_id}/data/layer3/{test_id}.json`
+- **Output:** `results/experiments/{exp_id}/data/layer3/{trial_id}.json`
 
 ## State Management Architecture (Critical)
 
@@ -101,7 +101,7 @@ results/
     │   ├── data/                        # Layer 1/2/3 outputs
     │   ├── state/                       # Per-experiment state
     │   │   ├── experiment_state.json
-    │   │   └── test_registry.json
+    │   │   └── trial_registry.json
     │   ├── visualizations/
     │   └── metadata.json
     └── exp_20251023_105245/             # Previous experiments preserved
@@ -121,7 +121,7 @@ finalize_experiment(clear_pointer=True)              # Mark complete, clear poin
 
 ### State Lifecycle
 1. **Create:** `create_experiment()` → saves pointer to `results/state/current_experiment.json`
-2. **Run:** Progress tracked in per-experiment `test_registry.json`
+2. **Run:** Progress tracked in per-experiment `trial_registry.json`
 3. **Complete:** `finalize_experiment()` → marks status="completed", clears pointer
 4. **Resume:** Pointer allows automatic resume of incomplete experiments
 
@@ -153,9 +153,9 @@ Models return JSON in different formats:
 ## Rate Limiting & Batching
 
 **Batch Strategy** (`src/runner.py`):
-- 12 tests per batch (2 per model to avoid rate limits)
+- 12 trials per batch (2 per model to avoid rate limits)
 - 20-second delay between batches
-- Round-robin distribution ensures no model gets multiple tests in same batch
+- Round-robin distribution ensures no model gets multiple trials in same batch
 
 ## Data Flow
 
@@ -190,7 +190,7 @@ Models return JSON in different formats:
 ### Debugging Failed Tests
 1. Check `results/experiments/{exp_id}/state/test_registry.json` for error messages
 2. Look for manual review files in `data/debug/manual_review/`
-3. Inspect layer outputs: `data/layer2/{test_id}.json` for reasoning
+3. Inspect layer outputs: `data/layer2/{trial_id}.json` for reasoning
 
 ## Important Constraints
 

@@ -18,7 +18,7 @@ from src.core.prompts import (
     build_constitutional_reasoning_prompt,
     build_integrity_evaluation_prompt
 )
-from src.core.experiment_state import ExperimentManager, TestDefinition, TestStatus
+from src.core.experiment_state import ExperimentManager, TrialDefinition, TrialStatus
 from src.core.graceful_parser import GracefulJsonParser, ParseStatus
 from src.core.truncation_detector import TruncationDetector
 from src.core.manifest_generator import save_manifest
@@ -115,7 +115,7 @@ def robust_json_parse(response: str) -> dict:
 
 
 async def run_single_test(
-    test_def: TestDefinition,
+    test_def: TrialDefinition,
     scenario_data: Dict,
     constitution_data: Dict,
     model_data: Dict,
@@ -125,7 +125,7 @@ async def run_single_test(
     Run a single test through the 3-layer pipeline
     Returns True if successful, False if failed
     """
-    test_id = test_def.test_id
+    test_id = test_def.trial_id
     # Use experiment_id for organizing manual review files
     parser = GracefulJsonParser(experiment_id=experiment_manager.experiment_id)
     
@@ -352,7 +352,7 @@ async def run_single_test(
 
 
 async def run_batch(
-    batch: List[TestDefinition],
+    batch: List[TrialDefinition],
     scenarios_dict: Dict,
     constitutions_dict: Dict,
     models_dict: Dict,
@@ -371,8 +371,8 @@ async def run_batch(
     tasks = []
     for test_def in batch:
         # Skip if already completed
-        if experiment_manager.test_exists(test_def.test_id):
-            print(f"⏭️  Skipping completed: {test_def.test_id}")
+        if experiment_manager.test_exists(test_def.trial_id):
+            print(f"⏭️  Skipping completed: {test_def.trial_id}")
             continue
         
         scenario = scenarios_dict[test_def.scenario_id]
@@ -385,11 +385,18 @@ async def run_batch(
     # Run batch in parallel
     if tasks:
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # Count results
+
+        # Count results and print exceptions
         successful = sum(1 for r in results if r is True)
         failed = sum(1 for r in results if r is False or isinstance(r, Exception))
-        
+
+        # Print any exceptions for debugging
+        for i, r in enumerate(results):
+            if isinstance(r, Exception):
+                print(f"❌ Task {i} failed with exception: {type(r).__name__}: {str(r)}")
+                import traceback
+                traceback.print_exception(type(r), r, r.__traceback__)
+
         print(f"\nBatch {batch_num} complete: {successful} successful, {failed} failed")
 
         # Update manifest after each batch
@@ -401,7 +408,7 @@ async def run_batch(
         return {"successful": 0, "failed": 0}
 
 
-def create_batches(tests: List[TestDefinition], batch_size: int = 6) -> List[List[TestDefinition]]:
+def create_batches(tests: List[TrialDefinition], batch_size: int = 6) -> List[List[TrialDefinition]]:
     """
     Create batches of tests, distributing across models for rate limit management
 
@@ -413,7 +420,7 @@ def create_batches(tests: List[TestDefinition], batch_size: int = 6) -> List[Lis
         batch_size: Target size for each batch (default: 6, reduced from 12 for safety)
 
     Returns:
-        List of batches, each batch is a list of TestDefinition objects
+        List of batches, each batch is a list of TrialDefinition objects
     """
     # Group by model to ensure even distribution
     model_groups = {}
@@ -644,18 +651,18 @@ Examples:
             print("🆕 No active experiment found, starting new one")
             experiment_id = experiment_manager.create_experiment(scenarios, constitutions, layer2_models)
     
-    # Get pending and retryable tests
-    pending_tests = experiment_manager.get_pending_tests()
-    failed_tests = experiment_manager.get_failed_tests(max_retries=3)
-    all_tests = pending_tests + failed_tests
+    # Get pending and retryable trials
+    pending_trials = experiment_manager.get_pending_trials()
+    failed_trials = experiment_manager.get_failed_trials(max_retries=3)
+    all_trials = pending_trials + failed_trials
     
-    if not all_tests:
-        print("🎉 All tests completed!")
+    if not all_trials:
+        print("🎉 All trials completed!")
         progress = experiment_manager.get_progress_summary()
         print(f"Final status: {progress}")
         return
     
-    print(f"\nTests to run: {len(pending_tests)} pending + {len(failed_tests)} retries = {len(all_tests)} total")
+    print(f"\ntrials to run: {len(pending_trials)} pending + {len(failed_trials)} retries = {len(all_trials)} total")
     
     # Create lookup dictionaries
     scenarios_dict = {s.id: s for s in scenarios}
@@ -663,8 +670,8 @@ Examples:
     models_dict = {m['id']: m for m in layer2_models}
     
     # Create batches
-    batches = create_batches(all_tests, batch_size=12)
-    print(f"Created {len(batches)} batches (12 tests per batch, 20s inter-batch delay)")
+    batches = create_batches(all_trials, batch_size=12)
+    print(f"Created {len(batches)} batches (12 trials per batch, 20s inter-batch delay)")
     
     # Show initial progress
     progress = experiment_manager.get_progress_summary()
@@ -714,13 +721,13 @@ Examples:
     print(f"Session results: {total_successful} successful, {total_failed} failed")
 
     if final_progress['progress']['pending'] == 0:
-        # All tests complete - finalize experiment
+        # All trials complete - finalize experiment
         experiment_manager.finalize_experiment(clear_pointer=True)
         print("\n🎉 Experiment completed successfully!")
         print("   State preserved in experiment directory for debugging")
         print("   Run 'python -m src.runner' to start a new experiment")
     else:
-        print(f"\n⏸️  Experiment paused with {final_progress['progress']['pending']} tests remaining.")
+        print(f"\n⏸️  Experiment paused with {final_progress['progress']['pending']} trials remaining.")
         print("Run this script again to resume.")
 
 

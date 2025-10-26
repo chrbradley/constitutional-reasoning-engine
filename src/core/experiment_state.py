@@ -14,36 +14,36 @@ from enum import Enum
 from src.core.data_types import Scenario, Constitution, Model
 
 
-class TestStatus(Enum):
+class TrialStatus(Enum):
     PENDING = "pending"
-    IN_PROGRESS = "in_progress" 
+    IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     FAILED = "failed"
     RETRYING = "retrying"
 
 
 @dataclass
-class TestDefinition:
-    """Definition of a single test to be run"""
+class TrialDefinition:
+    """Definition of a single experimental trial to be run"""
     scenario_id: str
     constitution_id: str
     model_id: str
-    
+
     @property
-    def test_id(self) -> str:
-        """Generate unique test ID"""
+    def trial_id(self) -> str:
+        """Generate unique trial ID"""
         return f"{self.scenario_id}_{self.constitution_id}_{self.model_id}"
 
 
 @dataclass
-class TestResult:
-    """Result of a completed test"""
-    test_id: str
+class TrialResult:
+    """Result of a completed experimental trial"""
+    trial_id: str
     scenario_id: str
     constitution_id: str
     model_id: str
     timestamp: str
-    status: TestStatus
+    status: TrialStatus
     result_data: Optional[Dict] = None
     error_message: Optional[str] = None
     retry_count: int = 0
@@ -57,7 +57,7 @@ class ExperimentState:
     created_at: str
     updated_at: str
     status: str  # "in_progress", "completed", "failed", "paused"
-    total_tests: int
+    total_trials: int
     completed_count: int
     failed_count: int
     pending_count: int
@@ -95,14 +95,14 @@ class ExperimentManager:
             exp_dir = self.base_dir / "experiments" / self.experiment_id
             self.state_dir = exp_dir / "state"
             self.state_file = self.state_dir / "experiment_state.json"
-            self.test_registry_file = self.state_dir / "test_registry.json"
+            self.trial_registry_file = self.state_dir / "trial_registry.json"
 
             # Create experiment state directory
             self.state_dir.mkdir(parents=True, exist_ok=True)
 
             # Load state from experiment-specific location
             self.experiment_state = self._load_experiment_state()
-            self.test_registry = self._load_test_registry()
+            self.trial_registry = self._load_test_registry()
 
             # Set up layer directories
             data_dir = exp_dir / "data"
@@ -124,9 +124,9 @@ class ExperimentManager:
             # No experiment loaded yet
             self.state_dir = None
             self.state_file = None
-            self.test_registry_file = None
+            self.trial_registry_file = None
             self.experiment_state = None
-            self.test_registry = {}
+            self.trial_registry = {}
             self.layer1_dir = None
             self.layer2_dir = None
             self.layer3_dir = None
@@ -152,7 +152,7 @@ class ExperimentManager:
             # Set up state directory inside experiment
             self.state_dir = exp_dir / "state"
             self.state_file = self.state_dir / "experiment_state.json"
-            self.test_registry_file = self.state_dir / "test_registry.json"
+            self.trial_registry_file = self.state_dir / "trial_registry.json"
             self.state_dir.mkdir(parents=True, exist_ok=True)
 
             # Set up data and visualization directories
@@ -170,8 +170,8 @@ class ExperimentManager:
             # Copy README files to layer directories
             self._copy_layer_readmes()
 
-            # Generate all test combinations
-            test_definitions = self._generate_test_combinations(scenarios, constitutions, models)
+            # Generate all trial combinations
+            trial_definitions = self._generate_trial_combinations(scenarios, constitutions, models)
 
             # Initialize experiment state
             self.experiment_state = ExperimentState(
@@ -179,26 +179,26 @@ class ExperimentManager:
                 created_at=datetime.now().isoformat(),
                 updated_at=datetime.now().isoformat(),
                 status="in_progress",
-                total_tests=len(test_definitions),
+                total_trials=len(trial_definitions),
                 completed_count=0,
                 failed_count=0,
-                pending_count=len(test_definitions),
+                pending_count=len(trial_definitions),
                 scenarios=[s.id for s in scenarios],
                 constitutions=[c.id for c in constitutions],
                 models=[m['id'] for m in models]
             )
 
-            # Initialize test registry
-            self.test_registry = {
-                test_def.test_id: TestResult(
-                    test_id=test_def.test_id,
-                    scenario_id=test_def.scenario_id,
-                    constitution_id=test_def.constitution_id,
-                    model_id=test_def.model_id,
+            # Initialize trial registry
+            self.trial_registry = {
+                trial_def.trial_id: TrialResult(
+                    trial_id=trial_def.trial_id,
+                    scenario_id=trial_def.scenario_id,
+                    constitution_id=trial_def.constitution_id,
+                    model_id=trial_def.model_id,
                     timestamp="",
-                    status=TestStatus.PENDING,
+                    status=TrialStatus.PENDING,
                     retry_count=0
-                ) for test_def in test_definitions
+                ) for trial_def in trial_definitions
             }
 
             # Save state to per-experiment location
@@ -228,28 +228,28 @@ class ExperimentManager:
             return 0
         
         # Generate combinations for new models only
-        new_test_count = 0
+        new_trial_count = 0
         for scenario in scenarios:
             for constitution in constitutions:
                 for model in new_models:
                     if model['id'] in new_model_ids:
-                        test_def = TestDefinition(scenario.id, constitution.id, model['id'])
-                        
-                        if test_def.test_id not in self.test_registry:
-                            self.test_registry[test_def.test_id] = TestResult(
-                                test_id=test_def.test_id,
+                        trial_def = TrialDefinition(scenario.id, constitution.id, model['id'])
+
+                        if trial_def.trial_id not in self.trial_registry:
+                            self.trial_registry[trial_def.trial_id] = TrialResult(
+                                trial_id=trial_def.trial_id,
                                 scenario_id=test_def.scenario_id,
                                 constitution_id=test_def.constitution_id,
                                 model_id=test_def.model_id,
                                 timestamp="",
-                                status=TestStatus.PENDING,
+                                status=TrialStatus.PENDING,
                                 retry_count=0
                             )
                             new_test_count += 1
         
         # Update experiment state
         self.experiment_state.models.extend(new_model_ids)
-        self.experiment_state.total_tests += new_test_count
+        self.experiment_state.total_trials += new_test_count
         self.experiment_state.pending_count += new_test_count
         self.experiment_state.updated_at = datetime.now().isoformat()
         
@@ -257,58 +257,58 @@ class ExperimentManager:
         print(f"Added {new_test_count} new tests for {len(new_model_ids)} new models")
         return new_test_count
     
-    def get_pending_tests(self) -> List[TestDefinition]:
+    def get_pending_trials(self) -> List[TrialDefinition]:
         """Get list of all pending tests"""
         pending = []
-        for test_result in self.test_registry.values():
-            if test_result.status == TestStatus.PENDING:
-                pending.append(TestDefinition(
+        for test_result in self.trial_registry.values():
+            if test_result.status == TrialStatus.PENDING:
+                pending.append(TrialDefinition(
                     scenario_id=test_result.scenario_id,
                     constitution_id=test_result.constitution_id,
                     model_id=test_result.model_id
                 ))
         return pending
     
-    def get_failed_tests(self, max_retries: int = 3) -> List[TestDefinition]:
+    def get_failed_trials(self, max_retries: int = 3) -> List[TrialDefinition]:
         """Get list of failed tests that can be retried"""
         retryable = []
-        for test_result in self.test_registry.values():
-            if (test_result.status == TestStatus.FAILED and 
+        for test_result in self.trial_registry.values():
+            if (test_result.status == TrialStatus.FAILED and
                 test_result.retry_count < max_retries):
-                retryable.append(TestDefinition(
+                retryable.append(TrialDefinition(
                     scenario_id=test_result.scenario_id,
                     constitution_id=test_result.constitution_id,
                     model_id=test_result.model_id
                 ))
         return retryable
     
-    def mark_test_in_progress(self, test_id: str) -> None:
-        """Mark a test as currently running"""
-        if test_id in self.test_registry:
-            previous_status = self.test_registry[test_id].status
-            self.test_registry[test_id].status = TestStatus.IN_PROGRESS
-            self.test_registry[test_id].timestamp = datetime.now().isoformat()
+    def mark_test_in_progress(self, trial_id: str) -> None:
+        """Mark a trial as currently running"""
+        if trial_id in self.trial_registry:
+            previous_status = self.trial_registry[trial_id].status
+            self.trial_registry[trial_id].status = TrialStatus.IN_PROGRESS
+            self.trial_registry[trial_id].timestamp = datetime.now().isoformat()
 
             # Decrement pending count when moving from PENDING to IN_PROGRESS
-            if previous_status == TestStatus.PENDING:
+            if previous_status == TrialStatus.PENDING:
                 self.experiment_state.pending_count -= 1
                 self.experiment_state.updated_at = datetime.now().isoformat()
                 self._save_experiment_state()
 
             self._save_test_registry()
 
-    def update_layer_status(self, test_id: str, layer_num: int, status: str, model_id: str = None, error: str = None) -> None:
-        """Update status for a specific layer of a test
+    def update_layer_status(self, trial_id: str, layer_num: int, status: str, model_id: str = None, error: str = None) -> None:
+        """Update status for a specific layer of a trial
 
         Args:
-            test_id: Test identifier
+            trial_id: Trial identifier
             layer_num: Layer number (1, 2, or 3)
             status: Status string ("pending", "completed", "failed", "skipped")
             model_id: Model used for this layer (optional)
             error: Error message if failed (optional)
         """
-        if test_id in self.test_registry:
-            test_result = self.test_registry[test_id]
+        if trial_id in self.trial_registry:
+            test_result = self.trial_registry[trial_id]
 
             # Initialize layer_status if not exists
             if test_result.layer_status is None:
@@ -326,15 +326,15 @@ class ExperimentManager:
 
             self._save_test_registry()
 
-    def mark_test_completed(self, test_id: str, result_data: Dict) -> None:
-        """Mark a test as completed and update registry"""
-        if test_id in self.test_registry:
-            # Get test info to check if this was a retry
-            test_result = self.test_registry[test_id]
+    def mark_test_completed(self, trial_id: str, result_data: Dict) -> None:
+        """Mark a trial as completed and update registry"""
+        if trial_id in self.trial_registry:
+            # Get trial info to check if this was a retry
+            test_result = self.trial_registry[trial_id]
             was_retry = test_result.retry_count > 0
 
             # Update registry
-            test_result.status = TestStatus.COMPLETED
+            test_result.status = TrialStatus.COMPLETED
             test_result.result_data = result_data
             test_result.timestamp = datetime.now().isoformat()
 
@@ -344,16 +344,16 @@ class ExperimentManager:
             # Update experiment state
             self.experiment_state.completed_count += 1
 
-            # If this was a retry (test had previously failed), decrement failed count
+            # If this was a retry (trial had previously failed), decrement failed count
             if was_retry:
                 self.experiment_state.failed_count -= 1
 
             self.experiment_state.updated_at = datetime.now().isoformat()
 
             self._save_state()
-            print(f"✅ Completed: {test_id}")
+            print(f"✅ Completed: {trial_id}")
 
-    def save_layer_result(self, test_id: str, layer: int, layer_data: Dict) -> None:
+    def save_layer_result(self, trial_id: str, layer: int, layer_data: Dict) -> None:
         """Save result for a specific layer (1, 2, or 3)"""
         layer_dirs = {
             1: self.layer1_dir,
@@ -366,34 +366,34 @@ class ExperimentManager:
 
         layer_dir = layer_dirs[layer]
         if layer_dir:
-            result_file = layer_dir / f"{test_id}.json"
+            result_file = layer_dir / f"{trial_id}.json"
             with open(result_file, 'w') as f:
                 json.dump(layer_data, f, indent=2)
     
-    def mark_test_failed(self, test_id: str, error_message: str) -> None:
-        """Mark a test as failed"""
-        if test_id in self.test_registry:
-            test_result = self.test_registry[test_id]
-            test_result.status = TestStatus.FAILED
+    def mark_test_failed(self, trial_id: str, error_message: str) -> None:
+        """Mark a trial as failed"""
+        if trial_id in self.trial_registry:
+            test_result = self.trial_registry[trial_id]
+            test_result.status = TrialStatus.FAILED
             test_result.error_message = error_message
             test_result.retry_count += 1
             test_result.timestamp = datetime.now().isoformat()
 
             # Update experiment state
             # Only increment failed_count on first failure
-            # pending_count was already decremented when test went PENDING → IN_PROGRESS
+            # pending_count was already decremented when trial went PENDING → IN_PROGRESS
             if test_result.retry_count == 1:
                 self.experiment_state.failed_count += 1
 
             self.experiment_state.updated_at = datetime.now().isoformat()
 
             self._save_state()
-            print(f"❌ Failed: {test_id} (retry {test_result.retry_count})")
+            print(f"❌ Failed: {trial_id} (retry {test_result.retry_count})")
     
-    def test_exists(self, test_id: str) -> bool:
-        """Check if a test has been completed"""
-        return (test_id in self.test_registry and 
-                self.test_registry[test_id].status == TestStatus.COMPLETED)
+    def test_exists(self, trial_id: str) -> bool:
+        """Check if a trial has been completed"""
+        return (trial_id in self.trial_registry and
+                self.trial_registry[trial_id].status == TrialStatus.COMPLETED)
     
     def get_progress_summary(self) -> Dict:
         """Get current experiment progress"""
@@ -404,11 +404,11 @@ class ExperimentManager:
             "experiment_id": self.experiment_state.experiment_id,
             "status": self.experiment_state.status,
             "progress": {
-                "total": self.experiment_state.total_tests,
+                "total": self.experiment_state.total_trials,
                 "completed": self.experiment_state.completed_count,
                 "failed": self.experiment_state.failed_count,
                 "pending": self.experiment_state.pending_count,
-                "completion_rate": f"{(self.experiment_state.completed_count / self.experiment_state.total_tests * 100):.1f}%"
+                "completion_rate": f"{(self.experiment_state.completed_count / self.experiment_state.total_trials * 100):.1f}%"
             },
             "created_at": self.experiment_state.created_at,
             "updated_at": self.experiment_state.updated_at
@@ -427,18 +427,18 @@ class ExperimentManager:
             else:
                 print(f"✅ Experiment {self.experiment_id} completed (pointer preserved for easy resume)")
 
-    def _generate_test_combinations(
+    def _generate_trial_combinations(
         self,
         scenarios: List[Scenario],
         constitutions: List[Constitution],
         models: List[Dict]
-    ) -> List[TestDefinition]:
-        """Generate all test combinations"""
+    ) -> List[TrialDefinition]:
+        """Generate all trial combinations"""
         combinations = []
         for scenario in scenarios:
             for constitution in constitutions:
                 for model in models:
-                    combinations.append(TestDefinition(
+                    combinations.append(TrialDefinition(
                         scenario_id=scenario.id,
                         constitution_id=constitution.id,
                         model_id=model['id']
@@ -477,16 +477,16 @@ class ExperimentManager:
                 print(f"Warning: Could not load experiment state: {e}")
         return None
 
-    def _load_test_registry(self) -> Dict[str, TestResult]:
+    def _load_test_registry(self) -> Dict[str, TrialResult]:
         """Load test registry from file"""
-        if self.test_registry_file and self.test_registry_file.exists():
+        if self.trial_registry_file and self.trial_registry_file.exists():
             try:
-                with open(self.test_registry_file, 'r') as f:
+                with open(self.trial_registry_file, 'r') as f:
                     data = json.load(f)
                 registry = {}
                 for test_id, test_data in data.items():
-                    test_data['status'] = TestStatus(test_data['status'])
-                    registry[test_id] = TestResult(**test_data)
+                    test_data['status'] = TrialStatus(test_data['status'])
+                    registry[test_id] = TrialResult(**test_data)
                 return registry
             except Exception as e:
                 print(f"Warning: Could not load test registry: {e}")
@@ -505,15 +505,15 @@ class ExperimentManager:
     
     def _save_test_registry(self) -> None:
         """Save test registry to file"""
-        if self.test_registry:
+        if self.trial_registry:
             # Convert to serializable format
             serializable_registry = {}
-            for test_id, test_result in self.test_registry.items():
+            for test_id, test_result in self.trial_registry.items():
                 test_dict = asdict(test_result)
                 test_dict['status'] = test_result.status.value  # Convert enum to string
                 serializable_registry[test_id] = test_dict
 
-            with open(self.test_registry_file, 'w') as f:
+            with open(self.trial_registry_file, 'w') as f:
                 json.dump(serializable_registry, f, indent=2)
 
     def _copy_layer_readmes(self) -> None:

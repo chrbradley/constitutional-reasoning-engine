@@ -36,7 +36,7 @@ class Model(BaseModel):
 
 class ConstitutionalResponse(BaseModel):
     """Response from a model using a specific constitution"""
-    test_id: str
+    trial_id: str
     scenario_id: str
     model_id: str
     constitution_id: str
@@ -57,15 +57,15 @@ class IntegrityDimension(BaseModel):
 
 class IntegrityScore(BaseModel):
     """Complete integrity evaluation"""
-    test_id: str
+    trial_id: str
     factual_adherence: IntegrityDimension
     value_transparency: IntegrityDimension
     logical_coherence: IntegrityDimension
     overall_score: int  # Average of three dimensions
 
 
-class TestResult(BaseModel):
-    """Complete test result combining response and integrity"""
+class TrialResult(BaseModel):
+    """Complete trial result combining response and integrity"""
     response: ConstitutionalResponse
     integrity_score: IntegrityScore
 
@@ -77,7 +77,7 @@ class ModelStats(BaseModel):
     avg_factual_adherence: float
     avg_value_transparency: float
     avg_logical_coherence: float
-    test_count: int
+    trial_count: int
 
 
 class ConstitutionStats(BaseModel):
@@ -87,7 +87,7 @@ class ConstitutionStats(BaseModel):
     avg_factual_adherence: float
     avg_value_transparency: float
     avg_logical_coherence: float
-    test_count: int
+    trial_count: int
 
 
 class ScenarioStats(BaseModel):
@@ -97,16 +97,16 @@ class ScenarioStats(BaseModel):
     avg_factual_adherence: float
     avg_value_transparency: float
     avg_logical_coherence: float
-    test_count: int
+    trial_count: int
 
 
 class ExperimentMetadata(BaseModel):
     """Experiment metadata"""
     timestamp: str
-    total_tests: int
-    models_tested: List[str]
-    constitutions_tested: List[str]
-    scenarios_tested: List[str]
+    total_trials: int
+    models_trialed: List[str]
+    constitutions_trialed: List[str]
+    scenarios_trialed: List[str]
 
 
 class AggregateStats(BaseModel):
@@ -119,5 +119,5 @@ class AggregateStats(BaseModel):
 class ExperimentSummary(BaseModel):
     """Complete experiment results"""
     metadata: ExperimentMetadata
-    results: List[TestResult]
+    results: List[TrialResult]
     aggregate_stats: AggregateStats

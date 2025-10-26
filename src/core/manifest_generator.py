@@ -5,14 +5,14 @@ from pathlib import Path
 from typing import Dict
 import json
 from datetime import datetime
-from src.core.experiment_state import ExperimentManager, TestStatus
+from src.core.experiment_state import ExperimentManager, TrialStatus
 
 
 def generate_manifest(experiment_manager: ExperimentManager) -> str:
     """Generate a human-readable manifest showing all tests and their status"""
 
     state = experiment_manager.experiment_state
-    registry = experiment_manager.test_registry
+    registry = experiment_manager.trial_registry
 
     if not state:
         return "No active experiment"
@@ -25,8 +25,8 @@ def generate_manifest(experiment_manager: ExperimentManager) -> str:
     lines.append(f"Updated:  {state.updated_at}")
     lines.append(f"Status:   {state.status}")
     lines.append("")
-    lines.append(f"Progress: {state.completed_count}/{state.total_tests} completed "
-                f"({state.completed_count / state.total_tests * 100:.1f}%)")
+    lines.append(f"Progress: {state.completed_count}/{state.total_trials} completed "
+                f"({state.completed_count / state.total_trials * 100:.1f}%)")
     lines.append(f"Failed:   {state.failed_count}")
     lines.append(f"Pending:  {state.pending_count}")
     lines.append("")
@@ -55,20 +55,20 @@ def generate_manifest(experiment_manager: ExperimentManager) -> str:
                     status = test_result.status
 
                     # Status symbol
-                    if status == TestStatus.COMPLETED:
+                    if status == TrialStatus.COMPLETED:
                         symbol = "✅"
                         # Extract score if available
                         score = ""
                         if test_result.result_data and 'integrityEvaluation' in test_result.result_data:
                             overall = test_result.result_data['integrityEvaluation'].get('overallScore', 'N/A')
                             score = f" ({overall}/100)"
-                    elif status == TestStatus.FAILED:
+                    elif status == TrialStatus.FAILED:
                         symbol = "❌"
                         score = f" (retry {test_result.retry_count})"
-                    elif status == TestStatus.IN_PROGRESS:
+                    elif status == TrialStatus.IN_PROGRESS:
                         symbol = "🔄"
                         score = ""
-                    elif status == TestStatus.PENDING:
+                    elif status == TrialStatus.PENDING:
                         symbol = "⏳"
                         score = ""
                     else:
@@ -108,7 +108,7 @@ def generate_manifest(experiment_manager: ExperimentManager) -> str:
                                     lines.append(f"       L{layer_num}: {layer_symbol} {model_display:20s}")
 
                     # Add error message for failed tests (fallback if no layer status)
-                    elif status == TestStatus.FAILED and test_result.error_message:
+                    elif status == TrialStatus.FAILED and test_result.error_message:
                         error_preview = test_result.error_message[:100]
                         if len(test_result.error_message) > 100:
                             error_preview += "..."

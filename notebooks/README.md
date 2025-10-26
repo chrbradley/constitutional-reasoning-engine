@@ -79,7 +79,7 @@ All notebooks use the same dataset: `results/experiments/exp_20251023_105245/`
 ## Data Schema
 
 Each test result contains:
-- `test_id`: Unique identifier (scenario_constitution_model)
+- `trial_id`: Unique identifier (scenario_constitution_model)
 - `scenario_id`: Ethical dilemma tested
 - `constitution_id`: Value framework applied
 - `model_id`: AI model used
