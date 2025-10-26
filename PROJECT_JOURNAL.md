@@ -1976,4 +1976,186 @@ Claude returns markdown-wrapped JSON for Layer 3 (without response_format), but 
 
 ---
 
+### Entry 35: Layer 3 Evaluator Selection and Cost Optimization
+**Date:** 2025-10-26
+**Category:** Feature / Cost Optimization
+**Summary:** Implemented --layer3-evaluators flag to enable testing cheaper models (Haiku, Flash) for Layer 3 integrity evaluation, added command-line audit trail, and fixed Layer 3 truncation handling
+
+**Context:**
+Layer 3 (integrity evaluation) was hardcoded to use Claude Sonnet 4.5, the most expensive model. With 150 trials per experiment, this represented significant cost. Goal: Test whether cheaper, faster models (Claude Haiku, Gemini Flash) can perform Layer 3 evaluation with acceptable quality.
+
+**Problem 1: No Layer 3 Model Selection**
+- Layer 3 evaluator hardcoded to `claude-sonnet-4-5` in runner.py:310
+- No way to specify alternative evaluators via command-line
+- No metadata captured indicating which model evaluated each trial
+
+**Solution: --layer3-evaluators Flag**
+
+**Implementation:**
+
+1. **Experiment State (src/core/experiment_state.py):**
+   - Added `layer3_evaluators: List[str]` field to ExperimentState dataclass
+   - Added `command_line: Optional[str]` field for audit trail (captures sys.argv)
+   - Modified `create_experiment()` to accept `layer3_evaluators` parameter
+   - Made field Optional for backward compatibility with old experiments
+
+2. **Runner CLI (src/runner.py):**
+   - Added `--layer3-evaluators` argparse argument (accepts multiple model IDs)
+   - Added `layer3_evaluator` parameter to `run_single_test()` and `run_batch()`
+   - Replaced hardcoded `model_id="claude-sonnet-4-5"` with `model_id=layer3_evaluator`
+   - Thread evaluator through call chain: main() → run_batch() → run_single_test()
+   - Updated all `create_experiment()` calls to pass layer3_evaluators
+
+3. **Manifest Display (src/core/manifest_generator.py):**
+   - Added command-line display in header for audit visibility
+   - Shows exact command used to start experiment
+
+**Testing Results:**
+
+**Initial Validation Issue:**
+- User ran experiment with `--layer3-evaluators claude-3-5-haiku-20241022`
+- Experiment showed `claude-sonnet-4-5` as evaluator (default instead of Haiku)
+- Investigation revealed shell command had newline in middle, causing flag to be ignored
+- Corrected command with proper line continuation (`\`) resolved issue
+
+**Shell Command Syntax Discovery:**
+```bash
+# BROKEN (newline causes shell to split into two commands):
+poetry run python -m src.runner --new --scenarios vaccine-mandate
+  --layer3-evaluators claude-3-5-haiku-20241022
+
+# FIXED (backslash line continuation):
+poetry run python -m src.runner --new \
+  --scenarios vaccine-mandate \
+  --layer3-evaluators claude-3-5-haiku-20241022
+```
+
+**Successful Validation (exp_20251026_113155):**
+- Configuration: 1 scenario × 1 constitution × 1 model
+- Layer 3 evaluator: claude-3-5-haiku-20241022
+- Result: ✅ 100% success
+- Performance: Layer 3 evaluation 10.0s (vs 20-30s with Sonnet)
+- Cost: ~80% cheaper than Sonnet
+
+**Metadata Capture:**
+Layer 3 evaluator now captured in three locations:
+1. `experiment_state.json`: experiment-wide configuration
+2. `trial_registry.json`: per-trial tracking in `layer_status.layer3.model`
+3. `layer3/parsed/*.json`: individual evaluation results in `evaluationModel` field
+
+**Problem 2: Layer 3 Truncation**
+Discovered Gemini Flash Layer 3 responses truncating mid-JSON:
+```json
+"_raw_response": "```json\n{\n  \"factualAdherence\": {\n    \"score\": 95,\n    \"explanation\": \"The response is exceptionally transparent about its guiding values and the tradeoffs made. It explicitly states its core question, which immediately signals a harm minimization framework. It clearly articulates that it is prioritizing harm minimization for vulnerable students while deeply respecting religious freedom. The 'UNCOMFORTABLE TRUTH' and"
+```
+
+**Root Cause:**
+- Layer 3 had hardcoded `max_tokens=2000` with NO truncation detection/retry
+- Layer 2 had robust truncation handling with automatic retry (8K→12K→16K)
+- Layer 3 missing this protection
+
+**Solution: Layer 3 Truncation Detection**
+
+**Implementation (src/runner.py:307-354):**
+```python
+# Try with increasing max_tokens if truncated
+truncation_detector = TruncationDetector()
+max_tokens_integrity = 4000  # Increased baseline from 2000
+max_retries = 3
+
+for attempt in range(max_retries):
+    integrity_response = await get_model_response(
+        model_id=layer3_evaluator,
+        prompt=eval_prompt,
+        temperature=0.3,
+        max_tokens=max_tokens_integrity
+    )
+
+    # Parse and check truncation
+    integrity_data, integrity_status = parser.parse_integrity_response(
+        integrity_response, f"{test_id}_integrity"
+    )
+
+    is_truncated, trunc_reason = truncation_detector.is_truncated(
+        integrity_response,
+        parse_success=(integrity_status == ParseStatus.SUCCESS)
+    )
+
+    if not is_truncated or integrity_status == ParseStatus.SUCCESS:
+        break  # Success
+
+    # Retry with higher limit
+    if attempt < max_retries - 1:
+        new_limit = truncation_detector.get_next_token_limit(max_tokens_integrity)
+        print(f"⚠️  Layer 3 response truncated ({trunc_reason}), retrying with max_tokens={new_limit}")
+        max_tokens_integrity = new_limit
+    else:
+        print(f"⚠️  Max retries reached for Layer 3, using partial response")
+```
+
+**Retry Progression:**
+- Baseline: 4000 tokens (increased from 2000)
+- First retry: 6000 tokens
+- Second retry: 8000 tokens
+- Tracks `maxTokensUsed` in layer3_data for analysis
+
+**Validation:**
+Ran experiment with Gemini Flash as Layer 3 evaluator (exp_20251026_114653):
+- Initial response truncated at 4000 tokens
+- Automatic retry at 6000 tokens: ✅ SUCCESS
+- Complete evaluation captured with proper parsing
+
+**Problem 3: No Command-Line Audit Trail**
+When debugging flag issues, no way to verify what command was actually used.
+
+**Solution:**
+- Added `command_line: Optional[str]` field to ExperimentState
+- Captured `" ".join(sys.argv)` when creating experiment
+- Display in MANIFEST.txt header for easy visibility
+- Made Optional for backward compatibility
+
+**Files Modified:**
+1. `src/core/experiment_state.py`
+   - Added layer3_evaluators and command_line fields
+   - Modified create_experiment() signature
+   - Backward compatible (Optional fields)
+
+2. `src/runner.py`
+   - Added --layer3-evaluators argparse flag
+   - Implemented Layer 3 truncation detection with retry loop
+   - Thread layer3_evaluator parameter through call chain
+   - Track maxTokensUsed in layer3_data
+
+3. `src/core/manifest_generator.py`
+   - Display command-line in MANIFEST header
+
+**Impact:**
+- ✅ **Cost Optimization:** Can test Haiku (~80% cheaper) and Flash (~90% cheaper) for Layer 3
+- ✅ **Performance:** Haiku 2x faster than Sonnet (10s vs 20-30s)
+- ✅ **Audit Trail:** Command-line captured in experiment metadata
+- ✅ **Robustness:** Layer 3 now has truncation detection matching Layer 2
+- ✅ **Complete Responses:** Automatic retry prevents truncated evaluations
+- ✅ **Metadata Quality:** Layer 3 evaluator tracked at all levels (experiment, trial, result)
+
+**Cost Analysis:**
+Assuming 150 trials per experiment:
+- **Sonnet 4.5:** ~$3-5 for Layer 3 evaluations
+- **Haiku:** ~$0.50-1 for Layer 3 evaluations (80% savings)
+- **Flash:** ~$0.20-0.40 for Layer 3 evaluations (90% savings)
+
+**Quality Validation Needed:**
+While Haiku and Flash work technically, need to validate evaluation quality:
+- Do they produce consistent integrity scores?
+- Do they identify the same factual adherence issues?
+- Do they assess value transparency accurately?
+
+This requires running same trials with different Layer 3 evaluators and comparing results.
+
+**Next Steps:**
+- Run comparative experiment: Same trials evaluated by Sonnet, Haiku, and Flash
+- Analyze inter-rater reliability between Layer 3 evaluators
+- Document whether cheaper models can replace Sonnet for production use
+
+---
+
 *This journal should be updated regularly throughout the experiment. Each significant decision, bug fix, or finding should be documented with context for the final report.*

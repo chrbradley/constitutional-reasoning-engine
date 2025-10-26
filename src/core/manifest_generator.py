@@ -33,6 +33,9 @@ def generate_manifest(experiment_manager: ExperimentManager) -> str:
     lines.append("Scenarios:      " + ", ".join(state.scenarios))
     lines.append("Constitutions:  " + ", ".join(state.constitutions))
     lines.append("Models:         " + ", ".join(state.models))
+    if state.command_line:
+        lines.append("")
+        lines.append("Command:        " + state.command_line)
     lines.append("")
     lines.append("=" * 80)
     lines.append("TEST DETAILS")

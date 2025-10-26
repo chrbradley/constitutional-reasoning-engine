@@ -64,6 +64,8 @@ class ExperimentState:
     scenarios: List[str]
     constitutions: List[str]
     models: List[str]
+    layer3_evaluators: List[str]
+    command_line: Optional[str] = None  # Command used to start experiment
 
 
 class ExperimentManager:
@@ -136,7 +138,8 @@ class ExperimentManager:
         self,
         scenarios: List[Scenario],
         constitutions: List[Constitution],
-        models: List[Dict]
+        models: List[Dict],
+        layer3_evaluators: List[str]
     ) -> str:
         """Create a new experiment or resume existing one"""
 
@@ -172,6 +175,7 @@ class ExperimentManager:
             trial_definitions = self._generate_trial_combinations(scenarios, constitutions, models)
 
             # Initialize experiment state
+            import sys
             self.experiment_state = ExperimentState(
                 experiment_id=experiment_id,
                 created_at=datetime.now().isoformat(),
@@ -183,7 +187,9 @@ class ExperimentManager:
                 pending_count=len(trial_definitions),
                 scenarios=[s.id for s in scenarios],
                 constitutions=[c.id for c in constitutions],
-                models=[m['id'] for m in models]
+                models=[m['id'] for m in models],
+                layer3_evaluators=layer3_evaluators,
+                command_line=" ".join(sys.argv)
             )
 
             # Initialize trial registry

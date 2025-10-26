@@ -120,6 +120,7 @@ async def run_single_test(
     constitution_data: Dict,
     model_data: Dict,
     experiment_manager: ExperimentManager,
+    layer3_evaluator: str,
     trial_num: int = 0,
     total_trials: int = 0
 ) -> bool:
@@ -295,7 +296,7 @@ async def run_single_test(
             print(f"❌ {test_id} - {error_msg}")
             return False
 
-        # Layer 3: Integrity evaluation (using Claude for consistency)
+        # Layer 3: Integrity evaluation
         try:
             eval_prompt = build_integrity_evaluation_prompt(
                 established_facts=facts['establishedFacts'],
@@ -303,25 +304,54 @@ async def run_single_test(
                 constitutional_response=response_data
             )
 
+            # Try with increasing max_tokens if truncated
+            truncation_detector = TruncationDetector()
+            max_tokens_integrity = 4000  # Start with baseline (evaluations are verbose)
+            max_retries = 3
+
             # Capture Layer 3 timing
             layer3_start = time.time()
 
-            integrity_response = await get_model_response(
-                model_id="claude-sonnet-4-5",
-                prompt=eval_prompt,
-                temperature=0.3,
-                max_tokens=2000
-            )
+            for attempt in range(max_retries):
+                integrity_response = await get_model_response(
+                    model_id=layer3_evaluator,
+                    prompt=eval_prompt,
+                    temperature=0.3,
+                    max_tokens=max_tokens_integrity
+                )
 
-            # Calculate Layer 3 time
-            layer3_time = int((time.time() - layer3_start) * 1000)
+                # Parse integrity response with graceful fallback
+                integrity_data, integrity_status = parser.parse_integrity_response(integrity_response, f"{test_id}_integrity")
 
-            # Parse integrity response with graceful fallback
-            integrity_data, integrity_status = parser.parse_integrity_response(integrity_response, f"{test_id}_integrity")
+                # Check if truncated
+                is_truncated, trunc_reason = truncation_detector.is_truncated(
+                    integrity_response,
+                    parse_success=(integrity_status == ParseStatus.SUCCESS)
+                )
+
+                if not is_truncated or integrity_status == ParseStatus.SUCCESS:
+                    # Success or not truncated - keep the result
+                    break
+
+                # Truncated - retry with higher limit
+                if attempt < max_retries - 1:
+                    new_limit = truncation_detector.get_next_token_limit(max_tokens_integrity)
+                    print(f"⚠️  Layer 3 response truncated ({trunc_reason}), retrying with max_tokens={new_limit}")
+                    max_tokens_integrity = new_limit
+                else:
+                    print(f"⚠️  Max retries reached for Layer 3, using partial response")
+
             if integrity_status == ParseStatus.MANUAL_REVIEW:
                 print(f"⚠️  Integrity response parsing needs manual review for {test_id}")
             elif integrity_status == ParseStatus.PARTIAL_SUCCESS:
                 print(f"⚠️  Partial integrity response extraction for {test_id}")
+
+            # Calculate Layer 3 time
+            layer3_time = int((time.time() - layer3_start) * 1000)
+
+            # Log the final max_tokens used for this evaluator (only if needed)
+            if max_tokens_integrity > 4000:
+                print(f"📊 Layer 3 ({layer3_evaluator}) required {max_tokens_integrity} tokens for complete response")
 
             # Calculate overall score (handle manual review cases)
             if integrity_status == ParseStatus.MANUAL_REVIEW:
@@ -343,12 +373,13 @@ async def run_single_test(
             layer3_data = {
                 "testId": test_id,
                 "timestamp": datetime.now().isoformat(),
-                "evaluationModel": "claude-sonnet-4-5",
+                "evaluationModel": layer3_evaluator,
                 "integrityEvaluation": integrity_data,
-                "parseStatus": integrity_status.value
+                "parseStatus": integrity_status.value,
+                "maxTokensUsed": max_tokens_integrity
             }
             experiment_manager.save_layer_result(test_id, 3, layer3_data)
-            experiment_manager.update_layer_status(test_id, 3, "completed", "claude-sonnet-4-5")
+            experiment_manager.update_layer_status(test_id, 3, "completed", layer3_evaluator)
 
             # Compile complete result
             result = {
@@ -371,8 +402,8 @@ async def run_single_test(
             return True
 
         except Exception as e:
-            error_msg = f"Layer 3 (integrity evaluation with claude-sonnet-4-5) failed: {str(e)}"
-            experiment_manager.update_layer_status(test_id, 3, "failed", "claude-sonnet-4-5", error_msg)
+            error_msg = f"Layer 3 (integrity evaluation with {layer3_evaluator}) failed: {str(e)}"
+            experiment_manager.update_layer_status(test_id, 3, "failed", layer3_evaluator, error_msg)
             experiment_manager.mark_test_failed(test_id, error_msg)
             print(f"❌ {test_id} - {error_msg}")
             return False
@@ -390,6 +421,7 @@ async def run_batch(
     constitutions_dict: Dict,
     models_dict: Dict,
     experiment_manager: ExperimentManager,
+    layer3_evaluator: str,
     batch_num: int,
     total_batches: int,
     total_trials: int = 0
@@ -416,7 +448,7 @@ async def run_batch(
         constitution = constitutions_dict[test_def.constitution_id]
         model = models_dict[test_def.model_id]
 
-        task = run_single_test(test_def, scenario, constitution, model, experiment_manager, trial_counter, total_trials)
+        task = run_single_test(test_def, scenario, constitution, model, experiment_manager, layer3_evaluator, trial_counter, total_trials)
         tasks.append(task)
         trial_counter += 1
     
@@ -658,7 +690,7 @@ Examples:
         # Force new experiment
         print("🆕 Starting new experiment (--new flag)")
         experiment_manager = ExperimentManager()
-        experiment_id = experiment_manager.create_experiment(scenarios, constitutions, layer2_models)
+        experiment_id = experiment_manager.create_experiment(scenarios, constitutions, layer2_models, layer3_evaluators)
 
     else:
         # Smart mode: check for incomplete experiment
@@ -673,7 +705,7 @@ Examples:
                 # Old experiment is complete, start new one
                 print(f"✅ Previous experiment {experiment_manager.experiment_id} is complete")
                 print("🆕 Starting new experiment")
-                experiment_id = experiment_manager.create_experiment(scenarios, constitutions, layer2_models)
+                experiment_id = experiment_manager.create_experiment(scenarios, constitutions, layer2_models, layer3_evaluators)
             elif pending_count > 0:
                 # Resume incomplete experiment
                 print(f"📂 Resuming incomplete experiment: {experiment_manager.experiment_id}")
@@ -683,11 +715,11 @@ Examples:
                 # Edge case: in_progress but no pending (all failed?)
                 print(f"⚠️  Experiment {experiment_manager.experiment_id} has no pending tests")
                 print("🆕 Starting new experiment")
-                experiment_id = experiment_manager.create_experiment(scenarios, constitutions, layer2_models)
+                experiment_id = experiment_manager.create_experiment(scenarios, constitutions, layer2_models, layer3_evaluators)
         else:
             # No current experiment, start new one
             print("🆕 No active experiment found, starting new one")
-            experiment_id = experiment_manager.create_experiment(scenarios, constitutions, layer2_models)
+            experiment_id = experiment_manager.create_experiment(scenarios, constitutions, layer2_models, layer3_evaluators)
     
     # Get pending and retryable trials
     pending_trials = experiment_manager.get_pending_trials()
@@ -724,7 +756,7 @@ Examples:
             # Run batch
             batch_results = await run_batch(
                 batch, scenarios_dict, constitutions_dict, models_dict,
-                experiment_manager, i, len(batches), len(all_trials)
+                experiment_manager, layer3_evaluators[0], i, len(batches), len(all_trials)
             )
             
             total_successful += batch_results["successful"]
