@@ -135,6 +135,54 @@ Incrementally scale testing:
 
 ---
 
+### Entry 33: Clean Up Obsolete Test Files and Scripts
+**Time:** Evening (continued)
+**Category:** Cleanup / Maintenance
+**Summary:** Removed all obsolete test files and debugging scripts from old pipeline iterations
+
+**Files Deleted:**
+1. **scripts/** (2 files):
+   - `compare_layer3_haiku.py` - Hardcoded to deleted experiment
+   - `compare_layer3_flash.py` - Hardcoded to deleted experiment
+
+2. **tests/debug/** (11 files - entire directory):
+   - Llama debugging: `debug_llama.py`, `fix_llama_json.py`, `test_fixed_llama.py`
+   - Old pipeline tests: `minimal_test.py`, `quick_test.py`, `simple_test.py`
+   - Evaluator tests: `test_haiku_single.py`, `test_flash_single.py`
+   - State debugging: `fix_experiment_state.py`, `test_state_management.py`
+
+3. **tests/model_tests/** (4 files - entire directory):
+   - `test_gemini.py`, `test_llama.py`, `test_grok.py`, `test_deepseek.py`
+   - All used obsolete import paths and old constants
+
+4. **tests/integration/** (2 files - entire directory):
+   - `test_connectivity.py` - Old path references
+   - `test_batching.py` - Used `TestDefinition` instead of `TrialDefinition`
+
+5. **Root directory:**
+   - `experiment_run.log` - 317KB log from Oct 24
+   - `__pycache__/` - Regenerable cache
+
+**Rationale:**
+All deleted files had one or more of these issues:
+- Referenced non-existent paths (`experiments/src`)
+- Used old terminology (`TestDefinition`, `CONSTITUTIONS` constant)
+- Hardcoded to deleted experiments
+- One-off debugging scripts no longer needed
+- Superseded by production `src/runner.py` and `scripts/test_minimal.sh`
+
+**What Remains:**
+- `tests/__init__.py` - Package marker (keep)
+- `tests/unit/` - Placeholder for future unit tests (keep)
+- `scripts/test_minimal.sh` - NEW minimal test script (keep)
+
+**Impact:**
+- Cleaner codebase with only production-ready code
+- No confusion between old/new pipelines
+- All testing now via `src/runner.py` with CLI args or `scripts/test_minimal.sh`
+
+---
+
 ### Entry 31: Unified Data Loading Pattern - Migrate to JSON Configuration
 **Time:** Late afternoon
 **Category:** Architecture / Refactoring
