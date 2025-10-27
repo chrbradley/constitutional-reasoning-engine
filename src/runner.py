@@ -22,6 +22,7 @@ from src.core.experiment_state import ExperimentManager, TrialDefinition, TrialS
 from src.core.graceful_parser import GracefulJsonParser, ParseStatus
 from src.core.truncation_detector import TruncationDetector
 from src.core.manifest_generator import save_manifest
+from src.core.layer3_evaluator import evaluate_layer3
 
 # Phase 1 Configuration: Skip Layer 1 (facts from scenario JSON)
 SKIP_LAYER_1 = True
@@ -126,6 +127,7 @@ async def run_single_test(
 ) -> bool:
     """
     Run a single test through the 3-layer pipeline
+
     Returns True if successful, False if failed
     """
     import time
@@ -221,6 +223,19 @@ async def run_single_test(
                 established_facts=facts['establishedFacts']
             )
 
+            # Create audit callback for Layer 2 API calls
+            def layer2_audit_callback(request_params, response, error, http_status, retry_attempt):
+                experiment_manager.save_api_audit_log(
+                    trial_id=test_id,
+                    layer=2,
+                    model_id=model_data['id'],
+                    request_params=request_params,
+                    response=response,
+                    error=error,
+                    http_status=http_status,
+                    retry_attempt=retry_attempt
+                )
+
             # Try with increasing max_tokens if truncated
             truncation_detector = TruncationDetector()
             max_tokens_constitutional = 8000  # Start with baseline
@@ -229,6 +244,7 @@ async def run_single_test(
             # Capture Layer 2 timing
             layer2_start = time.time()
 
+            constitutional_response = None  # Initialize for error handling
             for attempt in range(max_retries):
                 constitutional_response = await get_model_response(
                     model_id=model_data['id'],
@@ -236,7 +252,8 @@ async def run_single_test(
                     system_prompt=constitution_data.system_prompt,
                     temperature=0.7,
                     max_tokens=max_tokens_constitutional,
-                    use_response_format=True  # Enable JSON mode for constitutional reasoning
+                    use_response_format=True,  # Enable JSON mode for constitutional reasoning
+                    audit_callback=layer2_audit_callback
                 )
 
                 # Parse constitutional response with graceful fallback
@@ -291,122 +308,76 @@ async def run_single_test(
 
         except Exception as e:
             error_msg = f"Layer 2 (constitutional reasoning with {model_data['id']}) failed: {str(e)}"
+
+            # Extract detailed error information
+            error_details = {
+                "error_type": type(e).__name__,
+                "error_message": str(e),
+                "timestamp": datetime.now().isoformat(),
+                "layer": 2,
+                "model_id": model_data['id']
+            }
+
+            # If exception has attached error_details from models.py, include them
+            if hasattr(e, 'error_details'):
+                error_details.update(e.error_details)
+
+            # Save error response for debugging
+            experiment_manager.save_error_response(test_id, 2, error_details)
+
+            # If we got a partial response before the error, save it too
+            if constitutional_response:
+                experiment_manager.save_raw_response(test_id, 2, constitutional_response)
+
             experiment_manager.update_layer_status(test_id, 2, "failed", model_data['id'], error_msg)
             experiment_manager.mark_test_failed(test_id, error_msg)
             print(f"❌ {test_id} - {error_msg}")
             return False
 
         # Layer 3: Integrity evaluation
-        try:
-            eval_prompt = build_integrity_evaluation_prompt(
-                established_facts=facts['establishedFacts'],
-                ambiguous_elements=facts['ambiguousElements'],
-                constitutional_response=response_data
-            )
+        eval_prompt = build_integrity_evaluation_prompt(
+            established_facts=facts['establishedFacts'],
+            ambiguous_elements=facts['ambiguousElements'],
+            constitutional_response=response_data
+        )
 
-            # Try with increasing max_tokens if truncated
-            truncation_detector = TruncationDetector()
-            max_tokens_integrity = 4000  # Start with baseline (evaluations are verbose)
-            max_retries = 3
+        # Call shared evaluation function
+        eval_result = await evaluate_layer3(
+            trial_id=test_id,
+            eval_prompt=eval_prompt,
+            evaluator_id=layer3_evaluator,
+            is_primary=True,
+            experiment_manager=experiment_manager,
+            parser=parser
+        )
 
-            # Capture Layer 3 timing
-            layer3_start = time.time()
-
-            for attempt in range(max_retries):
-                integrity_response = await get_model_response(
-                    model_id=layer3_evaluator,
-                    prompt=eval_prompt,
-                    temperature=0.3,
-                    max_tokens=max_tokens_integrity
-                )
-
-                # Parse integrity response with graceful fallback
-                integrity_data, integrity_status = parser.parse_integrity_response(integrity_response, f"{test_id}_integrity")
-
-                # Check if truncated
-                is_truncated, trunc_reason = truncation_detector.is_truncated(
-                    integrity_response,
-                    parse_success=(integrity_status == ParseStatus.SUCCESS)
-                )
-
-                if not is_truncated or integrity_status == ParseStatus.SUCCESS:
-                    # Success or not truncated - keep the result
-                    break
-
-                # Truncated - retry with higher limit
-                if attempt < max_retries - 1:
-                    new_limit = truncation_detector.get_next_token_limit(max_tokens_integrity)
-                    print(f"⚠️  Layer 3 response truncated ({trunc_reason}), retrying with max_tokens={new_limit}")
-                    max_tokens_integrity = new_limit
-                else:
-                    print(f"⚠️  Max retries reached for Layer 3, using partial response")
-
-            if integrity_status == ParseStatus.MANUAL_REVIEW:
-                print(f"⚠️  Integrity response parsing needs manual review for {test_id}")
-            elif integrity_status == ParseStatus.PARTIAL_SUCCESS:
-                print(f"⚠️  Partial integrity response extraction for {test_id}")
-
-            # Calculate Layer 3 time
-            layer3_time = int((time.time() - layer3_start) * 1000)
-
-            # Log the final max_tokens used for this evaluator (only if needed)
-            if max_tokens_integrity > 4000:
-                print(f"📊 Layer 3 ({layer3_evaluator}) required {max_tokens_integrity} tokens for complete response")
-
-            # Calculate overall score (handle manual review cases)
-            if integrity_status == ParseStatus.MANUAL_REVIEW:
-                # Use -1 scores for manual review (already set in fallback)
-                overall_score = -1
-            else:
-                # Calculate normal score
-                overall_score = (
-                    integrity_data['factualAdherence']['score'] +
-                    integrity_data['valueTransparency']['score'] +
-                    integrity_data['logicalCoherence']['score']
-                ) / 3
-                integrity_data['overallScore'] = round(overall_score)
-
-            # Save raw response BEFORE parsing
-            experiment_manager.save_raw_response(test_id, 3, integrity_response)
-
-            # Save Layer 3 output (integrity evaluation)
-            layer3_data = {
-                "testId": test_id,
-                "timestamp": datetime.now().isoformat(),
-                "evaluationModel": layer3_evaluator,
-                "integrityEvaluation": integrity_data,
-                "parseStatus": integrity_status.value,
-                "maxTokensUsed": max_tokens_integrity
-            }
-            experiment_manager.save_layer_result(test_id, 3, layer3_data)
-            experiment_manager.update_layer_status(test_id, 3, "completed", layer3_evaluator)
-
-            # Compile complete result
-            result = {
-                "testId": test_id,
-                "timestamp": datetime.now().isoformat(),
-                "scenario": scenario_data.model_dump(),
-                "constitution": constitution_data.id,
-                "model": model_data['id'],
-                "facts": facts,
-                "constitutionalResponse": response_data,
-                "integrityEvaluation": integrity_data
-            }
-
-            # Mark as completed
-            experiment_manager.mark_test_completed(test_id, result)
-
-            # Compact one-line output
-            trial_label = f"[{trial_num}/{total_trials}]" if trial_num > 0 else ""
-            print(f"✓ {trial_label} {model_data['name']} | L2: {layer2_time/1000:.1f}s L3: {layer3_time/1000:.1f}s | Score: {integrity_data['overallScore']}/100")
-            return True
-
-        except Exception as e:
-            error_msg = f"Layer 3 (integrity evaluation with {layer3_evaluator}) failed: {str(e)}"
-            experiment_manager.update_layer_status(test_id, 3, "failed", layer3_evaluator, error_msg)
-            experiment_manager.mark_test_failed(test_id, error_msg)
-            print(f"❌ {test_id} - {error_msg}")
+        if not eval_result["success"]:
+            # Layer 3 failed
+            experiment_manager.mark_test_failed(test_id, eval_result["error"])
             return False
+
+        # Layer 3 succeeded - compile complete result
+        integrity_data = eval_result["integrity_data"]
+        layer3_time = eval_result["elapsed_ms"]
+
+        result = {
+            "testId": test_id,
+            "timestamp": datetime.now().isoformat(),
+            "scenario": scenario_data.model_dump(),
+            "constitution": constitution_data.id,
+            "model": model_data['id'],
+            "facts": facts,
+            "constitutionalResponse": response_data,
+            "integrityEvaluation": integrity_data
+        }
+
+        # Mark as completed
+        experiment_manager.mark_test_completed(test_id, result)
+
+        # Compact one-line output
+        trial_label = f"[{trial_num}/{total_trials}]" if trial_num > 0 else ""
+        print(f"✓ {trial_label} {model_data['name']} | L2: {layer2_time/1000:.1f}s L3: {layer3_time/1000:.1f}s | Score: {integrity_data['overallScore']}/100")
+        return True
         
     except Exception as e:
         error_msg = f"{type(e).__name__}: {str(e)}"

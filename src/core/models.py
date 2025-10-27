@@ -84,7 +84,8 @@ async def get_model_response(
     max_tokens: int = 2000,
     timeout: int = 60,
     max_retries: int = 3,
-    use_response_format: bool = False
+    use_response_format: bool = False,
+    audit_callback: Optional[callable] = None
 ) -> str:
     """
     Unified interface for calling any LLM via LiteLLM with retry logic
@@ -98,6 +99,8 @@ async def get_model_response(
         timeout: Request timeout in seconds
         max_retries: Maximum number of retry attempts for rate limits (default: 3)
         use_response_format: Enable JSON mode via response_format parameter (default: False)
+        audit_callback: Optional callback function(request_params, response, error, attempt)
+                       called for each API attempt (success or failure)
 
     Returns:
         Model response as string
@@ -151,12 +154,38 @@ async def get_model_response(
             if use_response_format:
                 api_params["response_format"] = {"type": "json_object"}
 
+            # Prepare request metadata for audit
+            request_metadata = {
+                "model_id": model_id,
+                "api_model": model_config["api_model"],
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "timeout": timeout,
+                "use_response_format": use_response_format,
+                "prompt_length": len(prompt),
+                "has_system_prompt": system_prompt is not None
+            }
+
             # Make API call
             response = await acompletion(**api_params)
 
             response_time_ms = int((time.time() - start_time) * 1000)
 
             content = response.choices[0].message.content
+
+            # Call audit callback on success
+            if audit_callback:
+                try:
+                    audit_callback(
+                        request_params=request_metadata,
+                        response=content,
+                        error=None,
+                        http_status=200,  # Assume success
+                        retry_attempt=attempt + 1
+                    )
+                except Exception as audit_error:
+                    # Don't fail the API call if audit fails
+                    print(f"Warning: Audit callback failed: {audit_error}")
 
             # Suppress verbose per-API-call logging (runner shows trial summaries)
             # print(f"✓ {model_id}: {response_time_ms}ms")
@@ -166,6 +195,47 @@ async def get_model_response(
         except Exception as e:
             response_time_ms = int((time.time() - start_time) * 1000)
             error_str = str(e).lower()
+
+            # Extract detailed error information
+            error_details = {
+                "exception_type": type(e).__name__,
+                "exception_module": type(e).__module__,
+                "error_message": str(e),
+                "response_time_ms": response_time_ms,
+                "attempt": attempt + 1
+            }
+
+            # Try to extract response body from exception
+            raw_response = None
+            http_status = None
+            if hasattr(e, 'response'):
+                try:
+                    raw_response = str(e.response)
+                    if hasattr(e.response, 'status_code'):
+                        http_status = e.response.status_code
+                except:
+                    pass
+
+            # Try to get status code from litellm exceptions
+            if hasattr(e, 'status_code'):
+                http_status = e.status_code
+
+            error_details["raw_response"] = raw_response
+            error_details["http_status"] = http_status
+
+            # Call audit callback on error
+            if audit_callback:
+                try:
+                    audit_callback(
+                        request_params=request_metadata,
+                        response=raw_response,
+                        error=e,
+                        http_status=http_status,
+                        retry_attempt=attempt + 1
+                    )
+                except Exception as audit_error:
+                    # Don't fail the API call if audit fails
+                    print(f"Warning: Audit callback failed: {audit_error}")
 
             # Check if this is a rate limit error
             is_rate_limit = any(phrase in error_str for phrase in [
@@ -185,7 +255,11 @@ async def get_model_response(
             else:
                 # Not a rate limit/timeout, or out of retries
                 print(f"✗ {model_id}: {response_time_ms}ms - Error: {str(e)}")
-                raise Exception(f"Error calling {model_id}: {str(e)}")
+
+                # Attach error details to exception for caller to access
+                enhanced_error = Exception(f"Error calling {model_id}: {str(e)}")
+                enhanced_error.error_details = error_details
+                raise enhanced_error
 
 
 async def test_model_connectivity(model_id: str) -> Dict[str, Any]:

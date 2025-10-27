@@ -393,6 +393,82 @@ class ExperimentManager:
             result_file = parsed_dir / f"{trial_id}.json"
             with open(result_file, 'w') as f:
                 json.dump(layer_data, f, indent=2)
+
+    def save_evaluator_response(
+        self,
+        trial_id: str,
+        evaluator_id: str,
+        is_primary: bool,
+        raw_content: str,
+        parsed_data: Dict
+    ) -> None:
+        """
+        Save Layer 3 evaluator response (supports primary + re-evaluation runs)
+
+        Args:
+            trial_id: Unique trial identifier
+            evaluator_id: Model ID of the evaluator
+            is_primary: True for primary evaluator, False for re-evaluation runs
+            raw_content: Raw API response
+            parsed_data: Parsed evaluation data
+
+        Directory structure:
+            - Primary (is_primary=True): layer3/raw/, layer3/parsed/
+            - Re-evaluation (is_primary=False): layer3/{evaluator_id}/raw/, layer3/{evaluator_id}/parsed/
+        """
+        if is_primary:
+            # Primary evaluator uses standard directories
+            raw_dir = self.layer3_dir / "raw"
+            parsed_dir = self.layer3_dir / "parsed"
+        else:
+            # Re-evaluation runs get their own subdirectories
+            evaluator_subdir = self.layer3_dir / evaluator_id
+            raw_dir = evaluator_subdir / "raw"
+            parsed_dir = evaluator_subdir / "parsed"
+
+            # Create directories if they don't exist
+            raw_dir.mkdir(parents=True, exist_ok=True)
+            parsed_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save raw response
+        raw_file = raw_dir / f"{trial_id}.txt"
+        with open(raw_file, 'w') as f:
+            f.write(raw_content)
+
+        # Save parsed data
+        parsed_file = parsed_dir / f"{trial_id}.json"
+        with open(parsed_file, 'w') as f:
+            json.dump(parsed_data, f, indent=2)
+
+    def save_evaluator_error(
+        self,
+        trial_id: str,
+        evaluator_id: str,
+        is_primary: bool,
+        error_details: Dict
+    ) -> None:
+        """
+        Save Layer 3 evaluator error (supports primary + re-evaluation runs)
+
+        Args:
+            trial_id: Unique trial identifier
+            evaluator_id: Model ID of the evaluator
+            is_primary: True for primary evaluator, False for re-evaluation runs
+            error_details: Error information dict
+        """
+        if is_primary:
+            # Primary evaluator uses standard directory
+            raw_dir = self.layer3_dir / "raw"
+        else:
+            # Re-evaluation runs get their own subdirectories
+            evaluator_subdir = self.layer3_dir / evaluator_id
+            raw_dir = evaluator_subdir / "raw"
+            raw_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save error details
+        error_file = raw_dir / f"{trial_id}.error.json"
+        with open(error_file, 'w') as f:
+            json.dump(error_details, f, indent=2)
     
     def mark_test_failed(self, trial_id: str, error_message: str) -> None:
         """Mark a trial as failed"""
@@ -413,7 +489,106 @@ class ExperimentManager:
 
             self._save_state()
             print(f"❌ Failed: {trial_id} (retry {test_result.retry_count})")
-    
+
+    def save_error_response(self, trial_id: str, layer: int, error_details: Dict) -> None:
+        """
+        Save detailed error information when an API call fails
+
+        Args:
+            trial_id: Unique trial identifier
+            layer: Layer number (1, 2, or 3)
+            error_details: Dict containing:
+                - error_type: Exception class name
+                - error_message: Exception message
+                - raw_response: Raw response body (if any)
+                - http_status: HTTP status code (if available)
+                - timestamp: When the error occurred
+                - request_params: Request parameters sent to API
+        """
+        layer_dirs = {
+            1: self.layer1_dir,
+            2: self.layer2_dir,
+            3: self.layer3_dir
+        }
+        if layer not in layer_dirs:
+            raise ValueError(f"Invalid layer: {layer}. Must be 1, 2, or 3.")
+
+        layer_dir = layer_dirs[layer]
+        if layer_dir:
+            # Save to raw directory with .error.json extension
+            raw_dir = layer_dir / "raw"
+            error_file = raw_dir / f"{trial_id}.error.json"
+
+            with open(error_file, 'w') as f:
+                json.dump(error_details, f, indent=2)
+
+    def save_api_audit_log(
+        self,
+        trial_id: str,
+        layer: int,
+        model_id: str,
+        request_params: Dict,
+        response: Optional[str] = None,
+        error: Optional[Exception] = None,
+        http_status: Optional[int] = None,
+        retry_attempt: int = 1
+    ) -> None:
+        """
+        Save comprehensive audit log for every API call (success or failure)
+
+        This creates a detailed record of all API interactions for debugging and analysis.
+
+        Args:
+            trial_id: Unique trial identifier
+            layer: Layer number (1, 2, or 3)
+            model_id: Model being called
+            request_params: Dict with temperature, max_tokens, prompt_length, etc.
+            response: Raw response body (if successful)
+            error: Exception object (if failed)
+            http_status: HTTP status code
+            retry_attempt: Which retry attempt this was (1 = first attempt)
+        """
+        # Create debug directory structure
+        exp_dir = self.base_dir / "experiments" / self.experiment_id
+        debug_dir = exp_dir / "debug" / "api_calls"
+        debug_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create audit log entry
+        audit_entry = {
+            "trial_id": trial_id,
+            "layer": layer,
+            "model_id": model_id,
+            "retry_attempt": retry_attempt,
+            "timestamp": datetime.now().isoformat(),
+            "request": request_params,
+            "http_status": http_status,
+            "success": error is None
+        }
+
+        # Add response or error details
+        if error:
+            audit_entry["error"] = {
+                "type": type(error).__name__,
+                "message": str(error),
+                "module": type(error).__module__
+            }
+            # Try to extract additional error details
+            if hasattr(error, 'response'):
+                try:
+                    audit_entry["error"]["response_body"] = str(error.response)
+                except:
+                    pass
+        else:
+            audit_entry["response_length"] = len(response) if response else 0
+            # Don't store full response here (it's in raw/), just metadata
+
+        # Save with timestamp to handle multiple retries
+        timestamp_suffix = datetime.now().strftime('%H%M%S_%f')
+        audit_file = debug_dir / f"{trial_id}_L{layer}_attempt{retry_attempt}_{timestamp_suffix}.json"
+
+        with open(audit_file, 'w') as f:
+            json.dump(audit_entry, f, indent=2)
+
     def test_exists(self, trial_id: str) -> bool:
         """Check if a trial has been completed"""
         return (trial_id in self.trial_registry and
