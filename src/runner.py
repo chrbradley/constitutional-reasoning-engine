@@ -121,7 +121,7 @@ async def run_single_test(
     constitution_data: Dict,
     model_data: Dict,
     experiment_manager: ExperimentManager,
-    layer3_evaluator: str,
+    layer3_evaluators: List[str],
     trial_num: int = 0,
     total_trials: int = 0
 ) -> bool:
@@ -343,31 +343,86 @@ async def run_single_test(
             print(f"❌ {test_id} - {error_msg}")
             return False
 
-        # Layer 3: Integrity evaluation
+        # Layer 3: Integrity evaluation with ALL evaluators
         eval_prompt = build_integrity_evaluation_prompt(
             established_facts=facts['establishedFacts'],
             ambiguous_elements=facts['ambiguousElements'],
             constitutional_response=response_data
         )
 
-        # Call shared evaluation function
-        eval_result = await evaluate_layer3(
-            trial_id=test_id,
-            eval_prompt=eval_prompt,
-            evaluator_id=layer3_evaluator,
-            is_primary=True,
-            experiment_manager=experiment_manager,
-            parser=parser
-        )
+        # Evaluate with all Layer 3 evaluators - incremental writes for fault tolerance
+        primary_eval_result = None
+        evaluator_failures = []
+        layer3_file_path = experiment_manager.layer3_dir / f"{test_id}.json"
 
-        if not eval_result["success"]:
-            # Layer 3 failed
-            experiment_manager.mark_test_failed(test_id, eval_result["error"])
-            return False
+        for idx, evaluator_id in enumerate(layer3_evaluators):
+            is_primary = (idx == 0)  # First evaluator is primary
 
-        # Layer 3 succeeded - compile complete result
-        integrity_data = eval_result["integrity_data"]
-        layer3_time = eval_result["elapsed_ms"]
+            eval_result = await evaluate_layer3(
+                trial_id=test_id,
+                eval_prompt=eval_prompt,
+                evaluator_id=evaluator_id,
+                is_primary=is_primary,
+                experiment_manager=experiment_manager,
+                parser=parser,
+                save_result=False  # We handle saving with incremental merge
+            )
+
+            if not eval_result["success"]:
+                # Log failure but continue with other evaluators
+                evaluator_failures.append(evaluator_id)
+                if is_primary:
+                    # Primary evaluator failed - trial fails
+                    experiment_manager.mark_test_failed(test_id, eval_result["error"])
+                    return False
+            else:
+                # Incremental write: Read existing Layer3 file if it exists
+                if layer3_file_path.exists():
+                    with open(layer3_file_path, 'r') as f:
+                        merged_layer3 = json.load(f)
+                else:
+                    # First evaluator - create initial structure
+                    merged_layer3 = {
+                        "trial_id": test_id,
+                        "layer": 3,
+                        "scenario_id": scenario_data.id,
+                        "model": model_data['id'],
+                        "constitution": constitution_data.id,
+                        "evaluations": {}
+                    }
+
+                # Add this evaluator's result to the merged structure
+                merged_layer3["evaluations"][evaluator_id] = {
+                    "timestamp": eval_result["layer3_data"]["timestamp"],
+                    "status": "completed",
+                    "evaluation_strategy": "single_prompt_likert",
+                    "prompt_sent": eval_result["layer3_data"]["prompt_sent"],
+                    "response_raw": eval_result["layer3_data"]["response_raw"],
+                    "response_parsed": eval_result["integrity_data"],
+                    "parsing": eval_result["layer3_data"]["parsing"],
+                    "tokens_used": eval_result["max_tokens_used"],
+                    "latency_ms": eval_result["elapsed_ms"]
+                }
+
+                # Write back immediately (fault tolerance - partial results preserved)
+                experiment_manager.save_layer_result(test_id, 3, merged_layer3)
+
+                if is_primary:
+                    # Save primary evaluator result for final output
+                    primary_eval_result = eval_result
+                    # Update trial status after primary completes
+                    experiment_manager.update_layer_status(test_id, 3, "completed", evaluator_id)
+
+            # Brief delay between evaluators to avoid rate limits
+            if idx < len(layer3_evaluators) - 1:
+                await asyncio.sleep(2)
+
+        if evaluator_failures:
+            print(f"⚠️  Evaluators failed for {test_id}: {', '.join(evaluator_failures)}")
+
+        # Use primary evaluator's result for trial completion
+        integrity_data = primary_eval_result["integrity_data"]
+        layer3_time = primary_eval_result["elapsed_ms"]
 
         result = {
             "testId": test_id,
@@ -401,7 +456,7 @@ async def run_batch(
     constitutions_dict: Dict,
     models_dict: Dict,
     experiment_manager: ExperimentManager,
-    layer3_evaluator: str,
+    layer3_evaluators: List[str],
     batch_num: int,
     total_batches: int,
     total_trials: int = 0
@@ -428,7 +483,7 @@ async def run_batch(
         constitution = constitutions_dict[test_def.constitution_id]
         model = models_dict[test_def.model_id]
 
-        task = run_single_test(test_def, scenario, constitution, model, experiment_manager, layer3_evaluator, trial_counter, total_trials)
+        task = run_single_test(test_def, scenario, constitution, model, experiment_manager, layer3_evaluators, trial_counter, total_trials)
         tasks.append(task)
         trial_counter += 1
     
@@ -639,8 +694,12 @@ Examples:
             print(f"    Available Layer 3 evaluators: {', '.join(valid_layer3_ids)}")
             sys.exit(1)
     else:
-        # Use default Layer 3 evaluator
-        layer3_evaluators = [get_default_layer3_evaluator(models_data['all'])]
+        # Use ALL models with can_layer3=true
+        layer3_evaluators = [
+            model['id'] for model in models_data['all']
+            if model.get('can_layer3', False)
+        ]
+        print(f"  Loading {len(layer3_evaluators)} Layer3 evaluators from models.json")
 
     print(f"\nConfiguration:")
     print(f"  Scenarios: {len(scenarios)} ({', '.join(s.id for s in scenarios[:3])}{'...' if len(scenarios) > 3 else ''})")
@@ -736,7 +795,7 @@ Examples:
             # Run batch
             batch_results = await run_batch(
                 batch, scenarios_dict, constitutions_dict, models_dict,
-                experiment_manager, layer3_evaluators[0], i, len(batches), len(all_trials)
+                experiment_manager, layer3_evaluators, i, len(batches), len(all_trials)
             )
             
             total_successful += batch_results["successful"]

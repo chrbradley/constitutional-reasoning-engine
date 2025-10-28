@@ -21,7 +21,8 @@ async def evaluate_layer3(
     evaluator_id: str,
     is_primary: bool,
     experiment_manager: ExperimentManager,
-    parser: GracefulJsonParser
+    parser: GracefulJsonParser,
+    save_result: bool = True
 ) -> Dict[str, Any]:
     """
     Run Layer 3 integrity evaluation on a trial
@@ -34,11 +35,13 @@ async def evaluate_layer3(
                    If False, saves to layer3/{evaluator_id}/raw/ and layer3/{evaluator_id}/parsed/
         experiment_manager: ExperimentManager instance
         parser: GracefulJsonParser instance
+        save_result: If True, saves result immediately. If False, returns layer3_data for caller to save
 
     Returns:
         {
             "success": bool,
             "integrity_data": dict or None,
+            "layer3_data": dict (full evaluation data, only if save_result=False),
             "error": str or None,
             "elapsed_ms": int,
             "max_tokens_used": int
@@ -162,22 +165,24 @@ async def evaluate_layer3(
             "integrityEvaluation": integrity_data  # Keep for backward compatibility
         }
 
-        # Use evaluator-aware save method
-        experiment_manager.save_evaluator_response(
-            trial_id=trial_id,
-            evaluator_id=evaluator_id,
-            is_primary=is_primary,
-            raw_content=integrity_response,
-            parsed_data=layer3_data
-        )
+        # Save if requested (default behavior for backward compatibility)
+        if save_result:
+            experiment_manager.save_evaluator_response(
+                trial_id=trial_id,
+                evaluator_id=evaluator_id,
+                is_primary=is_primary,
+                raw_content=integrity_response,
+                parsed_data=layer3_data
+            )
 
-        # Only update trial status for primary evaluator
-        if is_primary:
-            experiment_manager.update_layer_status(trial_id, 3, "completed", evaluator_id)
+            # Only update trial status for primary evaluator
+            if is_primary:
+                experiment_manager.update_layer_status(trial_id, 3, "completed", evaluator_id)
 
         return {
             "success": True,
             "integrity_data": integrity_data,
+            "layer3_data": layer3_data,  # Include full data for caller to use
             "error": None,
             "elapsed_ms": elapsed_ms,
             "max_tokens_used": max_tokens_integrity
@@ -199,23 +204,25 @@ async def evaluate_layer3(
         if hasattr(e, 'error_details'):
             error_details.update(e.error_details)
 
-        # Save error using evaluator-aware method
-        experiment_manager.save_evaluator_error(
-            trial_id=trial_id,
-            evaluator_id=evaluator_id,
-            is_primary=is_primary,
-            error_details=error_details
-        )
+        # Save error if requested
+        if save_result:
+            experiment_manager.save_evaluator_error(
+                trial_id=trial_id,
+                evaluator_id=evaluator_id,
+                is_primary=is_primary,
+                error_details=error_details
+            )
 
-        # Only update trial status for primary evaluator
-        if is_primary:
-            experiment_manager.update_layer_status(trial_id, 3, "failed", evaluator_id, error_msg)
+            # Only update trial status for primary evaluator
+            if is_primary:
+                experiment_manager.update_layer_status(trial_id, 3, "failed", evaluator_id, error_msg)
 
         print(f"❌ {trial_id} - Evaluator {evaluator_id} failed: {error_msg}")
 
         return {
             "success": False,
             "integrity_data": None,
+            "layer3_data": None,
             "error": error_msg,
             "elapsed_ms": 0,
             "max_tokens_used": 0
