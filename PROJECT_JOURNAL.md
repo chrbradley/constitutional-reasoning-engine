@@ -3744,3 +3744,136 @@ Sample scores from trial_001, trial_010, trial_015:
 - Multi-evaluator support can be added later if needed
 - Consider removing empty data/raw/ directory in future (currently harmless safety net)
 
+---
+
+### Entry 49: Analysis Scripts CLI Argument Refactoring
+**Time:** Evening
+**Category:** Developer Experience / Code Quality
+**Summary:** Removed hardcoded experiment IDs from standalone analysis scripts, requiring explicit CLI arguments with graceful error handling. Prevents bugs where scripts fail with non-existent default experiment IDs.
+
+**Context:**
+Three standalone analysis scripts (stratified_analysis.py, outlier_detection.py, dimensionality.py) had hardcoded default experiment IDs in their `__init__` methods (e.g., `experiment_id: str = "exp_20251028_095612"`). This created a poor developer experience where:
+1. Scripts would fail silently if default experiment didn't exist
+2. Users had to modify source code to analyze different experiments
+3. No clear usage documentation
+4. Inconsistent with data_loader.py pattern (which already required explicit experiment_id)
+
+**Problem:**
+```python
+# OLD (BAD):
+def __init__(self, experiment_id: str = "exp_20251028_095612", ...):
+```
+If `exp_20251028_095612` doesn't exist, script fails with cryptic error.
+
+**Implementation:**
+
+**Phase 1: Remove Default Values**
+- Updated all three `__init__` methods to require experiment_id:
+```python
+# NEW (GOOD):
+def __init__(self, experiment_id: str, exclude_evaluators: Optional[List[str]] = None):
+```
+
+**Phase 2: Add CLI Argument Parsing**
+- Added argparse to each script's `__main__` section
+- Required positional argument: `experiment_id`
+- Optional flag: `--exclude-evaluators` (for filtering out specific evaluators like gemini-2-5-pro)
+- Consistent pattern across all three scripts
+
+**Phase 3: Error Handling**
+- Wrapped script execution in try/except
+- Catch `FileNotFoundError` and `ValueError` from data_loader
+- Print helpful error messages showing:
+  - What went wrong
+  - List of available experiments
+  - Usage example with correct syntax
+
+**Example Error Output:**
+```
+❌ Error: Experiment not found: exp_nonexistent
+
+Available experiments:
+  - exp_20251026_122247
+  - exp_20251026_193228
+  - exp_20251028_095612
+
+Usage: python3 analysis/stratified_analysis.py <experiment_id>
+Example: python3 analysis/stratified_analysis.py exp_20251028_095612
+```
+
+**Testing:**
+
+**Test 1: Missing Argument**
+```bash
+$ python3 analysis/stratified_analysis.py
+usage: stratified_analysis.py [-h] experiment_id
+stratified_analysis.py: error: the following arguments are required: experiment_id
+```
+✅ Argparse catches missing argument
+
+**Test 2: Invalid Experiment**
+```bash
+$ python3 analysis/stratified_analysis.py exp_nonexistent
+❌ Error: Experiment not found: exp_nonexistent
+[Shows available experiments + usage]
+```
+✅ Graceful error with helpful guidance
+
+**Test 3: Valid Experiment**
+```bash
+$ python3 analysis/outlier_detection.py exp_20251028_095612
+=== Outlier Detection (Ensemble Support) ===
+Experiment: exp_20251028_095612
+Loaded 89 evaluations from 5 evaluators
+...
+✅ Outlier detection complete!
+```
+✅ Works as expected
+
+**Test 4: With Optional Flag**
+```bash
+$ python3 analysis/dimensionality.py exp_20251028_095612 --exclude-evaluators gemini-2-5-pro
+=== Dimensionality Analysis (Ensemble Support) ===
+Experiment: exp_20251028_095612
+Excluded evaluators: ['gemini-2-5-pro']
+...
+✅ Dimensionality analysis complete!
+```
+✅ Optional flags work correctly
+
+**Scripts Updated:**
+1. ✅ `analysis/stratified_analysis.py` - Inter-evaluator correlation analysis
+2. ✅ `analysis/outlier_detection.py` - Unusual scoring pattern detection
+3. ✅ `analysis/dimensionality.py` - Dimension redundancy analysis (PCA)
+
+**Pattern Applied:**
+- All three scripts now follow same CLI pattern as data_loader.py
+- Consistent error messages and usage examples
+- Support for optional evaluator exclusion (useful for outlier testing)
+
+**Impact:**
+- ✅ Better developer experience - clear usage from command line
+- ✅ Prevents silent failures from non-existent default experiments
+- ✅ Self-documenting - argparse provides --help automatically
+- ✅ Consistent with project conventions (matches data_loader.py)
+- ✅ Ready for ad-hoc analysis without source code modification
+
+**Files Modified:**
+- `analysis/stratified_analysis.py` - Added argparse, removed default experiment_id
+- `analysis/outlier_detection.py` - Added argparse, removed default experiment_id
+- `analysis/dimensionality.py` - Added argparse, removed default experiment_id
+
+**Usage Examples:**
+```bash
+# Basic usage
+python3 analysis/stratified_analysis.py exp_20251028_095612
+
+# With evaluator exclusion
+python3 analysis/outlier_detection.py exp_20251028_095612 --exclude-evaluators gemini-2-5-pro
+
+# Get help
+python3 analysis/dimensionality.py --help
+```
+
+---
+

@@ -46,8 +46,8 @@ class ExperimentVisualizer:
     def visualize_experiment(self, experiment_id: str) -> None:
         """Generate all visualizations for a single experiment."""
 
-        # Load analysis results
-        analysis_path = self.analysis_dir / f"{experiment_id}_analysis.json"
+        # Load analysis results (from experiment's analysis directory)
+        analysis_path = Path("results/experiments") / experiment_id / "analysis" / f"{experiment_id}_analysis.json"
         if not analysis_path.exists():
             raise FileNotFoundError(f"Analysis file not found: {analysis_path}")
 
@@ -308,30 +308,28 @@ class ExperimentVisualizer:
         plt.close()
 
     def _plot_dimensional_breakdown(self, data: Dict[str, Any], output_dir: Path) -> None:
-        """Grouped bar chart: Factual adherence, value transparency, logical coherence by model."""
+        """Grouped bar chart: Epistemic integrity, value transparency by model."""
 
         models_data = data['by_model']['models']
 
         # Prepare data
         models = [self._format_model_name(m) for m in data['by_model']['ranking']]
-        factual = [models_data[m]['factual_adherence'] for m in data['by_model']['ranking']]
+        epistemic = [models_data[m]['epistemic_integrity'] for m in data['by_model']['ranking']]
         value = [models_data[m]['value_transparency'] for m in data['by_model']['ranking']]
-        logic = [models_data[m]['logical_coherence'] for m in data['by_model']['ranking']]
 
         # Create plot
         fig, ax = plt.subplots(figsize=(14, 6))
 
         x = np.arange(len(models))
-        width = 0.25
+        width = 0.35
 
-        bars1 = ax.bar(x - width, factual, width, label='Factual Adherence', color='steelblue')
-        bars2 = ax.bar(x, value, width, label='Value Transparency', color='seagreen')
-        bars3 = ax.bar(x + width, logic, width, label='Logical Coherence', color='coral')
+        bars1 = ax.bar(x - width/2, epistemic, width, label='Epistemic Integrity', color='steelblue')
+        bars2 = ax.bar(x + width/2, value, width, label='Value Transparency', color='seagreen')
 
         # Customize
         ax.set_xlabel('Model', fontweight='bold')
         ax.set_ylabel('Score', fontweight='bold')
-        ax.set_title('Integrity Dimensions by Model\n(Three-Dimensional Breakdown)',
+        ax.set_title('Integrity Dimensions by Model\n(Two-Dimensional Breakdown)',
                     fontsize=14, fontweight='bold')
         ax.set_xticks(x)
         ax.set_xticklabels(models, rotation=45, ha='right')
@@ -389,24 +387,22 @@ class ExperimentVisualizer:
 
         # Prepare data
         constitutions = [self._format_constitution_name(c) for c in data['by_constitution']['ranking']]
-        factual = [const_data[c]['factual_adherence'] for c in data['by_constitution']['ranking']]
+        epistemic = [const_data[c]['epistemic_integrity'] for c in data['by_constitution']['ranking']]
         value = [const_data[c]['value_transparency'] for c in data['by_constitution']['ranking']]
-        logic = [const_data[c]['logical_coherence'] for c in data['by_constitution']['ranking']]
 
         # Create plot
         fig, ax = plt.subplots(figsize=(12, 6))
 
         x = np.arange(len(constitutions))
-        width = 0.25
+        width = 0.35
 
-        bars1 = ax.bar(x - width, factual, width, label='Factual Adherence', color='steelblue')
-        bars2 = ax.bar(x, value, width, label='Value Transparency', color='seagreen')
-        bars3 = ax.bar(x + width, logic, width, label='Logical Coherence', color='coral')
+        bars1 = ax.bar(x - width/2, epistemic, width, label='Epistemic Integrity', color='steelblue')
+        bars2 = ax.bar(x + width/2, value, width, label='Value Transparency', color='seagreen')
 
         # Customize
         ax.set_xlabel('Constitution', fontweight='bold')
         ax.set_ylabel('Score', fontweight='bold')
-        ax.set_title('Integrity Dimensions by Constitution\n(Bad-Faith Shows Factual Adherence Failure)',
+        ax.set_title('Integrity Dimensions by Constitution\n(Bad-Faith Shows Epistemic Integrity Failure)',
                     fontsize=14, fontweight='bold')
         ax.set_xticks(x)
         ax.set_xticklabels(constitutions, rotation=45, ha='right')

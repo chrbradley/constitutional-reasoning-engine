@@ -20,15 +20,13 @@ from typing import Dict, List, Optional
 
 @dataclass
 class EvaluationScores:
-    """Scores from Layer 3 evaluation."""
+    """Scores from Layer 3 evaluation (2D rubric)."""
     evaluator_model: str
-    factual_adherence: float
+    epistemic_integrity: float
     value_transparency: float
-    logical_coherence: float
     overall_score: float
-    factual_explanation: Optional[str] = None
+    epistemic_explanation: Optional[str] = None
     transparency_explanation: Optional[str] = None
-    coherence_explanation: Optional[str] = None
 
 @dataclass
 class TrialData:
@@ -46,13 +44,37 @@ class TrialData:
 class ExperimentDataLoader:
     """Load trial data from migrated experiment structure."""
 
-    def __init__(self, experiment_id: str = "exp_20251026_193228"):
+    def __init__(self, experiment_id: Optional[str] = None):
+        if experiment_id is None:
+            # List available experiments to help user
+            experiments_dir = Path("results/experiments")
+            if experiments_dir.exists():
+                available = sorted([d.name for d in experiments_dir.iterdir() if d.is_dir()])
+                if available:
+                    raise ValueError(
+                        f"experiment_id is required. Available experiments:\n" +
+                        "\n".join(f"  - {exp}" for exp in available) +
+                        f"\n\nUsage: ExperimentDataLoader(experiment_id='exp_20251028_095612')"
+                    )
+                else:
+                    raise ValueError("experiment_id is required, but no experiments found in results/experiments/")
+            else:
+                raise ValueError("experiment_id is required, and results/experiments/ directory not found")
+
+        self.experiment_id = experiment_id
         self.exp_path = Path("results/experiments") / experiment_id
         self.layer2_dir = self.exp_path / "data" / "layer2"
         self.layer3_dir = self.exp_path / "data" / "layer3"
 
         if not self.exp_path.exists():
-            raise FileNotFoundError(f"Experiment not found: {experiment_id}")
+            # List available experiments to help user
+            experiments_dir = Path("results/experiments")
+            available = sorted([d.name for d in experiments_dir.iterdir() if d.is_dir()])
+            raise FileNotFoundError(
+                f"Experiment not found: {experiment_id}\n\n" +
+                f"Available experiments:\n" +
+                "\n".join(f"  - {exp}" for exp in available)
+            )
 
     def load_trial(self, trial_id: str) -> TrialData:
         """Load single trial with Layer 2 and Layer 3 data (all evaluators)."""
@@ -80,13 +102,11 @@ class ExperimentDataLoader:
 
                     evaluations[evaluator_name] = EvaluationScores(
                         evaluator_model=evaluator_name,
-                        factual_adherence=parsed["factual_adherence"]["score"],
-                        value_transparency=parsed["value_transparency"]["score"],
-                        logical_coherence=parsed["logical_coherence"]["score"],
-                        overall_score=parsed["overall_score"],
-                        factual_explanation=parsed["factual_adherence"].get("explanation"),
-                        transparency_explanation=parsed["value_transparency"].get("explanation"),
-                        coherence_explanation=parsed["logical_coherence"].get("explanation")
+                        epistemic_integrity=parsed["epistemicIntegrity"]["score"],
+                        value_transparency=parsed["valueTransparency"]["score"],
+                        overall_score=parsed["overallScore"],
+                        epistemic_explanation=parsed["epistemicIntegrity"].get("explanation"),
+                        transparency_explanation=parsed["valueTransparency"].get("explanation")
                     )
 
         return TrialData(
@@ -129,9 +149,8 @@ class ExperimentDataLoader:
         - constitution
         - layer2_model
         - evaluator (claude-sonnet-4-5, gpt-4o, deepseek-chat, grok-3, gemini-2-5-pro)
-        - factual_adherence
+        - epistemic_integrity
         - value_transparency
-        - logical_coherence
         - overall_score
         """
 
@@ -150,9 +169,8 @@ class ExperimentDataLoader:
                     "constitution": trial.constitution,
                     "layer2_model": trial.layer2_model,
                     "evaluator": eval_name,
-                    "factual_adherence": eval_scores.factual_adherence,
+                    "epistemic_integrity": eval_scores.epistemic_integrity,
                     "value_transparency": eval_scores.value_transparency,
-                    "logical_coherence": eval_scores.logical_coherence,
                     "overall_score": eval_scores.overall_score
                 })
 
@@ -170,20 +188,15 @@ class ExperimentDataLoader:
             "layer2_models": sorted(df["layer2_model"].unique().tolist()),
             "evaluators": sorted(df["evaluator"].unique().tolist()),
             "score_ranges": {
-                "factual_adherence": {
-                    "min": float(df["factual_adherence"].min()),
-                    "max": float(df["factual_adherence"].max()),
-                    "mean": float(df["factual_adherence"].mean())
+                "epistemic_integrity": {
+                    "min": float(df["epistemic_integrity"].min()),
+                    "max": float(df["epistemic_integrity"].max()),
+                    "mean": float(df["epistemic_integrity"].mean())
                 },
                 "value_transparency": {
                     "min": float(df["value_transparency"].min()),
                     "max": float(df["value_transparency"].max()),
                     "mean": float(df["value_transparency"].mean())
-                },
-                "logical_coherence": {
-                    "min": float(df["logical_coherence"].min()),
-                    "max": float(df["logical_coherence"].max()),
-                    "mean": float(df["logical_coherence"].mean())
                 },
                 "overall_score": {
                     "min": float(df["overall_score"].min()),
@@ -194,8 +207,23 @@ class ExperimentDataLoader:
         }
 
 if __name__ == "__main__":
+    import sys
+
+    # Get experiment_id from command line or show error
+    if len(sys.argv) > 1:
+        experiment_id = sys.argv[1]
+    else:
+        print("Usage: python analysis/data_loader.py <experiment_id>")
+        print("\nExample: python analysis/data_loader.py exp_20251028_095612")
+        print("\nTrying to list available experiments...")
+        try:
+            loader = ExperimentDataLoader()  # Will show available experiments
+        except ValueError as e:
+            print(f"\n{e}")
+        sys.exit(1)
+
     # Test the data loader
-    loader = ExperimentDataLoader()
+    loader = ExperimentDataLoader(experiment_id)
 
     print("=== Testing Data Loader (Ensemble Support) ===\n")
 

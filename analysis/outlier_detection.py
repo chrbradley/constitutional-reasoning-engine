@@ -15,6 +15,8 @@ import numpy as np
 from typing import List, Dict, Optional
 from dataclasses import dataclass
 from pathlib import Path
+import argparse
+import sys
 
 from data_loader import ExperimentDataLoader, TrialData
 
@@ -46,7 +48,7 @@ class HighVarianceTrial:
 class OutlierDetector:
     """Detect trials with unusual scoring patterns and inter-evaluator disagreement."""
 
-    def __init__(self, experiment_id: str = "exp_20251026_193228", exclude_evaluators: Optional[List[str]] = None):
+    def __init__(self, experiment_id: str, exclude_evaluators: Optional[List[str]] = None):
         self.loader = ExperimentDataLoader(experiment_id)
         df_full = self.loader.get_trial_dataframe()  # All evaluations (598 rows)
 
@@ -58,7 +60,7 @@ class OutlierDetector:
         self.exclude_evaluators = exclude_evaluators or []
 
         # Calculate consensus scores (mean across evaluators for each trial)
-        dimensions = ["factual_adherence", "value_transparency", "logical_coherence", "overall_score"]
+        dimensions = ["epistemic_integrity", "value_transparency", "overall_score"]
         consensus_data = []
 
         for trial_id in self.df_full["trial_id"].unique():
@@ -103,9 +105,8 @@ class OutlierDetector:
         low_df = self.df_consensus[self.df_consensus[dimension] < low_threshold]
         for _, row in low_df.iterrows():
             consensus_scores = {
-                "factual_adherence": row["factual_adherence"],
+                "epistemic_integrity": row["epistemic_integrity"],
                 "value_transparency": row["value_transparency"],
-                "logical_coherence": row["logical_coherence"],
                 "overall_score": row["overall_score"]
             }
 
@@ -123,9 +124,8 @@ class OutlierDetector:
         high_df = self.df_consensus[self.df_consensus[dimension] > high_threshold]
         for _, row in high_df.iterrows():
             consensus_scores = {
-                "factual_adherence": row["factual_adherence"],
+                "epistemic_integrity": row["epistemic_integrity"],
                 "value_transparency": row["value_transparency"],
-                "logical_coherence": row["logical_coherence"],
                 "overall_score": row["overall_score"]
             }
 
@@ -169,9 +169,8 @@ class OutlierDetector:
 
                 if abs(z_score) > std_threshold:
                     consensus_scores = {
-                        "factual_adherence": row["factual_adherence"],
+                        "epistemic_integrity": row["epistemic_integrity"],
                         "value_transparency": row["value_transparency"],
-                        "logical_coherence": row["logical_coherence"],
                         "overall_score": row["overall_score"]
                     }
 
@@ -205,23 +204,21 @@ class OutlierDetector:
 
         for _, row in self.df_consensus.iterrows():
             # Calculate range of dimension scores
-            dims = ["factual_adherence", "value_transparency", "logical_coherence"]
+            dims = ["epistemic_integrity", "value_transparency"]
             dim_scores = [row[d] for d in dims]
             score_range = max(dim_scores) - min(dim_scores)
 
             if score_range > threshold:
                 consensus_scores = {
-                    "factual_adherence": row["factual_adherence"],
+                    "epistemic_integrity": row["epistemic_integrity"],
                     "value_transparency": row["value_transparency"],
-                    "logical_coherence": row["logical_coherence"],
                     "overall_score": row["overall_score"]
                 }
 
                 reasons = [
                     f"Large dimension score spread (consensus): {score_range:.0f} points",
-                    f"Factual: {row['factual_adherence']:.0f}, " +
-                    f"Transparency: {row['value_transparency']:.0f}, " +
-                    f"Coherence: {row['logical_coherence']:.0f}"
+                    f"Epistemic: {row['epistemic_integrity']:.0f}, " +
+                    f"Transparency: {row['value_transparency']:.0f}"
                 ]
 
                 outliers.append(OutlierTrial(
@@ -409,105 +406,86 @@ class OutlierDetector:
 
 
 if __name__ == "__main__":
-    # Test the outlier detector (ENSEMBLE SUPPORT)
-    print("=== Testing Outlier Detector (Ensemble Support) ===\n")
+    parser = argparse.ArgumentParser(
+        description="Outlier Detection - Detect unusual scoring patterns and inter-evaluator disagreement"
+    )
+    parser.add_argument(
+        'experiment_id',
+        type=str,
+        help='Experiment ID to analyze (e.g., exp_20251028_095612)'
+    )
+    parser.add_argument(
+        '--exclude-evaluators',
+        type=str,
+        nargs='+',
+        help='Evaluator(s) to exclude from analysis (e.g., gemini-2-5-pro)'
+    )
 
-    # ===== FULL ENSEMBLE (5 evaluators) =====
-    print("--- Full Ensemble (5 evaluators) ---\n")
+    args = parser.parse_args()
 
-    detector = OutlierDetector()
-    print(f"Loaded {len(detector.df_full)} evaluations from {len(detector.evaluators)} evaluators")
-    print(f"Evaluators: {detector.evaluators}")
-    print(f"Consensus data: {len(detector.df_consensus)} trials\n")
+    print("=== Outlier Detection (Ensemble Support) ===\n")
 
-    # Test 1: Extreme consensus scores
-    print("1. Detecting extreme consensus scores (low<40, high>95)...")
-    extreme = detector.detect_extreme_scores(low_threshold=40, high_threshold=95)
-    print(f"   Found {len(extreme)} trials with extreme consensus scores")
-    if extreme:
-        print(f"   Example: {extreme[0].trial_id} - {extreme[0].outlier_reasons[0]}")
-    print()
+    try:
+        detector = OutlierDetector(args.experiment_id, exclude_evaluators=args.exclude_evaluators)
+        print(f"Experiment: {args.experiment_id}")
+        print(f"Loaded {len(detector.df_full)} evaluations from {len(detector.evaluators)} evaluators")
+        print(f"Evaluators: {detector.evaluators}")
+        if args.exclude_evaluators:
+            print(f"Excluded: {args.exclude_evaluators}")
+        print(f"Consensus data: {len(detector.df_consensus)} trials\n")
 
-    # Test 2: Group deviants (consensus)
-    print("2. Detecting group deviants (>2σ from group mean, using consensus)...")
-    deviants = detector.detect_group_deviants(std_threshold=2.0)
-    print(f"   Found {len(deviants)} trials deviating >2σ from group")
-    if deviants:
-        print(f"   Example: {deviants[0].trial_id} - {deviants[0].outlier_reasons[0]}")
-    print()
+        # Test 1: Extreme consensus scores
+        print("1. Detecting extreme consensus scores (low<40, high>95)...")
+        extreme = detector.detect_extreme_scores(low_threshold=40, high_threshold=95)
+        print(f"   Found {len(extreme)} trials with extreme consensus scores")
+        if extreme:
+            print(f"   Example: {extreme[0].trial_id} - {extreme[0].outlier_reasons[0]}")
+        print()
 
-    # Test 3: Dimension inconsistencies (consensus)
-    print("3. Detecting dimension inconsistencies (>30 point spread in consensus)...")
-    inconsistent = detector.detect_dimension_inconsistencies(threshold=30)
-    print(f"   Found {len(inconsistent)} trials with inconsistent dimensions")
-    if inconsistent:
-        print(f"   Example: {inconsistent[0].trial_id} - {inconsistent[0].outlier_reasons[0]}")
-    print()
+        # Test 2: Group deviants (consensus)
+        print("2. Detecting group deviants (>2σ from group mean, using consensus)...")
+        deviants = detector.detect_group_deviants(std_threshold=2.0)
+        print(f"   Found {len(deviants)} trials deviating >2σ from group")
+        if deviants:
+            print(f"   Example: {deviants[0].trial_id} - {deviants[0].outlier_reasons[0]}")
+        print()
 
-    # Test 4: HIGH VARIANCE TRIALS (NEW - inter-evaluator disagreement)
-    print("4. Detecting high variance trials (std dev >15 across evaluators)...")
-    high_variance = detector.detect_high_variance_trials(std_threshold=15.0)
-    print(f"   Found {len(high_variance)} trials with high inter-evaluator disagreement")
-    if high_variance:
-        print(f"\n   Top {min(3, len(high_variance))} high-variance trials:")
-        for i, trial in enumerate(high_variance[:3], 1):
-            print(f"\n   {i}. {trial.trial_id}")
-            print(f"      Std dev: {trial.std_dev:.1f}, Range: {trial.score_range:.0f}")
-            print(f"      Scores: {', '.join(f'{k}: {v:.0f}' for k, v in trial.evaluator_scores.items())}")
-            print(f"      Reason: {trial.disagreement_reason}")
-    print()
+        # Test 3: Dimension inconsistencies (consensus)
+        print("3. Detecting dimension inconsistencies (>30 point spread in consensus)...")
+        inconsistent = detector.detect_dimension_inconsistencies(threshold=30)
+        print(f"   Found {len(inconsistent)} trials with inconsistent dimensions")
+        if inconsistent:
+            print(f"   Example: {inconsistent[0].trial_id} - {inconsistent[0].outlier_reasons[0]}")
+        print()
 
-    # Test 5: EVALUATOR OUTLIERS (NEW - which evaluators are consistently different)
-    print("5. Detecting evaluator outliers (deviation >10 from consensus)...")
-    eval_outliers = detector.detect_evaluator_outliers(deviation_threshold=10.0)
-    print(f"   Evaluators ranked by outlier trial count:")
-    for evaluator, trial_ids in eval_outliers.items():
-        if len(trial_ids) > 0:
-            pct = (len(trial_ids) / 120) * 100
-            print(f"     {evaluator}: {len(trial_ids)} outlier trials ({pct:.1f}%)")
-    print()
+        # Test 4: HIGH VARIANCE TRIALS (inter-evaluator disagreement)
+        print("4. Detecting high variance trials (std dev >15 across evaluators)...")
+        high_variance = detector.detect_high_variance_trials(std_threshold=15.0)
+        print(f"   Found {len(high_variance)} trials with high inter-evaluator disagreement")
+        if high_variance:
+            print(f"\n   Top {min(3, len(high_variance))} high-variance trials:")
+            for i, trial in enumerate(high_variance[:3], 1):
+                print(f"\n   {i}. {trial.trial_id}")
+                print(f"      Std dev: {trial.std_dev:.1f}, Range: {trial.score_range:.0f}")
+                print(f"      Scores: {', '.join(f'{k}: {v:.0f}' for k, v in trial.evaluator_scores.items())}")
+                print(f"      Reason: {trial.disagreement_reason}")
+        print()
 
-    # ===== WITHOUT GEMINI (4 evaluators) =====
-    print("\n" + "="*60)
-    print("--- Without Gemini (4 evaluators) ---\n")
+        # Test 5: EVALUATOR OUTLIERS (which evaluators are consistently different)
+        print("5. Detecting evaluator outliers (deviation >10 from consensus)...")
+        eval_outliers = detector.detect_evaluator_outliers(deviation_threshold=10.0)
+        print(f"   Evaluators ranked by outlier trial count:")
+        for evaluator, trial_ids in eval_outliers.items():
+            if len(trial_ids) > 0:
+                total_trials = len(detector.df_consensus)
+                pct = (len(trial_ids) / total_trials) * 100 if total_trials > 0 else 0
+                print(f"     {evaluator}: {len(trial_ids)} outlier trials ({pct:.1f}%)")
+        print()
 
-    detector_no_gemini = OutlierDetector(exclude_evaluators=["gemini-2-5-pro"])
-    print(f"Loaded {len(detector_no_gemini.df_full)} evaluations from {len(detector_no_gemini.evaluators)} evaluators")
-    print(f"Evaluators: {detector_no_gemini.evaluators}")
-    print(f"Excluded: {detector_no_gemini.exclude_evaluators}")
-    print(f"Consensus data: {len(detector_no_gemini.df_consensus)} trials\n")
+        print("✅ Outlier detection complete!")
 
-    # Test 4: HIGH VARIANCE TRIALS (without Gemini)
-    print("4. Detecting high variance trials (std dev >15 across evaluators, NO GEMINI)...")
-    high_variance_no_gemini = detector_no_gemini.detect_high_variance_trials(std_threshold=15.0)
-    print(f"   Found {len(high_variance_no_gemini)} trials with high inter-evaluator disagreement")
-    if high_variance_no_gemini:
-        print(f"\n   Top {min(3, len(high_variance_no_gemini))} high-variance trials:")
-        for i, trial in enumerate(high_variance_no_gemini[:3], 1):
-            print(f"\n   {i}. {trial.trial_id}")
-            print(f"      Std dev: {trial.std_dev:.1f}, Range: {trial.score_range:.0f}")
-            print(f"      Scores: {', '.join(f'{k}: {v:.0f}' for k, v in trial.evaluator_scores.items())}")
-            print(f"      Reason: {trial.disagreement_reason}")
-    print()
-
-    # Test 5: EVALUATOR OUTLIERS (without Gemini)
-    print("5. Detecting evaluator outliers (deviation >10 from consensus, NO GEMINI)...")
-    eval_outliers_no_gemini = detector_no_gemini.detect_evaluator_outliers(deviation_threshold=10.0)
-    print(f"   Evaluators ranked by outlier trial count:")
-    for evaluator, trial_ids in eval_outliers_no_gemini.items():
-        if len(trial_ids) > 0:
-            pct = (len(trial_ids) / 120) * 100
-            print(f"     {evaluator}: {len(trial_ids)} outlier trials ({pct:.1f}%)")
-    print()
-
-    # ===== COMPARISON =====
-    print("="*60)
-    print("=== Comparison: Full Ensemble vs Without Gemini ===\n")
-
-    print(f"High-variance trials (std dev >15):")
-    print(f"  Full ensemble: {len(high_variance)} trials")
-    print(f"  Without Gemini: {len(high_variance_no_gemini)} trials")
-    print(f"  Reduction: {len(high_variance) - len(high_variance_no_gemini)} trials")
-    print()
-
-    print("✅ Outlier detector test complete!")
+    except (FileNotFoundError, ValueError) as e:
+        print(f"\n❌ Error: {e}", file=sys.stderr)
+        print(f"\nUsage: python3 analysis/outlier_detection.py <experiment_id>", file=sys.stderr)
+        print(f"Example: python3 analysis/outlier_detection.py exp_20251028_095612", file=sys.stderr)
+        sys.exit(1)

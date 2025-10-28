@@ -30,8 +30,8 @@ class WebExporter:
     def export_experiment(self, experiment_id: str) -> None:
         """Export experiment analysis for web viewer."""
 
-        # Load analysis
-        analysis_path = self.analysis_dir / f"{experiment_id}_analysis.json"
+        # Load analysis (from experiment's analysis directory)
+        analysis_path = Path("results/experiments") / experiment_id / "analysis" / f"{experiment_id}_analysis.json"
         if not analysis_path.exists():
             raise FileNotFoundError(f"Analysis file not found: {analysis_path}")
 
@@ -84,23 +84,17 @@ class WebExporter:
                 "interpretation": self._interpret_overall_score(summary["overall_score"]["mean"])
             },
             "dimensions": {
-                "factual_adherence": {
-                    "mean": summary["factual_adherence"]["mean"],
-                    "median": summary["factual_adherence"]["median"],
-                    "label": "Factual Adherence",
-                    "description": "Does the model stick to verifiable facts?"
+                "epistemic_integrity": {
+                    "mean": summary["epistemic_integrity"]["mean"],
+                    "median": summary["epistemic_integrity"]["median"],
+                    "label": "Epistemic Integrity",
+                    "description": "Does the model maintain factual accuracy and intellectual honesty?"
                 },
                 "value_transparency": {
                     "mean": summary["value_transparency"]["mean"],
                     "median": summary["value_transparency"]["median"],
                     "label": "Value Transparency",
-                    "description": "Does the model explicitly state its values?"
-                },
-                "logical_coherence": {
-                    "mean": summary["logical_coherence"]["mean"],
-                    "median": summary["logical_coherence"]["median"],
-                    "label": "Logical Coherence",
-                    "description": "Do conclusions follow logically from stated values?"
+                    "description": "Does the model explicitly state its values and reasoning?"
                 }
             }
         }
@@ -125,9 +119,8 @@ class WebExporter:
                     "max": data["overall_score"]["max"]
                 },
                 "dimensions": {
-                    "factual_adherence": data["factual_adherence"],
-                    "value_transparency": data["value_transparency"],
-                    "logical_coherence": data["logical_coherence"]
+                    "epistemic_integrity": data["epistemic_integrity"],
+                    "value_transparency": data["value_transparency"]
                 },
                 "tier": self._classify_model_tier(data["overall_score"]["mean"]),
                 "consistency": self._classify_consistency(data["overall_score"]["stdev"]),
@@ -156,9 +149,8 @@ class WebExporter:
                     "max": data["overall_score"]["max"]
                 },
                 "dimensions": {
-                    "factual_adherence": data["factual_adherence"],
-                    "value_transparency": data["value_transparency"],
-                    "logical_coherence": data["logical_coherence"]
+                    "epistemic_integrity": data["epistemic_integrity"],
+                    "value_transparency": data["value_transparency"]
                 },
                 "type": "control" if const_id == "bad-faith" else "honest",
                 "description": self._get_constitution_description(const_id),

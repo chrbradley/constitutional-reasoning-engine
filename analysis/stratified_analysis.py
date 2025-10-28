@@ -23,6 +23,8 @@ from scipy import stats
 from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
 from pathlib import Path
+import argparse
+import sys
 
 from data_loader import ExperimentDataLoader
 
@@ -40,7 +42,7 @@ class CorrelationResult:
 class StratifiedAnalyzer:
     """Analyze inter-evaluator score correlations within subgroups."""
 
-    def __init__(self, experiment_id: str = "exp_20251026_193228", exclude_evaluators: Optional[List[str]] = None):
+    def __init__(self, experiment_id: str, exclude_evaluators: Optional[List[str]] = None):
         self.loader = ExperimentDataLoader(experiment_id)
         self.df = self.loader.get_trial_dataframe()
 
@@ -188,10 +190,10 @@ class StratifiedAnalyzer:
         Calculate inter-evaluator correlations separately for each scoring dimension.
 
         Purpose: Identify which dimensions show best evaluator agreement.
-        Example: Do evaluators agree more on "factual_adherence" than "value_transparency"?
+        Example: Do evaluators agree more on "epistemic_integrity" than "value_transparency"?
         """
 
-        dimensions = ["factual_adherence", "value_transparency", "logical_coherence", "overall_score"]
+        dimensions = ["epistemic_integrity", "value_transparency", "overall_score"]
         results = {}
 
         for dimension in dimensions:
@@ -279,42 +281,57 @@ class StratifiedAnalyzer:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Stratified Correlation Analysis - Analyze inter-evaluator score correlations"
+    )
+    parser.add_argument(
+        'experiment_id',
+        type=str,
+        help='Experiment ID to analyze (e.g., exp_20251028_095612)'
+    )
+    parser.add_argument(
+        '--exclude-evaluators',
+        type=str,
+        nargs='+',
+        help='Evaluator(s) to exclude from analysis (e.g., gemini-2-5-pro)'
+    )
+
+    args = parser.parse_args()
+
     # Test the stratified analyzer (ENSEMBLE SUPPORT)
-    print("=== Testing Stratified Analyzer (Inter-Evaluator Correlation) ===")
+    print("=== Stratified Analyzer (Inter-Evaluator Correlation) ===\n")
 
-    # Test with full ensemble (5 evaluators)
-    print("\n--- Full Ensemble (5 evaluators) ---")
-    analyzer = StratifiedAnalyzer()
-    print(f"Loaded {len(analyzer.df)} evaluations from {len(analyzer.evaluators)} evaluators")
-    print(f"Evaluators: {analyzer.evaluators}\n")
+    try:
+        # Test with specified evaluators
+        analyzer = StratifiedAnalyzer(args.experiment_id, exclude_evaluators=args.exclude_evaluators)
+        print(f"Experiment: {args.experiment_id}")
+        print(f"Loaded {len(analyzer.df)} evaluations from {len(analyzer.evaluators)} evaluators")
+        print(f"Evaluators: {analyzer.evaluators}")
+        if args.exclude_evaluators:
+            print(f"Excluded: {args.exclude_evaluators}")
+        print()
 
-    # Test by constitution
-    print("\nAnalyzing by constitution...")
-    const_results = analyzer.analyze_by_constitution()
-    analyzer.print_results(const_results, "Inter-Evaluator Correlation by Constitution")
+        # Run all analyses
+        print("Analyzing by constitution...")
+        const_results = analyzer.analyze_by_constitution()
+        analyzer.print_results(const_results, "Inter-Evaluator Correlation by Constitution")
 
-    # Test by scenario
-    print("\nAnalyzing by scenario...")
-    scenario_results = analyzer.analyze_by_scenario()
-    analyzer.print_results(scenario_results, "Inter-Evaluator Correlation by Scenario")
+        print("\nAnalyzing by scenario...")
+        scenario_results = analyzer.analyze_by_scenario()
+        analyzer.print_results(scenario_results, "Inter-Evaluator Correlation by Scenario")
 
-    # Test by dimension
-    print("\nAnalyzing by dimension...")
-    dimension_results = analyzer.analyze_by_dimension()
-    analyzer.print_results(dimension_results, "Inter-Evaluator Correlation by Dimension")
+        print("\nAnalyzing by dimension...")
+        dimension_results = analyzer.analyze_by_dimension()
+        analyzer.print_results(dimension_results, "Inter-Evaluator Correlation by Dimension")
 
-    # Test by score range
-    print("\nAnalyzing by score range...")
-    range_results = analyzer.analyze_by_score_range()
-    analyzer.print_results(range_results, "Inter-Evaluator Correlation by Score Range")
+        print("\nAnalyzing by score range...")
+        range_results = analyzer.analyze_by_score_range()
+        analyzer.print_results(range_results, "Inter-Evaluator Correlation by Score Range")
 
-    # Test WITHOUT Gemini (4 evaluators)
-    print("\n\n--- Without Gemini (4 evaluators) ---")
-    analyzer_no_gemini = StratifiedAnalyzer(exclude_evaluators=["gemini-2-5-pro"])
-    print(f"Loaded {len(analyzer_no_gemini.df)} evaluations from {len(analyzer_no_gemini.evaluators)} evaluators")
-    print(f"Evaluators: {analyzer_no_gemini.evaluators}\n")
+        print("\n✅ Stratified analysis complete!")
 
-    dimension_results_no_gemini = analyzer_no_gemini.analyze_by_dimension()
-    analyzer_no_gemini.print_results(dimension_results_no_gemini, "Inter-Evaluator Correlation WITHOUT Gemini")
-
-    print("✅ Stratified analyzer test complete!")
+    except (FileNotFoundError, ValueError) as e:
+        print(f"\n❌ Error: {e}", file=sys.stderr)
+        print(f"\nUsage: python3 analysis/stratified_analysis.py <experiment_id>", file=sys.stderr)
+        print(f"Example: python3 analysis/stratified_analysis.py exp_20251028_095612", file=sys.stderr)
+        sys.exit(1)

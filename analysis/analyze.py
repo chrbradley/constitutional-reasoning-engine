@@ -16,6 +16,7 @@ from dataclasses import dataclass
 import statistics
 
 from src.core.scenarios import load_scenarios
+from analysis.data_loader import ExperimentDataLoader
 
 @dataclass
 class TestResult:
@@ -27,10 +28,9 @@ class TestResult:
     model_id: str
     timestamp: str
 
-    # Integrity scores
-    factual_adherence: float
+    # Integrity scores (2D rubric)
+    epistemic_integrity: float
     value_transparency: float
-    logical_coherence: float
     overall_score: float
 
     # Metadata
@@ -69,57 +69,56 @@ class ExperimentAnalyzer:
         return sorted(experiments)
 
     def load_experiment_results(self, experiment_id: str) -> List[TestResult]:
-        """Load all test results from a single experiment"""
-        registry_path = self.experiments_dir / experiment_id / "data" / "tests"
+        """Load all test results from a single experiment (using ensemble consensus scores)"""
 
-        if not registry_path.exists():
-            raise ValueError(f"Experiment {experiment_id} not found")
+        try:
+            loader = ExperimentDataLoader(experiment_id)
+        except (FileNotFoundError, ValueError) as e:
+            raise ValueError(f"Experiment {experiment_id} not found") from e
 
         results = []
 
-        # Load all raw JSON files
-        for result_file in registry_path.glob("*.json"):
-            try:
-                with open(result_file) as f:
-                    data = json.load(f)
+        # Load all trials
+        trials = loader.load_all_trials()
 
-                # Extract test metadata
-                trial_id = data.get("testId")
-                scenario_id = data["scenario"]["id"]
-                constitution_id = data["constitution"]
-                model_id = data["model"]
+        # Convert each trial to TestResult using consensus scores (mean across evaluators)
+        for trial in trials:
+            if not trial.evaluations:
+                continue  # Skip trials with no evaluations
 
-                # Get scenario for dimensional data
-                scenario = self.scenarios.get(scenario_id)
+            # Calculate consensus scores (mean across all evaluators)
+            epistemic_scores = [eval_scores.epistemic_integrity for eval_scores in trial.evaluations.values()]
+            value_scores = [eval_scores.value_transparency for eval_scores in trial.evaluations.values()]
+            overall_scores = [eval_scores.overall_score for eval_scores in trial.evaluations.values()]
 
-                # Extract integrity scores
-                integrity = data["integrityEvaluation"]
+            consensus_epistemic = statistics.mean(epistemic_scores)
+            consensus_value = statistics.mean(value_scores)
+            consensus_overall = statistics.mean(overall_scores)
 
-                result = TestResult(
-                    trial_id=trial_id,
-                    experiment_id=experiment_id,
-                    scenario_id=scenario_id,
-                    constitution_id=constitution_id,
-                    model_id=model_id,
-                    timestamp=data.get("timestamp", ""),
-                    factual_adherence=integrity["factualAdherence"]["score"],
-                    value_transparency=integrity["valueTransparency"]["score"],
-                    logical_coherence=integrity["logicalCoherence"]["score"],
-                    overall_score=integrity.get("overallScore",
-                        (integrity["factualAdherence"]["score"] +
-                         integrity["valueTransparency"]["score"] +
-                         integrity["logicalCoherence"]["score"]) / 3),
-                    parse_statuses=data.get("parseStatuses", {}),
-                    scale=scenario.category if scenario else "unknown",
-                    directionality="unknown",  # Not in current scenario schema
-                    severity="unknown"  # Not in current scenario schema
-                )
+            # Get scenario for dimensional data
+            scenario = self.scenarios.get(trial.scenario_id)
 
-                results.append(result)
+            # Get first evaluator's timestamp (they should all be similar)
+            first_eval = next(iter(trial.evaluations.values()))
+            timestamp = datetime.now().isoformat()  # Default to now
 
-            except Exception as e:
-                print(f"Warning: Failed to load {result_file}: {e}")
-                continue
+            result = TestResult(
+                trial_id=trial.trial_id,
+                experiment_id=experiment_id,
+                scenario_id=trial.scenario_id,
+                constitution_id=trial.constitution,
+                model_id=trial.layer2_model,  # Layer2 model that did constitutional reasoning
+                timestamp=timestamp,
+                epistemic_integrity=round(consensus_epistemic, 2),
+                value_transparency=round(consensus_value, 2),
+                overall_score=round(consensus_overall, 2),
+                parse_statuses={},  # Not tracked in new structure
+                scale=scenario.category if scenario else "unknown",
+                directionality="unknown",  # Not in current scenario schema
+                severity="unknown"  # Not in current scenario schema
+            )
+
+            results.append(result)
 
         return results
 
@@ -132,6 +131,7 @@ class ExperimentAnalyzer:
             return {"error": "No results found", "experiment_id": experiment_id}
 
         analysis = {
+            "analysis_type": "single_experiment",
             "experiment_id": experiment_id,
             "analysis_timestamp": datetime.now().isoformat(),
             "total_tests": len(results),
@@ -193,9 +193,8 @@ class ExperimentAnalyzer:
         """Calculate overall summary statistics"""
 
         overall_scores = [r.overall_score for r in results]
-        factual_scores = [r.factual_adherence for r in results]
+        epistemic_scores = [r.epistemic_integrity for r in results]
         value_scores = [r.value_transparency for r in results]
-        logic_scores = [r.logical_coherence for r in results]
 
         return {
             "overall_score": {
@@ -205,20 +204,15 @@ class ExperimentAnalyzer:
                 "min": round(min(overall_scores), 2),
                 "max": round(max(overall_scores), 2)
             },
-            "factual_adherence": {
-                "mean": round(statistics.mean(factual_scores), 2),
-                "median": round(statistics.median(factual_scores), 2),
-                "stdev": round(statistics.stdev(factual_scores), 2) if len(factual_scores) > 1 else 0
+            "epistemic_integrity": {
+                "mean": round(statistics.mean(epistemic_scores), 2),
+                "median": round(statistics.median(epistemic_scores), 2),
+                "stdev": round(statistics.stdev(epistemic_scores), 2) if len(epistemic_scores) > 1 else 0
             },
             "value_transparency": {
                 "mean": round(statistics.mean(value_scores), 2),
                 "median": round(statistics.median(value_scores), 2),
                 "stdev": round(statistics.stdev(value_scores), 2) if len(value_scores) > 1 else 0
-            },
-            "logical_coherence": {
-                "mean": round(statistics.mean(logic_scores), 2),
-                "median": round(statistics.median(logic_scores), 2),
-                "stdev": round(statistics.stdev(logic_scores), 2) if len(logic_scores) > 1 else 0
             }
         }
 
@@ -234,9 +228,8 @@ class ExperimentAnalyzer:
         model_stats = {}
         for model_id, model_results in model_groups.items():
             overall_scores = [r.overall_score for r in model_results]
-            factual_scores = [r.factual_adherence for r in model_results]
+            epistemic_scores = [r.epistemic_integrity for r in model_results]
             value_scores = [r.value_transparency for r in model_results]
-            logic_scores = [r.logical_coherence for r in model_results]
 
             model_stats[model_id] = {
                 "test_count": len(model_results),
@@ -247,9 +240,8 @@ class ExperimentAnalyzer:
                     "min": round(min(overall_scores), 2),
                     "max": round(max(overall_scores), 2)
                 },
-                "factual_adherence": round(statistics.mean(factual_scores), 2),
-                "value_transparency": round(statistics.mean(value_scores), 2),
-                "logical_coherence": round(statistics.mean(logic_scores), 2)
+                "epistemic_integrity": round(statistics.mean(epistemic_scores), 2),
+                "value_transparency": round(statistics.mean(value_scores), 2)
             }
 
         # Sort by mean overall score
@@ -271,9 +263,8 @@ class ExperimentAnalyzer:
         const_stats = {}
         for const_id, const_results in const_groups.items():
             overall_scores = [r.overall_score for r in const_results]
-            factual_scores = [r.factual_adherence for r in const_results]
+            epistemic_scores = [r.epistemic_integrity for r in const_results]
             value_scores = [r.value_transparency for r in const_results]
-            logic_scores = [r.logical_coherence for r in const_results]
 
             const_stats[const_id] = {
                 "test_count": len(const_results),
@@ -284,9 +275,8 @@ class ExperimentAnalyzer:
                     "min": round(min(overall_scores), 2),
                     "max": round(max(overall_scores), 2)
                 },
-                "factual_adherence": round(statistics.mean(factual_scores), 2),
-                "value_transparency": round(statistics.mean(value_scores), 2),
-                "logical_coherence": round(statistics.mean(logic_scores), 2)
+                "epistemic_integrity": round(statistics.mean(epistemic_scores), 2),
+                "value_transparency": round(statistics.mean(value_scores), 2)
             }
 
         # Sort by mean overall score

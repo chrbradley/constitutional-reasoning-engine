@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 Dimensionality Analysis (ENSEMBLE SUPPORT)
-Phase 0.4 - Step 5: Check if 3 scoring dimensions are distinct or redundant
+Phase 0.4 - Step 5: Check if 2 scoring dimensions are distinct or redundant
 
-Analyzes whether factual_adherence, value_transparency, and logical_coherence
+Analyzes whether epistemic_integrity and value_transparency
 are measuring different constructs or are highly correlated (redundant).
 
 Uses CONSENSUS SCORES (mean across evaluators for each trial) to avoid
@@ -21,6 +21,8 @@ from scipy.stats import pearsonr
 from scipy import linalg
 from typing import Dict, Tuple, Optional, List
 from dataclasses import dataclass
+import argparse
+import sys
 
 from data_loader import ExperimentDataLoader
 
@@ -44,7 +46,7 @@ class DimensionalityAssessment:
 class DimensionalityAnalyzer:
     """Analyze whether scoring dimensions are distinct or redundant (using consensus)."""
 
-    def __init__(self, experiment_id: str = "exp_20251026_193228", exclude_evaluators: Optional[List[str]] = None):
+    def __init__(self, experiment_id: str, exclude_evaluators: Optional[List[str]] = None):
         self.loader = ExperimentDataLoader(experiment_id)
         df_full = self.loader.get_trial_dataframe()
 
@@ -55,7 +57,7 @@ class DimensionalityAnalyzer:
         self.exclude_evaluators = exclude_evaluators or []
 
         # Calculate consensus scores (mean across evaluators for each trial)
-        self.dimensions = ["factual_adherence", "value_transparency", "logical_coherence"]
+        self.dimensions = ["epistemic_integrity", "value_transparency"]
         consensus_data = []
 
         for trial_id in df_full["trial_id"].unique():
@@ -104,7 +106,7 @@ class DimensionalityAnalyzer:
 
     def run_pca(self) -> PCAResult:
         """
-        Run Principal Component Analysis on the 3 dimensions.
+        Run Principal Component Analysis on the 2 dimensions.
 
         Returns: PCAResult with variance explained and loadings.
 
@@ -136,7 +138,7 @@ class DimensionalityAnalyzer:
         components_for_90 = np.argmax(cumulative_variance >= 0.90) + 1
 
         return PCAResult(
-            n_components=3,
+            n_components=2,
             variance_explained=variance_explained,
             cumulative_variance=cumulative_variance,
             loadings=eigenvectors.T,  # Transpose to match sklearn convention
@@ -145,11 +147,10 @@ class DimensionalityAnalyzer:
 
     def assess_dimensionality(self) -> DimensionalityAssessment:
         """
-        Assess whether dimensions are distinct, partially redundant, or redundant.
+        Assess whether dimensions are distinct or redundant.
 
-        Criteria:
-        - DISTINCT: r < 0.60 between dimensions, need 3 components for 90% variance
-        - PARTIALLY_REDUNDANT: r = 0.60-0.80, need 2 components for 85%+ variance
+        Criteria (2D rubric):
+        - DISTINCT: r < 0.60 between dimensions, need 2 components for 90% variance
         - REDUNDANT: r > 0.85, 1 component explains >80% variance
         """
 
@@ -165,27 +166,27 @@ class DimensionalityAnalyzer:
         max_corr = max(off_diagonal)
         mean_corr = np.mean(off_diagonal)
 
-        # Assess status
+        # Assess status (simplified for 2D)
         if max_corr > 0.85 and pca_result.components_for_90pct == 1:
             status = "REDUNDANT"
             interpretation = (
-                f"Dimensions are highly redundant. Maximum correlation: {max_corr:.3f}. "
+                f"Dimensions are highly redundant. Correlation: {max_corr:.3f}. "
                 f"Only 1 component needed for 90% variance. "
                 f"Consider collapsing to a single dimension or redesigning rubric."
             )
-        elif max_corr > 0.60 and pca_result.components_for_90pct <= 2:
+        elif max_corr > 0.60:
             status = "PARTIALLY_REDUNDANT"
             interpretation = (
-                f"Dimensions are partially redundant. Maximum correlation: {max_corr:.3f}. "
+                f"Dimensions are partially redundant. Correlation: {max_corr:.3f}. "
                 f"{pca_result.components_for_90pct} components needed for 90% variance. "
-                f"Dimensions capture related but distinct aspects. May combine 2 of 3 dimensions."
+                f"Dimensions capture related but distinct aspects."
             )
         else:
             status = "DISTINCT"
             interpretation = (
-                f"Dimensions are distinct. Maximum correlation: {max_corr:.3f} (below 0.60). "
+                f"Dimensions are distinct. Correlation: {max_corr:.3f} (below 0.60). "
                 f"{pca_result.components_for_90pct} components needed for 90% variance. "
-                f"All 3 dimensions are justified and capture different aspects."
+                f"Both dimensions are justified and capture different aspects."
             )
 
         return DimensionalityAssessment(
@@ -228,7 +229,7 @@ class DimensionalityAnalyzer:
         loadings_df = pd.DataFrame(
             assessment.pca_result.loadings.T,
             index=self.dimensions,
-            columns=[f"PC{i+1}" for i in range(3)]
+            columns=[f"PC{i+1}" for i in range(2)]
         )
         print(loadings_df.to_string())
         print()
@@ -240,46 +241,45 @@ class DimensionalityAnalyzer:
 
 
 if __name__ == "__main__":
-    # Test the dimensionality analyzer (ENSEMBLE SUPPORT)
-    print("=== Testing Dimensionality Analyzer (Ensemble Support) ===\n")
+    parser = argparse.ArgumentParser(
+        description="Dimensionality Analysis - Check if scoring dimensions are distinct or redundant"
+    )
+    parser.add_argument(
+        'experiment_id',
+        type=str,
+        help='Experiment ID to analyze (e.g., exp_20251028_095612)'
+    )
+    parser.add_argument(
+        '--exclude-evaluators',
+        type=str,
+        nargs='+',
+        help='Evaluator(s) to exclude from analysis (e.g., gemini-2-5-pro)'
+    )
 
-    # Test 1: Full ensemble (5 evaluators)
-    print("--- Full Ensemble (5 evaluators) ---")
-    analyzer = DimensionalityAnalyzer()
-    print(f"Loaded {len(analyzer.df)} trials with consensus scores")
-    print(f"Excluded evaluators: {analyzer.exclude_evaluators if analyzer.exclude_evaluators else 'None'}\n")
+    args = parser.parse_args()
 
-    assessment = analyzer.assess_dimensionality()
-    analyzer.print_results(assessment)
+    print("=== Dimensionality Analysis (Ensemble Support) ===\n")
 
-    # Verify PCA math
-    print("=== Verification ===")
-    print(f"Total variance explained by 3 components: {assessment.pca_result.cumulative_variance[-1]*100:.1f}%")
-    print("(Should be ~100% for 3 components on 3 dimensions)")
-    print()
+    try:
+        analyzer = DimensionalityAnalyzer(args.experiment_id, exclude_evaluators=args.exclude_evaluators)
+        print(f"Experiment: {args.experiment_id}")
+        print(f"Loaded {len(analyzer.df)} trials with consensus scores")
+        if args.exclude_evaluators:
+            print(f"Excluded evaluators: {args.exclude_evaluators}")
+        print()
 
-    # Test 2: Without Gemini (4 evaluators)
-    print("\n" + "="*60)
-    print("--- Without Gemini (4 evaluators) ---")
-    analyzer_no_gemini = DimensionalityAnalyzer(exclude_evaluators=["gemini-2-5-pro"])
-    print(f"Loaded {len(analyzer_no_gemini.df)} trials with consensus scores")
-    print(f"Excluded evaluators: {analyzer_no_gemini.exclude_evaluators}\n")
+        assessment = analyzer.assess_dimensionality()
+        analyzer.print_results(assessment)
 
-    assessment_no_gemini = analyzer_no_gemini.assess_dimensionality()
-    analyzer_no_gemini.print_results(assessment_no_gemini)
+        # Verify PCA math
+        print("\n=== Verification ===")
+        print(f"Total variance explained by 2 components: {assessment.pca_result.cumulative_variance[-1]*100:.1f}%")
+        print("(Should be ~100% for 2 components on 2 dimensions)")
 
-    # Compare results
-    print("\n" + "="*60)
-    print("=== Comparison: Full Ensemble vs Without Gemini ===\n")
+        print("\n✅ Dimensionality analysis complete!")
 
-    print("Dimensionality Status:")
-    print(f"  Full ensemble: {assessment.status}")
-    print(f"  Without Gemini: {assessment_no_gemini.status}")
-    print()
-
-    print("Components needed for 90% variance:")
-    print(f"  Full ensemble: {assessment.pca_result.components_for_90pct}")
-    print(f"  Without Gemini: {assessment_no_gemini.pca_result.components_for_90pct}")
-    print()
-
-    print("✅ Dimensionality analyzer test complete!")
+    except (FileNotFoundError, ValueError) as e:
+        print(f"\n❌ Error: {e}", file=sys.stderr)
+        print(f"\nUsage: python3 analysis/dimensionality.py <experiment_id>", file=sys.stderr)
+        print(f"Example: python3 analysis/dimensionality.py exp_20251028_095612", file=sys.stderr)
+        sys.exit(1)
