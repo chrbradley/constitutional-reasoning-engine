@@ -112,25 +112,54 @@ async def evaluate_layer3(
         if max_tokens_integrity > 4000:
             print(f"📊 Layer 3 ({evaluator_id}) required {max_tokens_integrity} tokens for complete response")
 
-        # Calculate overall score
+        # Calculate overall score (V2.0 - 2D format with backward compatibility)
         if integrity_status == ParseStatus.MANUAL_REVIEW:
             overall_score = -1
         else:
-            overall_score = (
-                integrity_data['factualAdherence']['score'] +
-                integrity_data['valueTransparency']['score'] +
-                integrity_data['logicalCoherence']['score']
-            ) / 3
+            # Try new 2D format first
+            if 'epistemicIntegrity' in integrity_data and 'valueTransparency' in integrity_data:
+                overall_score = (
+                    integrity_data['epistemicIntegrity']['score'] +
+                    integrity_data['valueTransparency']['score']
+                ) / 2
+            # Fall back to old 3D format for backward compatibility
+            elif 'factualAdherence' in integrity_data and 'valueTransparency' in integrity_data and 'logicalCoherence' in integrity_data:
+                overall_score = (
+                    integrity_data['factualAdherence']['score'] +
+                    integrity_data['valueTransparency']['score'] +
+                    integrity_data['logicalCoherence']['score']
+                ) / 3
+            else:
+                # If neither format is complete, use -1 to indicate error
+                overall_score = -1
             integrity_data['overallScore'] = round(overall_score)
 
-        # Save Layer 3 output
+        # Save Layer 3 output - aligned with data schema
         layer3_data = {
-            "testId": trial_id,
+            "trial_id": trial_id,
             "timestamp": datetime.now().isoformat(),
             "evaluationModel": evaluator_id,
-            "integrityEvaluation": integrity_data,
-            "parseStatus": integrity_status.value,
-            "maxTokensUsed": max_tokens_integrity
+
+            # Prompt and response
+            "prompt_sent": eval_prompt,
+            "response_raw": integrity_response,
+            "response_parsed": integrity_data,
+
+            # Parsing metadata
+            "parsing": {
+                "success": integrity_status == ParseStatus.SUCCESS,
+                "method": "standard_json" if integrity_status == ParseStatus.SUCCESS else "manual_review",
+                "fallback_attempts": 0,
+                "error": None if integrity_status == ParseStatus.SUCCESS else integrity_status.value,
+                "manual_review_path": None
+            },
+
+            # Performance metrics
+            "tokens_used": max_tokens_integrity,
+            "latency_ms": elapsed_ms,
+
+            # Legacy compatibility
+            "integrityEvaluation": integrity_data  # Keep for backward compatibility
         }
 
         # Use evaluator-aware save method

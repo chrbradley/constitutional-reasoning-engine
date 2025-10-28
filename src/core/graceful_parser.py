@@ -75,44 +75,49 @@ class GracefulJsonParser:
     
     def parse_integrity_response(self, response: str, trial_id: str) -> Tuple[Dict[str, Any], ParseStatus]:
         """
-        Parse integrity evaluation response with graceful fallback
+        Parse integrity evaluation response with graceful fallback (Version 2.0 - 2D Rubric)
+        Supports both new 2D format (epistemicIntegrity + valueTransparency) and old 3D format
         """
-        
+
         # Method 1: Try robust JSON parsing
         try:
             parsed = self._robust_json_parse(response)
-            if self._validate_integrity_response(parsed):
+            # Try new 2D format first
+            if self._validate_integrity_response_v2(parsed):
                 return parsed, ParseStatus.SUCCESS
+            # Fall back to old 3D format for backward compatibility
+            elif self._validate_integrity_response_v1(parsed):
+                # Convert old format to new format for unified data structure
+                converted = self._convert_v1_to_v2(parsed)
+                return converted, ParseStatus.SUCCESS
         except:
             pass
-        
-        # Method 2: Try partial extraction
+
+        # Method 2: Try partial extraction (2D format)
         try:
             partial = self._extract_partial_integrity(response)
-            if partial and 'factualAdherence' in partial:
+            if partial and ('epistemicIntegrity' in partial or 'factualAdherence' in partial):
                 self._save_raw_response(trial_id, response, "partial_integrity")
+                # Convert old format if needed
+                if 'factualAdherence' in partial and 'epistemicIntegrity' not in partial:
+                    partial = self._convert_v1_to_v2(partial)
                 return partial, ParseStatus.PARTIAL_SUCCESS
         except:
             pass
-        
-        # Method 3: Manual review fallback
+
+        # Method 3: Manual review fallback (use new 2D format)
         self._save_raw_response(trial_id, response, "integrity_manual_review_needed")
 
-        # Return default scores that indicate parsing failed
+        # Return default scores that indicate parsing failed (new 2D format)
         fallback_data = {
-            "factualAdherence": {
+            "epistemicIntegrity": {
                 "score": -1,  # Special marker for parsing failure
-                "explanation": "[PARSING FAILED] See data/raw/{trial_id}.integrity.json",
+                "explanation": f"[PARSING FAILED] See data/raw/{trial_id}.integrity.json",
                 "examples": ["Parsing failed - see raw response"]
             },
             "valueTransparency": {
                 "score": -1,
-                "explanation": "[PARSING FAILED] See data/raw/{trial_id}.integrity.json",
-                "examples": ["Parsing failed - see raw response"]
-            },
-            "logicalCoherence": {
-                "score": -1,
-                "explanation": "[PARSING FAILED] See data/raw/{trial_id}.integrity.json",
+                "explanation": f"[PARSING FAILED] See data/raw/{trial_id}.integrity.json",
                 "examples": ["Parsing failed - see raw response"]
             },
             "overallScore": -1,
@@ -271,22 +276,25 @@ class GracefulJsonParser:
     
     def _extract_partial_integrity(self, response: str) -> Dict[str, Any]:
         """
-        Extract integrity scores using regex when JSON parsing fails
+        Extract integrity scores using regex when JSON parsing fails (V2.0 - 2D format)
+        Also handles old V1.0 3D format for backward compatibility
         """
         partial = {}
-        
+
         # Look for score patterns
         score_patterns = [
             r'"score":\s*(\d+)',
             r'score["\s]*:[\s]*(\d+)',
             r'Score:\s*(\d+)',
         ]
-        
-        # Try to extract each dimension
-        dimensions = ['factualAdherence', 'valueTransparency', 'logicalCoherence']
-        
-        for dim in dimensions:
-            # Look for this dimension's score
+
+        # Try to extract new 2D dimensions first
+        dimensions_v2 = ['epistemicIntegrity', 'valueTransparency']
+        # Also try old 3D dimensions for backward compatibility
+        dimensions_v1 = ['factualAdherence', 'valueTransparency', 'logicalCoherence']
+
+        # Try new format first
+        for dim in dimensions_v2:
             dim_pattern = rf'{dim}[^{{]*"score":\s*(\d+)'
             match = re.search(dim_pattern, response, re.IGNORECASE)
             if match:
@@ -296,32 +304,101 @@ class GracefulJsonParser:
                     "explanation": "[PARTIAL_EXTRACTION] See raw response for full details",
                     "examples": ["Partial extraction from raw response"]
                 }
-        
+
+        # If no new format found, try old format
+        if not partial:
+            for dim in dimensions_v1:
+                dim_pattern = rf'{dim}[^{{]*"score":\s*(\d+)'
+                match = re.search(dim_pattern, response, re.IGNORECASE)
+                if match:
+                    score = int(match.group(1))
+                    partial[dim] = {
+                        "score": score,
+                        "explanation": "[PARTIAL_EXTRACTION] See raw response for full details",
+                        "examples": ["Partial extraction from raw response"]
+                    }
+
         # Calculate overall if we have at least one dimension
         if partial:
             scores = [partial[dim]["score"] for dim in partial if "score" in partial[dim]]
             if scores:
                 partial["overallScore"] = sum(scores) // len(scores)
-        
+
         return partial
     
     def _validate_constitutional_response(self, data: dict) -> bool:
         """Validate constitutional response has required fields"""
         required_fields = ["reasoning", "recommendation", "valuesApplied", "tradeoffsAcknowledged"]
         return all(field in data for field in required_fields)
-    
-    def _validate_integrity_response(self, data: dict) -> bool:
-        """Validate integrity response has required structure"""
-        required_dims = ["factualAdherence", "valueTransparency", "logicalCoherence"]
+
+    def _validate_integrity_response_v2(self, data: dict) -> bool:
+        """Validate integrity response has required structure (V2.0 - 2D format)"""
+        required_dims = ["epistemicIntegrity", "valueTransparency"]
         if not all(dim in data for dim in required_dims):
             return False
-        
+
         # Check each dimension has score
         for dim in required_dims:
             if not isinstance(data[dim], dict) or "score" not in data[dim]:
                 return False
-        
+
         return True
+
+    def _validate_integrity_response_v1(self, data: dict) -> bool:
+        """Validate integrity response has required structure (V1.0 - 3D format, legacy)"""
+        required_dims = ["factualAdherence", "valueTransparency", "logicalCoherence"]
+        if not all(dim in data for dim in required_dims):
+            return False
+
+        # Check each dimension has score
+        for dim in required_dims:
+            if not isinstance(data[dim], dict) or "score" not in data[dim]:
+                return False
+
+        return True
+
+    def _convert_v1_to_v2(self, v1_data: dict) -> dict:
+        """
+        Convert old 3D format to new 2D format for backward compatibility
+        Combines factualAdherence + logicalCoherence → epistemicIntegrity
+        """
+        v2_data = {}
+
+        # Calculate epistemicIntegrity as average of factualAdherence + logicalCoherence
+        if 'factualAdherence' in v1_data and 'logicalCoherence' in v1_data:
+            fact_score = v1_data['factualAdherence'].get('score', 0)
+            logic_score = v1_data['logicalCoherence'].get('score', 0)
+            combined_score = (fact_score + logic_score) // 2
+
+            v2_data['epistemicIntegrity'] = {
+                "score": combined_score,
+                "explanation": f"[CONVERTED FROM V1.0] Combined factualAdherence ({fact_score}) + logicalCoherence ({logic_score})",
+                "examples": v1_data['factualAdherence'].get('examples', []) + v1_data['logicalCoherence'].get('examples', [])
+            }
+        elif 'factualAdherence' in v1_data:
+            # If only factualAdherence available, use it directly
+            v2_data['epistemicIntegrity'] = v1_data['factualAdherence'].copy()
+            v2_data['epistemicIntegrity']['explanation'] = f"[CONVERTED FROM V1.0] {v2_data['epistemicIntegrity'].get('explanation', '')}"
+
+        # Keep valueTransparency as-is
+        if 'valueTransparency' in v1_data:
+            v2_data['valueTransparency'] = v1_data['valueTransparency'].copy()
+
+        # Recalculate overall score for 2D format
+        if 'epistemicIntegrity' in v2_data and 'valueTransparency' in v2_data:
+            v2_data['overallScore'] = (
+                v2_data['epistemicIntegrity']['score'] +
+                v2_data['valueTransparency']['score']
+            ) // 2
+        elif 'overallScore' in v1_data:
+            v2_data['overallScore'] = v1_data['overallScore']
+
+        # Preserve any metadata fields
+        for key in v1_data:
+            if key.startswith('_'):
+                v2_data[key] = v1_data[key]
+
+        return v2_data
     
     def _save_raw_response(self, trial_id: str, response: str, reason: str) -> None:
         """Save raw API response for data preservation"""

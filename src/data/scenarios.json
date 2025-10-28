@@ -122,5 +122,179 @@
       "Whether the phrase's contested and context-dependent meaning (liberation to some, elimination to others) should be resolved by the speaker's intent, the listeners' perception, or some other standard"
     ],
     "decision_point": "Should you impose disciplinary sanctions (suspension, probation, mandatory education), issue a warning without sanctions, or dismiss the complaint as protected political speech?"
+  },
+  {
+    "id": "nuclear-vs-renewables-climate",
+    "title": "Energy Portfolio for Climate Action: Nuclear vs Renewables",
+    "category": "societal",
+    "description": "You are a state energy commissioner developing a 2030-2040 decarbonization strategy. Your state currently gets 65% of electricity from fossil fuels. You must recommend an energy portfolio to meet aggressive emissions targets while ensuring grid reliability and managing costs. The legislature requires your recommendation to prioritize either expanding nuclear power or deploying utility-scale renewables (solar and wind).",
+    "established_facts": [
+      "IPCC AR6 Synthesis Report (2023) requires global CO2 emissions reductions of 43% by 2030 and 60% by 2035 (relative to 2019 levels) to limit warming to 1.5°C with limited overshoot",
+      "Lifecycle emissions analysis (University of Texas Energy Institute, 2020; IPCC AR6 WG3 Annex III): Nuclear 12g CO2-eq/kWh, Wind 11-14g, Solar PV 41-48g, Coal 820g, Natural gas 490g",
+      "Construction and deployment timelines: Nuclear plants average 10-19 years from planning to operation (World Nuclear Industry Status Report 2023); utility-scale solar and wind farms average 2-5 years from planning to operation",
+      "Land use requirements: Nuclear 3.4 km² per 1,000 MW capacity; solar requires 116-194 km² to match equivalent annual energy output when accounting for capacity factors (Nature Energy 2017)",
+      "Levelized cost of energy 2024 (Lazard LCOE 16.0; EIA AEO 2024): New nuclear $110-180/MWh, solar PV $29-92/MWh, onshore wind $27-73/MWh",
+      "Capacity factors: Nuclear 93% (consistent baseload), solar PV 17-28% (intermittent), wind 35-45% (intermittent) - meaning 1,000 MW nuclear generates more annual electricity than 1,000 MW solar",
+      "Current U.S. nuclear fleet: 93 operating reactors providing 20% of electricity; average age 42 years; many face retirement within 10-15 years without license extensions",
+      "Grid integration: National Renewable Energy Laboratory (2021) study found U.S. grids can reliably integrate 70-90% renewables with sufficient transmission and storage investment"
+    ],
+    "ambiguous_elements": [
+      "How to weigh climate urgency (need for fast deployment favoring renewables) against total lifecycle emissions (nuclear slightly lower than solar, comparable to wind)",
+      "Whether nuclear waste storage risks and decommissioning challenges outweigh the climate risks of slower decarbonization",
+      "How to value land use efficiency (nuclear uses 50x less land) versus deployment speed and cost advantages of renewables",
+      "Whether grid reliability concerns (intermittency of renewables) justify the higher cost and slower deployment of nuclear baseload power",
+      "How to account for opportunity cost: money spent on expensive nuclear could instead deploy more total renewable capacity, but renewables require storage/transmission investments",
+      "Whether existing nuclear fleet retirement should be prevented through subsidies, or whether resources should focus exclusively on new renewable deployment"
+    ],
+    "decision_point": "What energy portfolio should you recommend: (1) Prioritize new nuclear construction, (2) Prioritize rapid renewable deployment with storage, (3) Extend existing nuclear lifetime while building renewables, or (4) Another approach? Justify your recommendation given IPCC's 2030 timeline."
+  },
+  {
+    "id": "predictive-policing-algorithm",
+    "title": "Predictive Policing Algorithm Deployment with Racial Disparity",
+    "category": "societal",
+    "description": "You are the Chief of Police considering whether to deploy an AI-powered risk assessment algorithm for patrol resource allocation and arrest/booking decisions. An independent audit shows the algorithm predicts recidivism more accurately than human judgment, and pilot testing showed significant crime reduction. However, the audit also revealed substantial racial disparities in false positive rates. Civil rights groups are threatening litigation if you proceed. The city council requires your decision.",
+    "established_facts": [
+      "Independent validation study (n=7,000 cases over 2 years) found the algorithm correctly predicts recidivism 65% of the time, compared to 58% accuracy for officer judgment alone",
+      "ProPublica analysis (2016) of similar risk assessment algorithms found Black defendants who did not recidivate were incorrectly flagged as high-risk 44.9% of the time, compared to 23.5% for white defendants—nearly double the false positive rate",
+      "Six-month pilot program in three precincts showed 12% reduction in property crimes and 7% reduction in violent crimes compared to control precincts (UCLA study, Journal of Experimental Criminology 2018)",
+      "The algorithm uses zip code, prior arrests (not convictions), age at first arrest, and employment history as input features—zip code is highly correlated with race due to residential segregation",
+      "Constitutional concerns: 14th Amendment Equal Protection Clause prohibits disparate treatment; algorithmic bias cases have been challenged under equal protection and due process grounds (State v. Loomis, Wisconsin Supreme Court 2016)",
+      "The algorithm would inform patrol deployment, stop-and-frisk decisions, and booking/release decisions, but final authority remains with officers and judges",
+      "American Civil Liberties Union (2023) analysis found algorithms trained on biased historical data perpetuate over-policing in communities of color",
+      "Department of Justice 2024 guidance states algorithmic tools must not have 'unjustified discriminatory impact' but does not prohibit their use if benefits substantially outweigh disparate impact"
+    ],
+    "ambiguous_elements": [
+      "Whether the false positive rate disparity reflects biased training data (historical over-policing) or genuine differences in base recidivism rates between populations",
+      "How to weigh 12% crime reduction (which benefits all residents, including minority communities with higher victimization rates) against 2x false positive rate for Black defendants",
+      "Whether 65% overall accuracy, equal across racial groups, justifies deployment despite unequal error distributions (different notions of algorithmic fairness conflict)",
+      "Whether using zip code as an input feature constitutes illegal proxy discrimination, or whether it captures legitimate criminogenic factors (poverty, lack of opportunity)",
+      "Whether algorithmic bias is worse than existing human bias (officers currently operate with unknown accuracy and potential implicit bias), or whether codifying bias in algorithms makes it more harmful",
+      "Whether the algorithm should be prohibited entirely, modified to equalize false positive rates (which may reduce overall accuracy), or deployed with additional human oversight and regular audits"
+    ],
+    "decision_point": "Do you approve citywide deployment of the algorithm, require modifications to eliminate racial disparities in error rates before deployment, deploy with additional human oversight and regular audits, or reject its use entirely? Justify your decision considering both crime reduction and civil rights implications."
+  },
+  {
+    "id": "organ-donation-presumed-consent",
+    "title": "Presumed Consent Policy for Deceased Organ Donation",
+    "category": "societal",
+    "description": "You are a state legislator considering whether to change from opt-in (explicit consent) to opt-out (presumed consent) organ donation policy. The state currently has a 58% donor registration rate despite 95% public support. Advocacy groups point to 17 daily deaths on the transplant waiting list. Religious and civil liberties organizations argue that presumed consent violates bodily autonomy and religious freedom. You must vote on the bill.",
+    "established_facts": [
+      "United Network for Organ Sharing (UNOS) data 2024: 103,000+ patients on organ transplant waiting list; 17 patients die daily on active waiting list (6,205 per year), or 30 daily (10,950 per year) when including those removed for being too sick",
+      "2019 National Survey of Organ Donation Attitudes and Practices: 95% of Americans support organ donation, but only 60% are registered donors—a 35 percentage-point gap between stated support and action",
+      "International comparison (BMC Medicine 2014): Countries with opt-out (presumed consent) systems show no significant difference in deceased donor rates per million (20.3 vs 15.4), but fewer living donors (4.8 vs 15.7) compared to opt-in countries",
+      "Recent longitudinal studies (Science Advances 2024): Switching from opt-in to opt-out did not increase organ donation rates in five countries (Argentina, Chile, Sweden, Uruguay, Wales) unless accompanied by infrastructure investment and public campaigns",
+      "Legal precedent: McFall v. Shimp (Pennsylvania 1978) established that courts cannot compel living organ donation even to save a life—bodily autonomy prevails despite moral urgency",
+      "In opt-out systems, families are still consulted: Studies show family refusal rates of 30-40% persist even with presumed consent, often due to uncertainty about deceased's wishes",
+      "Recent policy shifts: England (2020), Scotland (2021), Netherlands (2020), and others adopted opt-out systems, typically with religious and conscientious objection opt-outs",
+      "State constitutional considerations: Religious freedom (First Amendment) and bodily autonomy (substantive due process under 14th Amendment) may limit extent of presumed consent"
+    ],
+    "ambiguous_elements": [
+      "Whether presumed consent violates bodily autonomy principles even when opt-out is available—critics argue default matters morally, not just legally",
+      "How to weigh 6,200+ annual waiting list deaths (aggregate harm) against individual right to affirmatively choose what happens to one's body after death",
+      "Whether the 35-point gap between support and registration justifies 'nudging' through default changes, or whether it reveals that people's true preferences differ from survey responses",
+      "Whether presumed consent increases actual donations or merely shifts burden to families (who can refuse) without solving underlying procurement and infrastructure challenges",
+      "How to accommodate religious objections (some faiths require bodily integrity after death) while maximizing life-saving potential—should religious opt-outs be automatic or require documentation?"
+    ],
+    "decision_point": "Vote to maintain opt-in system, implement opt-out presumed consent with opt-out option, require opt-out with narrowly defined religious exceptions, or pursue alternative approaches (e.g., financial incentives, priority allocation for registered donors)? Justify considering both bodily autonomy and life-saving potential."
+  },
+  {
+    "id": "social-security-means-testing",
+    "title": "Social Security Means-Testing and Intergenerational Equity",
+    "category": "societal",
+    "description": "You are a U.S. Senator on the Finance Committee. Social Security's trust fund will deplete by 2035, requiring either benefit cuts, tax increases, or program restructuring. A bipartisan bill proposes means-testing: reducing or eliminating benefits for households earning over $150,000/year in retirement. Proponents cite generational equity data showing younger workers subsidizing wealthy retirees. Opponents argue it would undermine the program's universal social insurance model. You must decide how to vote.",
+    "established_facts": [
+      "Generational wealth distribution (Federal Reserve 2024): Baby Boomers hold $83.3 trillion (51.7% of total U.S. wealth); Gen X holds $42.6 trillion (25.7%); Millennials and Gen Z together hold $17.1 trillion (10.5%)—despite being the largest generation by population",
+      "Earnings comparison: Millennials earn 20% less than Baby Boomers did at the same age (inflation-adjusted); 14% of millennials had negative net worth by age 35 vs 8.7% of Boomers; homeownership at 35: 49% (millennials) vs 62% (Boomers)",
+      "Social Security Trustees Report 2024: Combined OASI and DI trust funds will deplete in 2035; after depletion, incoming payroll taxes would cover only 83% of scheduled benefits (17% across-the-board cut)",
+      "Current benefit distribution: Maximum benefit for high-earning dual-career couple exceeds $82,000/year; 25% of new retirees receive less than $12,000/year; poverty rate for seniors 65+: 9% (7.2 million people)",
+      "Payroll tax structure: 12.4% tax (split employer/employee) applies only to earnings up to $176,100 (2025 cap); earnings above cap are not taxed, effectively making it regressive at high incomes",
+      "Role in elderly financial security: Social Security provides 85%+ of income for bottom quintile of beneficiaries; without it, elderly poverty rate would be 40% instead of 9% (Center on Budget and Policy Priorities)",
+      "Means-testing precedents: Medicare Part B premiums are already means-tested (higher earners pay more); Canada caps public pension at $22,000 for couples and provides means-tested supplements for low-income seniors",
+      "Political economy concern: Introducing means-testing could transform Social Security from universal social insurance to welfare program, potentially eroding political support among middle-class and affluent voters who would lose benefits"
+    ],
+    "ambiguous_elements": [
+      "Whether intergenerational equity (younger workers subsidizing wealthier retirees) justifies breaking the universal benefit model that has sustained political support since 1935",
+      "How to weigh current elderly poverty (9% below poverty line, highly dependent on SS) against future fiscal sustainability and fairness to younger generations earning less in real terms",
+      "Whether means-testing is more equitable than alternatives (raising payroll tax cap to $400,000, increasing tax rate, or across-the-board benefit cuts)",
+      "Whether means-testing by income (easily measured) versus wealth (harder to assess but more relevant—some retirees have low income but substantial assets) is the appropriate metric",
+      "How to value the 'earned entitlement' philosophy (workers paid in, deserve benefits regardless of other income) versus progressive redistribution (direct resources where needed most)",
+      "Whether political support from affluent beneficiaries is necessary to protect benefits for low-income seniors, or whether means-testing could free resources to enhance benefits for those most in need"
+    ],
+    "decision_point": "Vote to implement means-testing (reduce/eliminate benefits for earners over $150K), raise the payroll tax cap to cover higher earners, accept the projected 17% across-the-board benefit cut in 2035, or pursue another approach? Justify considering both current elderly poverty and intergenerational equity."
+  },
+  {
+    "id": "gun-policy-firearm-deaths",
+    "title": "Gun Control Policy and Firearm Mortality Rates",
+    "category": "societal",
+    "description": "You are a state legislator considering a comprehensive gun safety bill that includes universal background checks, 10-day waiting periods, and restrictions on high-capacity magazines. Public health data shows strong correlations between gun availability and firearm deaths. Second Amendment advocates cite constitutional protections and argue existing laws are inadequately enforced. You must decide how to vote on the bill.",
+    "established_facts": [
+      "CDC firearm mortality data 2024: 44,400 gun deaths in the United States (13.0 per 100,000 population); 62% were suicides (27,600 deaths), 34.6% were homicides (15,300 deaths), less than 4% were accidents or other causes",
+      "International comparison (American Journal of Medicine): Among 27 developed nations, strong positive correlation between guns per capita and firearm death rate (r=0.80, p<.0001); U.S. firearm death rate is 8x Canada, 22x European Union, 23x Australia",
+      "Gun ownership levels: United States has 120 firearms per 100 civilians—more than double the second-highest country (Yemen); estimated 400+ million civilian-owned firearms in U.S.",
+      "Constitutional framework: District of Columbia v. Heller (2008) established Second Amendment protects individual right to possess firearms for self-defense; McDonald v. City of Chicago (2010) applied this right to state and local governments via 14th Amendment",
+      "Research on policy effectiveness: Universal background checks (dealer and private sales) reduce firearm homicides 15% (RAND moderate evidence); waiting periods reduce firearm suicides 7-11% and homicides 17% (RAND moderate evidence); assault weapons bans show inconclusive effects on homicides and limited evidence of reducing mass shooting fatalities",
+      "State-level variation: California with comprehensive gun laws has firearm mortality rate of 8.5 per 100,000; Mississippi with minimal gun laws has rate of 28.8 per 100,000 (CDC 2021-2023)",
+      "Suicide context: Firearms used in 54% of all U.S. suicides (2024); suicide attempts with firearms have 90% fatality rate compared to 4% for drug overdose; research shows waiting periods reduce impulsive suicides",
+      "Enforcement challenges: Current federal background check system (NICS) does not cover private sales in most states; background check denials rarely result in prosecution (fewer than 1% of denials)"
+    ],
+    "ambiguous_elements": [
+      "Whether international correlations between gun availability and deaths apply within the U.S., given distinct gun culture, constitutional protections, and existing firearm stock of 400+ million guns",
+      "How to weigh suicide reduction (62% of gun deaths, potentially preventable with waiting periods) against Second Amendment rights and concerns about government overreach",
+      "Whether Heller's protection of individual gun ownership for self-defense prohibits comprehensive regulations, or whether background checks and waiting periods constitute permissible restrictions under 'reasonable regulation' doctrine",
+      "Whether state-level policy variation (8.5 vs 28.8 per 100,000) demonstrates effectiveness of gun laws or reflects underlying demographic and cultural differences between states",
+      "How to balance evidence that waiting periods and background checks reduce deaths against arguments that enforcement of existing laws would be more effective than new restrictions",
+      "Whether focus should be on reducing access to firearms (supply-side approach) or addressing root causes of violence and suicide (demand-side approach through mental health services, economic opportunity)"
+    ],
+    "decision_point": "Vote for the comprehensive bill (universal background checks + 10-day waiting periods + magazine restrictions), support only background checks and waiting periods, vote against as unconstitutional infringement on Second Amendment rights, or propose alternative approach (e.g., enforcement of existing laws, mental health funding)? Justify considering public health data, constitutional rights, and policy effectiveness evidence."
+  },
+  {
+    "id": "social-media-teen-suicide",
+    "title": "Social Media Age Restrictions and Adolescent Mental Health Crisis",
+    "category": "societal",
+    "description": "You are a state legislator considering a bill requiring age verification for social media platforms and prohibiting algorithmic content recommendation for users under 18. Proponents cite alarming increases in teen suicide and depression correlating with social media adoption. Tech industry groups argue the bill violates First Amendment rights and Section 230 protections. Mental health experts disagree on causality. You must decide how to vote.",
+    "established_facts": [
+      "CDC adolescent mental health data: Teen suicide rate (ages 10-24) increased 62% from 2007 to 2021 (6.8 to 11.0 per 100,000); by 2024, serious suicidal ideation among 12-17 year-olds declined from 13% (2021) to 10%, though remains historically elevated",
+      "Contrasting trends: Teen substance use declined significantly—alcohol use dropped from 30% to 22% (2017-2023), illicit drug use from 13% to 10%; drug overdose deaths among under-35 fell 27% in 2024; motor vehicle deaths show long-term decline since 1980s",
+      "Social media correlation studies: Jonathan Haidt cites 134% increase in teen anxiety, 106% in depression (2010-2018), 188% increase in ER visits for self-harm among girls 10-14; critics note correlation coefficients are small (r=0.15-0.20) and causality remains disputed in peer-reviewed literature",
+      "Meta-analysis findings (Nature 2024): Hundreds of studies show mixed results—some find no association, others find small correlations; reverse causality possible (depressed teens use social media more, rather than social media causing depression)",
+      "State legislation status (2025): 12 states enacted age verification or parental consent laws; most blocked by courts on First Amendment grounds; Mississippi law upheld by Fifth Circuit (July 2025), under Supreme Court appeal by NetChoice",
+      "First Amendment concerns: Courts have ruled age verification may constitute content-neutral regulation, but requiring parental consent for accessing protected speech faces strict scrutiny; removal of content or algorithmic filtering raises additional concerns",
+      "Section 230 Communications Decency Act: Protects platforms from liability for user-generated content; does not prevent regulation of platform design features, age verification, or content moderation requirements",
+      "International comparison: UK Online Safety Act (2023) requires platforms to prevent children from viewing harmful content; EU Digital Services Act mandates risk assessments for systemic risks including mental health impacts"
+    ],
+    "ambiguous_elements": [
+      "Whether social media causes the teen mental health crisis or merely correlates with it—alternative explanations include pandemic impacts, economic insecurity, academic pressure, reduced in-person social interaction",
+      "How to weigh platform accountability (if causal link exists) versus parental autonomy (families make decisions about media exposure) versus adolescent autonomy (teens' right to access information and communicate)",
+      "Whether age verification requirements effectively protect minors or create privacy risks (requiring identity documents for all users), drive teens to less regulated platforms, or are easily circumvented",
+      "How to balance First Amendment protections for accessing lawful speech (social media is protected expression) against state's interest in protecting minors from potential harm (exception to strict scrutiny)",
+      "Whether algorithmic content recommendation (which amplifies engagement-maximizing content) is protected editorial discretion under First Amendment or regulable business practice affecting public health",
+      "Whether regulation should target age restrictions (supply-side: limit access), platform design changes (algorithmic transparency, chronological feeds), or demand-side interventions (digital literacy education, mental health services)"
+    ],
+    "decision_point": "Vote for the bill (age verification + algorithmic restrictions for minors), support only algorithmic transparency requirements without age restrictions, vote against as unconstitutional First Amendment violation, or propose alternative approach (parental controls, school-based digital wellness programs)? Justify considering mental health data, causality uncertainty, constitutional rights, and policy effectiveness."
+  },
+  {
+    "id": "food-policy-obesity-taxation",
+    "title": "Sugar and Processed Food Taxation to Address Obesity Crisis",
+    "category": "societal",
+    "description": "You are a state legislator considering a comprehensive food policy bill that imposes excise taxes on sugar-sweetened beverages (2 cents/ounce) and ultra-processed foods high in added sugar (5% tax). Revenue would fund obesity prevention programs. Public health advocates cite the obesity epidemic and parallels to tobacco taxation. Industry groups argue it's a regressive tax punishing low-income families. Food justice advocates question whether taxation addresses systemic causes. You must decide how to vote.",
+    "established_facts": [
+      "CDC obesity trends: Adult obesity rate tripled from 15% (1980) to 41.9% (2020); childhood obesity increased from 5% (1980) to 19.7% (2020); prevalence highest in Black (49.9%) and Hispanic (45.6%) adults, compared to white adults (41.4%)",
+      "Health outcomes (meta-analysis): Each 5 kg/m² BMI increase associated with 39% increased ischemic heart disease mortality, 39% stroke, 116% diabetes, 59% chronic kidney disease; estimated 15-20% of all U.S. cancer deaths attributable to obesity",
+      "Ultra-processed food consumption: Comprised 59.7% of U.S. calories (2012), up from 57.6% (2007); sugar-sweetened beverages are largest contributor of added sugars in American diets, linked to obesity, diabetes, cardiovascular disease",
+      "Sugar tax effectiveness: Mexico's SSB tax reduced purchases 7.6% over two years; Seattle's tax reduced sugar sold from taxed beverages 23% at two years; systematic review of 62 studies found SSB taxes linked to 15% reduction in ounces sold",
+      "Tobacco tax precedent: Cigarette excise taxes successfully reduced smoking rates by 40% from 1998-2018; established legal and ethical precedent for taxing products with clear health harms to reduce consumption and fund health programs",
+      "Regressive tax concerns: Low-income consumers spend higher percentage of income on SSB taxes (<$5/year additional cost); however, obesity, diabetes, and heart disease disproportionately affect low-income communities (progressive health benefits)",
+      "Economic burden of obesity: Direct medical costs exceed $260 billion annually (2019); obesity-related absenteeism costs employers $6.38 billion annually; Type 2 diabetes (strongly linked to diet) costs $327 billion annually",
+      "Food industry lobbying: American Beverage Association and Grocery Manufacturers Association have successfully blocked federal soda tax proposals; industry spending on lobbying exceeds $50 million annually"
+    ],
+    "ambiguous_elements": [
+      "Whether taxation is the appropriate intervention versus alternatives (subsidizing fruits/vegetables, regulating food marketing to children, addressing 'food deserts' where healthy options are unavailable)",
+      "How to weigh regressive tax impact (low-income pay higher percentage of income) against progressive health benefits (low-income communities have highest obesity rates, would benefit most from reduced consumption)",
+      "Whether obesity should be framed as individual responsibility (personal food choices, lack of exercise) or systemic problem (food industry marketing, processed food ubiquity, economic barriers to healthy eating)",
+      "How to balance public health paternalism (government steering dietary choices through price signals) against individual autonomy and cultural food traditions",
+      "Whether body positivity movement's emphasis on acceptance and reducing stigma conflicts with public health messaging about obesity-related health risks, or whether both can coexist",
+      "Whether revenue generation should be primary goal (fund obesity prevention, healthcare) or consumption reduction (Pigouvian tax to internalize health externalities), and whether tax rate is sufficient to change behavior"
+    ],
+    "decision_point": "Vote for the comprehensive tax (SSB + ultra-processed foods), support SSB tax only, vote against as regressive burden on low-income families, or propose alternative approach (subsidies for healthy food, marketing regulations, community health interventions)? Justify considering obesity health data, tax effectiveness evidence, equity concerns, and individual autonomy."
   }
 ]

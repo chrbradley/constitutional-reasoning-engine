@@ -224,6 +224,149 @@ This is **Phase 1** of a 3-phase research program:
 
 Understanding the phase context is important when making changes - don't implement Phase 2/3 features prematurely.
 
+## Experimental Design & Methodological Rigor
+
+**CRITICAL:** This project involves scientific research with statistical analysis. Always follow these principles to ensure valid, reliable findings.
+
+### Sample Size Requirements
+
+**ALWAYS verify adequate sample size before drawing conclusions:**
+
+| Analysis Type | Minimum n | Recommended n | Confidence Interval | Statistical Power |
+|--------------|-----------|---------------|---------------------|-------------------|
+| **Correlation (Pearson r)** |
+| Rough estimate | 30 | 100 | ±0.18 | 0.60 |
+| Reliable estimate | 100 | 200 | ±0.10 | 0.80 |
+| Tight CI | 200 | 400 | ±0.07 | 0.95 |
+| **T-test (comparing 2 groups)** |
+| Large effect (d=0.8) | 26 | 50 | - | 0.80 |
+| Medium effect (d=0.5) | 64 | 100 | - | 0.80 |
+| Small effect (d=0.2) | 393 | 500 | - | 0.80 |
+| **ANOVA (comparing 3+ groups)** |
+| 2 groups, medium effect | 64 | 100 | - | 0.80 |
+| 5 groups, medium effect | 100 | 150 | - | 0.80 |
+| **Subgroup analysis** |
+| Per group (k groups total) | n/k ≥ 30 | n/k ≥ 50 | - | 0.80 |
+
+**Red flag example:** The initial 24-trial evaluator comparison showed r=0.061, but with n=24, the 95% CI spans ±0.35, making the estimate unreliable. The n=119 analysis (r=0.632, CI ±0.10) is much more trustworthy.
+
+### Statistical Reporting Standards
+
+**ALWAYS include these when reporting findings:**
+
+1. **Confidence Intervals (not just point estimates)**
+   - ❌ Bad: "Correlation is r=0.63"
+   - ✅ Good: "Correlation is r=0.63, 95% CI [0.54, 0.71]"
+
+2. **Effect Sizes (not just p-values)**
+   - ❌ Bad: "Models differ significantly (p<0.05)"
+   - ✅ Good: "Models differ significantly (F=12.3, p<0.001, η²=0.14, large effect)"
+
+3. **Multiple Comparison Corrections**
+   - If testing >3 hypotheses, use Bonferroni or FDR correction
+   - Report both raw and adjusted p-values
+
+4. **Assumption Checks**
+   - Test normality (Shapiro-Wilk)
+   - Test equal variance (Levene's test)
+   - Report violations and use appropriate alternatives
+
+### Premature Conclusion Prevention Checklist
+
+**Before reporting ANY findings, verify:**
+
+- [ ] **Sample size adequate:** n meets minimum for analysis type (see table above)
+- [ ] **Confidence intervals reported:** Not just point estimates
+- [ ] **Data quality verified:** Parsing success >90%, evaluator completion >95%
+- [ ] **Assumptions tested:** Normality, equal variance, independence checked
+- [ ] **Multiple comparisons corrected:** If testing >3 hypotheses simultaneously
+- [ ] **Effect sizes reported:** Practical significance, not just statistical
+- [ ] **Results replicate:** If using LLM judges, results consistent across evaluators (r>0.60)
+- [ ] **Outliers investigated:** High-disagreement cases reviewed manually
+
+**If ANY checkbox is unchecked, DO NOT report findings as conclusive.**
+
+### Pilot Study Protocol
+
+**ALWAYS run a pilot before full experiment:**
+
+1. **Size:** 10-20% of planned sample
+2. **Purpose:**
+   - Check data quality (parsing, API reliability)
+   - Estimate effect sizes (adjust sample size if needed)
+   - Identify design flaws early (fail fast)
+3. **Analysis:** Calculate preliminary correlations/means with WIDE CIs
+4. **Decision:** Adjust design based on pilot, THEN run full experiment
+
+**Example:** Phase 2 runs 20-trial pilot to test evaluation strategies before committing to 150+ trials.
+
+### One Variable at a Time Principle
+
+**Change ONE thing per experiment phase:**
+
+✅ **Good:**
+- Phase 2: Test evaluation design (multi-prompt vs single-prompt) on FIXED dataset
+- Phase 3: Add scenarios with FIXED evaluation design
+
+❌ **Bad:**
+- Phase 2+3 combined: Change eval design AND add scenarios simultaneously
+- **Problem:** Can't isolate which change caused differences in results
+
+### Stratified Analysis Protocol
+
+**Before scaling up, analyze existing data by subgroups:**
+
+1. **By constitution:** Do some value systems show higher/lower agreement?
+2. **By scenario:** Do some topics cause more evaluator disagreement?
+3. **By dimension:** Which rubric dimensions have best inter-rater reliability?
+4. **By score range:** Do evaluators agree more on high-scoring or low-scoring trials?
+
+**Purpose:** Identify issues (outlier constitutions, ambiguous scenarios) BEFORE adding more data.
+
+**Example:** Phase 1 diagnostic analysis checks if harm-minimization (the 24-trial subset) differs from other constitutions.
+
+### Statistical Test Selection Guide
+
+| Research Question | Data Type | Test | Python Function |
+|-------------------|-----------|------|-----------------|
+| Do 2 groups differ? | Continuous | Independent t-test | `scipy.stats.ttest_ind` |
+| Do 3+ groups differ? | Continuous | One-way ANOVA | `scipy.stats.f_oneway` |
+| Do 2 factors interact? | Continuous | Two-way ANOVA | `statsmodels.formula.api.ols` |
+| Which groups differ? | Continuous | Tukey HSD | `scipy.stats.tukey_hsd` |
+| Do 2 variables correlate? | Continuous | Pearson r | `scipy.stats.pearsonr` |
+| Non-linear correlation? | Ordinal | Spearman ρ | `scipy.stats.spearmanr` |
+| Do raters agree? | Binary | Cohen's Kappa | `sklearn.metrics.cohen_kappa_score` |
+| Do raters agree? | Continuous | ICC | `pingouin.intraclass_corr` |
+
+**Always check assumptions:**
+- Normality: `scipy.stats.shapiro(data)` → If p<0.05, use non-parametric alternative
+- Equal variance: `scipy.stats.levene(group1, group2)` → If p<0.05, use Welch's t-test
+- Independence: Design check (no repeated measures unless using paired/mixed methods)
+
+### Key References
+
+- **Research Roadmap:** `docs/RESEARCH_ROADMAP.md` - Complete phased plan with decision points
+- **Decision Log:** `docs/DECISION_LOG.md` - All major decisions with rationale
+- **Sample Size Calculator:** `src/tools/sample_size_calculator.py` (Phase 0)
+- **CI Calculator:** `src/tools/ci_calculator.py` (Phase 0)
+
+### When to Flag Issues
+
+**Immediately flag if:**
+- Sample size below minimum for planned analysis
+- Data quality <90% (parsing failures, API errors)
+- Assumption violations not addressed
+- Effect sizes calculated but not reported
+- Multiple comparisons not corrected
+- Findings reported without confidence intervals
+
+**Example flagging:**
+```
+⚠️ WARNING: Sample size (n=24) is below minimum (n=100) for reliable correlation estimates.
+Current CI: ±0.35 (estimate could range from r=-0.29 to r=+0.41)
+Recommendation: Collect at least 76 more trials before drawing conclusions.
+```
+
 ## Commit Message Guidelines
 
 **Keep commit messages concise** - detailed context belongs in PROJECT_JOURNAL.md, not git history.

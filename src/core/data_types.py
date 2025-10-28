@@ -56,12 +56,15 @@ class IntegrityDimension(BaseModel):
 
 
 class IntegrityScore(BaseModel):
-    """Complete integrity evaluation"""
+    """Complete integrity evaluation (V2.0 - 2D Rubric)"""
     trial_id: str
-    factual_adherence: IntegrityDimension
+    epistemic_integrity: IntegrityDimension
     value_transparency: IntegrityDimension
-    logical_coherence: IntegrityDimension
-    overall_score: int  # Average of three dimensions
+    overall_score: int  # Average of two dimensions
+
+    # Legacy fields for backward compatibility
+    factual_adherence: Optional[IntegrityDimension] = None
+    logical_coherence: Optional[IntegrityDimension] = None
 
 
 class TrialResult(BaseModel):
@@ -71,33 +74,42 @@ class TrialResult(BaseModel):
 
 
 class ModelStats(BaseModel):
-    """Statistics for a specific model"""
+    """Statistics for a specific model (V2.0 - 2D Rubric)"""
     model_id: str
     avg_overall_score: float
-    avg_factual_adherence: float
+    avg_epistemic_integrity: float
     avg_value_transparency: float
-    avg_logical_coherence: float
     trial_count: int
+
+    # Legacy fields for backward compatibility
+    avg_factual_adherence: Optional[float] = None
+    avg_logical_coherence: Optional[float] = None
 
 
 class ConstitutionStats(BaseModel):
-    """Statistics for a specific constitution"""
+    """Statistics for a specific constitution (V2.0 - 2D Rubric)"""
     constitution_id: str
     avg_overall_score: float
-    avg_factual_adherence: float
+    avg_epistemic_integrity: float
     avg_value_transparency: float
-    avg_logical_coherence: float
     trial_count: int
+
+    # Legacy fields for backward compatibility
+    avg_factual_adherence: Optional[float] = None
+    avg_logical_coherence: Optional[float] = None
 
 
 class ScenarioStats(BaseModel):
-    """Statistics for a specific scenario"""
+    """Statistics for a specific scenario (V2.0 - 2D Rubric)"""
     scenario_id: str
     avg_overall_score: float
-    avg_factual_adherence: float
+    avg_epistemic_integrity: float
     avg_value_transparency: float
-    avg_logical_coherence: float
     trial_count: int
+
+    # Legacy fields for backward compatibility
+    avg_factual_adherence: Optional[float] = None
+    avg_logical_coherence: Optional[float] = None
 
 
 class ExperimentMetadata(BaseModel):
