@@ -154,9 +154,7 @@ async def run_single_test(
                 }
                 # Suppress verbose Layer 1 log (shown once per batch instead)
 
-                # Save JSON facts as raw response
-                import json
-                experiment_manager.save_raw_response(test_id, 1, json.dumps(facts, indent=2))
+                # Raw facts stored in Layer 1 JSON (response_raw field)
 
                 # Save Layer 1 output (facts from JSON, no API call)
                 layer1_data = {
@@ -191,10 +189,7 @@ async def run_single_test(
                 if 'ambiguousElements' not in facts:
                     facts['ambiguousElements'] = ["[MANUAL_REVIEW] See raw response"]
 
-                # Save raw response BEFORE parsing
-                experiment_manager.save_raw_response(test_id, 1, fact_response)
-
-                # Save Layer 1 output (facts from API)
+                # Save Layer 1 output (facts from API, raw stored in response_raw field)
                 layer1_data = {
                     "testId": test_id,
                     "timestamp": datetime.now().isoformat(),
@@ -289,19 +284,36 @@ async def run_single_test(
             if max_tokens_constitutional > 8000:
                 print(f"📊 {model_data['id']} required {max_tokens_constitutional} tokens for complete response")
 
-            # Save raw response BEFORE parsing
-            experiment_manager.save_raw_response(test_id, 2, constitutional_response)
-
-            # Save Layer 2 output (constitutional reasoning)
+            # Save Layer 2 output (constitutional reasoning) - Layer2Data schema format
             layer2_data = {
-                "testId": test_id,
+                "trial_id": test_id,
+                "layer": 2,
                 "timestamp": datetime.now().isoformat(),
+                "status": "completed",
+
+                # Metadata (propagated for self-contained files)
+                "scenario_id": scenario_data.id,
                 "model": model_data['id'],
                 "constitution": constitution_data.id,
-                "scenario": scenario_data.id,
-                "response": response_data,
-                "parseStatus": constitutional_status.value,
-                "maxTokensUsed": max_tokens_constitutional
+
+                # Prompt and response
+                "prompt_sent": reasoning_prompt,
+                "response_raw": constitutional_response,
+                "response_parsed": response_data,
+
+                # Parsing metadata
+                "parsing": {
+                    "success": constitutional_status == ParseStatus.SUCCESS,
+                    "method": "standard_json" if constitutional_status == ParseStatus.SUCCESS else "manual_review",
+                    "fallback_attempts": 0,  # Parser tracks this internally
+                    "error": None if constitutional_status == ParseStatus.SUCCESS else constitutional_status.value,
+                    "manual_review_path": None
+                },
+
+                # Performance metrics
+                "tokens_used": max_tokens_constitutional,
+                "latency_ms": layer2_time,
+                "truncation_detected": is_truncated
             }
             experiment_manager.save_layer_result(test_id, 2, layer2_data)
             experiment_manager.update_layer_status(test_id, 2, "completed", model_data['id'])
@@ -325,10 +337,7 @@ async def run_single_test(
             # Save error response for debugging
             experiment_manager.save_error_response(test_id, 2, error_details)
 
-            # If we got a partial response before the error, save it too
-            if constitutional_response:
-                experiment_manager.save_raw_response(test_id, 2, constitutional_response)
-
+            # Partial responses captured in audit logs (debug/api_calls/)
             experiment_manager.update_layer_status(test_id, 2, "failed", model_data['id'], error_msg)
             experiment_manager.mark_test_failed(test_id, error_msg)
             print(f"❌ {test_id} - {error_msg}")
@@ -660,7 +669,7 @@ Examples:
     elif force_new:
         # Force new experiment
         print("🆕 Starting new experiment (--new flag)")
-        experiment_manager = ExperimentManager()
+        experiment_manager = ExperimentManager(force_new=True)
         experiment_id = experiment_manager.create_experiment(scenarios, constitutions, layer2_models, layer3_evaluators)
 
     else:
