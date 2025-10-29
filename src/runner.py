@@ -16,7 +16,9 @@ from src.core.constitutions import load_constitutions
 from src.core.prompts import (
     build_fact_establishment_prompt,
     build_constitutional_reasoning_prompt,
-    build_integrity_evaluation_prompt
+    build_integrity_evaluation_prompt_likert,
+    build_integrity_evaluation_prompt_binary,
+    build_integrity_evaluation_prompt_ternary
 )
 from src.core.experiment_state import ExperimentManager, TrialDefinition, TrialStatus
 from src.core.graceful_parser import GracefulJsonParser, ParseStatus
@@ -122,6 +124,7 @@ async def run_single_test(
     model_data: Dict,
     experiment_manager: ExperimentManager,
     layer3_evaluators: List[str],
+    evaluation_strategy: str = 'likert',
     trial_num: int = 0,
     total_trials: int = 0
 ) -> bool:
@@ -344,11 +347,25 @@ async def run_single_test(
             return False
 
         # Layer 3: Integrity evaluation with ALL evaluators
-        eval_prompt = build_integrity_evaluation_prompt(
-            established_facts=facts['establishedFacts'],
-            ambiguous_elements=facts['ambiguousElements'],
-            constitutional_response=response_data
-        )
+        # Select prompt based on evaluation strategy
+        if evaluation_strategy == 'binary':
+            eval_prompt = build_integrity_evaluation_prompt_binary(
+                established_facts=facts['establishedFacts'],
+                ambiguous_elements=facts['ambiguousElements'],
+                constitutional_response=response_data
+            )
+        elif evaluation_strategy == 'ternary':
+            eval_prompt = build_integrity_evaluation_prompt_ternary(
+                established_facts=facts['establishedFacts'],
+                ambiguous_elements=facts['ambiguousElements'],
+                constitutional_response=response_data
+            )
+        else:  # likert (default)
+            eval_prompt = build_integrity_evaluation_prompt_likert(
+                established_facts=facts['establishedFacts'],
+                ambiguous_elements=facts['ambiguousElements'],
+                constitutional_response=response_data
+            )
 
         # Evaluate with all Layer 3 evaluators - incremental writes for fault tolerance
         primary_eval_result = None
@@ -459,6 +476,7 @@ async def run_batch(
     layer3_evaluators: List[str],
     batch_num: int,
     total_batches: int,
+    evaluation_strategy: str = 'likert',
     total_trials: int = 0
 ) -> Dict[str, int]:
     """
@@ -483,7 +501,7 @@ async def run_batch(
         constitution = constitutions_dict[test_def.constitution_id]
         model = models_dict[test_def.model_id]
 
-        task = run_single_test(test_def, scenario, constitution, model, experiment_manager, layer3_evaluators, trial_counter, total_trials)
+        task = run_single_test(test_def, scenario, constitution, model, experiment_manager, layer3_evaluators, evaluation_strategy, trial_counter, total_trials)
         tasks.append(task)
         trial_counter += 1
     
@@ -613,6 +631,9 @@ Examples:
                        help='Model IDs for Layer 2 reasoning (default: all)')
     parser.add_argument('--layer3-evaluators', type=str, nargs='+', metavar='MODEL_ID',
                        help='Model IDs for Layer 3 evaluation (default: primary evaluator)')
+    parser.add_argument('--evaluation-strategy', type=str, choices=['likert', 'binary', 'ternary'],
+                       default='likert',
+                       help='Rubric format for Layer 3 evaluation: likert (0-100), binary (PASS/FAIL), or ternary (STRONG/PARTIAL/WEAK) (default: likert)')
 
     # Single-layer mode (for resume with forced rerun)
     parser.add_argument('--layer', type=int, choices=[1, 2, 3],
@@ -795,7 +816,8 @@ Examples:
             # Run batch
             batch_results = await run_batch(
                 batch, scenarios_dict, constitutions_dict, models_dict,
-                experiment_manager, layer3_evaluators, i, len(batches), len(all_trials)
+                experiment_manager, layer3_evaluators, i, len(batches),
+                args.evaluation_strategy, len(all_trials)
             )
             
             total_successful += batch_results["successful"]

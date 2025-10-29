@@ -23,7 +23,7 @@ from typing import Dict, List
 
 from src.core.experiment_state import ExperimentManager
 from src.core.graceful_parser import GracefulJsonParser
-from src.core.prompts import build_integrity_evaluation_prompt
+from src.core.prompts import build_integrity_evaluation_prompt_likert
 from src.core.layer3_evaluator import evaluate_layer3
 
 
@@ -130,7 +130,7 @@ async def re_evaluate_experiment(experiment_id: str, evaluator_id: str) -> Dict[
             "ambiguousElements": scenario.ambiguous_elements
         }
 
-        eval_prompt = build_integrity_evaluation_prompt(
+        eval_prompt = build_integrity_evaluation_prompt_likert(
             established_facts=facts['establishedFacts'],
             ambiguous_elements=facts['ambiguousElements'],
             constitutional_response=constitutional_response
