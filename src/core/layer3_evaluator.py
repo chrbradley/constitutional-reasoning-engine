@@ -29,7 +29,7 @@ async def evaluate_layer3(
 
     Args:
         trial_id: Unique trial identifier
-        eval_prompt: Evaluation prompt (from build_integrity_evaluation_prompt)
+        eval_prompt: Evaluation prompt (from build_integrity_evaluation_prompt_likert/binary/ternary)
         evaluator_id: Model ID of the evaluator
         is_primary: If True, saves to layer3/raw/ and layer3/parsed/
                    If False, saves to layer3/{evaluator_id}/raw/ and layer3/{evaluator_id}/parsed/
