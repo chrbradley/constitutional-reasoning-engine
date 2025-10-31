@@ -1,0 +1,1120 @@
+{
+  "experiment_id": "exp_20251028_134615",
+  "consensus_method": "mean_all",
+  "n_trials": 360,
+  "n_models": 5,
+  "n_constitutions": 6,
+  "dimensions": {
+    "epistemic_integrity": {
+      "cell_means": {
+        "balanced-justice": {
+          "claude-sonnet-4-5": 92.95,
+          "deepseek-chat": 91.68333333333334,
+          "gemini-2-5-pro": 91.81666666666666,
+          "gpt-4o": 87.58333333333333,
+          "grok-3": 91.91666666666667
+        },
+        "community-order": {
+          "claude-sonnet-4-5": 93.0,
+          "deepseek-chat": 89.73333333333333,
+          "gemini-2-5-pro": 88.01666666666667,
+          "gpt-4o": 87.0,
+          "grok-3": 90.95
+        },
+        "harm-minimization": {
+          "claude-sonnet-4-5": 93.5,
+          "deepseek-chat": 91.45,
+          "gemini-2-5-pro": 90.11666666666667,
+          "gpt-4o": 87.71666666666665,
+          "grok-3": 92.0
+        },
+        "no-constitution": {
+          "claude-sonnet-4-5": 92.96666666666665,
+          "deepseek-chat": 90.48333333333333,
+          "gemini-2-5-pro": 91.7,
+          "gpt-4o": 87.46666666666665,
+          "grok-3": 91.10000000000001
+        },
+        "self-sovereignty": {
+          "claude-sonnet-4-5": 89.26666666666667,
+          "deepseek-chat": 84.01666666666667,
+          "gemini-2-5-pro": 84.10000000000001,
+          "gpt-4o": 83.76666666666667,
+          "grok-3": 87.61666666666667
+        },
+        "utilitarian": {
+          "claude-sonnet-4-5": 91.75,
+          "deepseek-chat": 90.0,
+          "gemini-2-5-pro": 89.68333333333334,
+          "gpt-4o": 87.56666666666666,
+          "grok-3": 89.3
+        }
+      },
+      "anova": {
+        "n_observations": 360,
+        "n_models": 5,
+        "n_constitutions": 6,
+        "dimension": "epistemic_integrity",
+        "anova_table": {
+          "model_effect": {
+            "F": 37.971515034999,
+            "p": 3.9202081841272796e-26,
+            "eta_sq": 0.22366068937168102,
+            "df": 4
+          },
+          "constitution_effect": {
+            "F": 33.623480352358236,
+            "p": 1.0061751855974735e-27,
+            "eta_sq": 0.24756224461125892,
+            "df": 5
+          },
+          "interaction_effect": {
+            "F": 1.4543990218709446,
+            "p": 0.09535763048466851,
+            "eta_sq": 0.042833672498098496,
+            "df": 20
+          },
+          "residual": {
+            "df": 330
+          }
+        },
+        "model_r_squared": 0.5140566064810419,
+        "adjusted_r_squared": 0.4713524900808911,
+        "interpretation": {
+          "interaction_significant": false,
+          "model_effect_significant": true,
+          "constitution_effect_significant": true,
+          "interaction_strength": "small",
+          "model_strength": "large",
+          "constitution_strength": "large"
+        }
+      },
+      "post_hoc": {
+        "models": {
+          "summary": "          Multiple Comparison of Means - Tukey HSD, FWER=0.05          \n=======================================================================\n      group1          group2     meandiff p-adj   lower   upper  reject\n-----------------------------------------------------------------------\nclaude-sonnet-4-5  deepseek-chat  -2.6778    0.0 -4.1827 -1.1728   True\nclaude-sonnet-4-5 gemini-2-5-pro     -3.0    0.0  -4.505  -1.495   True\nclaude-sonnet-4-5         gpt-4o  -5.3889    0.0 -6.8938 -3.8839   True\nclaude-sonnet-4-5         grok-3  -1.7583 0.0128 -3.2633 -0.2534   True\n    deepseek-chat gemini-2-5-pro  -0.3222  0.977 -1.8272  1.1827  False\n    deepseek-chat         gpt-4o  -2.7111    0.0 -4.2161 -1.2062   True\n    deepseek-chat         grok-3   0.9194 0.4507 -0.5855  2.4244  False\n   gemini-2-5-pro         gpt-4o  -2.3889 0.0002 -3.8938 -0.8839   True\n   gemini-2-5-pro         grok-3   1.2417 0.1598 -0.2633  2.7466  False\n           gpt-4o         grok-3   3.6306    0.0  2.1256  5.1355   True\n-----------------------------------------------------------------------",
+          "significant_pairs": [
+            {
+              "group1": "claude-sonnet-4-5",
+              "group2": "deepseek-chat",
+              "mean_diff": -2.6778,
+              "p_adj": 0.0,
+              "ci_lower": -4.1827,
+              "ci_upper": -1.1728
+            },
+            {
+              "group1": "claude-sonnet-4-5",
+              "group2": "gemini-2-5-pro",
+              "mean_diff": -3.0,
+              "p_adj": 0.0,
+              "ci_lower": -4.505,
+              "ci_upper": -1.495
+            },
+            {
+              "group1": "claude-sonnet-4-5",
+              "group2": "gpt-4o",
+              "mean_diff": -5.3889,
+              "p_adj": 0.0,
+              "ci_lower": -6.8938,
+              "ci_upper": -3.8839
+            },
+            {
+              "group1": "claude-sonnet-4-5",
+              "group2": "grok-3",
+              "mean_diff": -1.7583,
+              "p_adj": 0.0128,
+              "ci_lower": -3.2633,
+              "ci_upper": -0.2534
+            },
+            {
+              "group1": "deepseek-chat",
+              "group2": "gpt-4o",
+              "mean_diff": -2.7111,
+              "p_adj": 0.0,
+              "ci_lower": -4.2161,
+              "ci_upper": -1.2062
+            },
+            {
+              "group1": "gemini-2-5-pro",
+              "group2": "gpt-4o",
+              "mean_diff": -2.3889,
+              "p_adj": 0.0002,
+              "ci_lower": -3.8938,
+              "ci_upper": -0.8839
+            },
+            {
+              "group1": "gpt-4o",
+              "group2": "grok-3",
+              "mean_diff": 3.6306,
+              "p_adj": 0.0,
+              "ci_lower": 2.1256,
+              "ci_upper": 5.1355
+            }
+          ]
+        },
+        "constitutions": {
+          "summary": "           Multiple Comparison of Means - Tukey HSD, FWER=0.05            \n==========================================================================\n      group1            group2      meandiff p-adj   lower   upper  reject\n--------------------------------------------------------------------------\n balanced-justice   community-order    -1.45 0.1435 -3.1485  0.2485  False\n balanced-justice harm-minimization  -0.2333 0.9988 -1.9319  1.4652  False\n balanced-justice   no-constitution  -0.4467 0.9749 -2.1452  1.2519  False\n balanced-justice  self-sovereignty  -5.4367    0.0 -7.1352 -3.7381   True\n balanced-justice       utilitarian    -1.53 0.1046 -3.2285  0.1685  False\n  community-order harm-minimization   1.2167  0.315 -0.4819  2.9152  False\n  community-order   no-constitution   1.0033 0.5376 -0.6952  2.7019  False\n  community-order  self-sovereignty  -3.9867    0.0 -5.6852 -2.2881   True\n  community-order       utilitarian    -0.08    1.0 -1.7785  1.6185  False\nharm-minimization   no-constitution  -0.2133 0.9992 -1.9119  1.4852  False\nharm-minimization  self-sovereignty  -5.2033    0.0 -6.9019 -3.5048   True\nharm-minimization       utilitarian  -1.2967 0.2462 -2.9952  0.4019  False\n  no-constitution  self-sovereignty    -4.99    0.0 -6.6885 -3.2915   True\n  no-constitution       utilitarian  -1.0833 0.4493 -2.7819  0.6152  False\n self-sovereignty       utilitarian   3.9067    0.0  2.2081  5.6052   True\n--------------------------------------------------------------------------",
+          "significant_pairs": [
+            {
+              "group1": "balanced-justice",
+              "group2": "self-sovereignty",
+              "mean_diff": -5.4367,
+              "p_adj": 0.0,
+              "ci_lower": -7.1352,
+              "ci_upper": -3.7381
+            },
+            {
+              "group1": "community-order",
+              "group2": "self-sovereignty",
+              "mean_diff": -3.9867,
+              "p_adj": 0.0,
+              "ci_lower": -5.6852,
+              "ci_upper": -2.2881
+            },
+            {
+              "group1": "harm-minimization",
+              "group2": "self-sovereignty",
+              "mean_diff": -5.2033,
+              "p_adj": 0.0,
+              "ci_lower": -6.9019,
+              "ci_upper": -3.5048
+            },
+            {
+              "group1": "no-constitution",
+              "group2": "self-sovereignty",
+              "mean_diff": -4.99,
+              "p_adj": 0.0,
+              "ci_lower": -6.6885,
+              "ci_upper": -3.2915
+            },
+            {
+              "group1": "self-sovereignty",
+              "group2": "utilitarian",
+              "mean_diff": 3.9067,
+              "p_adj": 0.0,
+              "ci_lower": 2.2081,
+              "ci_upper": 5.6052
+            }
+          ]
+        }
+      },
+      "simple_effects": {
+        "claude-sonnet-4-5": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 92.95,
+              "community-order": 93.0,
+              "harm-minimization": 93.5,
+              "no-constitution": 92.96666666666665,
+              "self-sovereignty": 89.26666666666667,
+              "utilitarian": 91.75
+            },
+            "std": {
+              "balanced-justice": 0.615703588661712,
+              "community-order": 0.922447337742968,
+              "harm-minimization": 0.48617243480439676,
+              "no-constitution": 0.8814588458740968,
+              "self-sovereignty": 2.7187341082781837,
+              "utilitarian": 2.7714453072195178
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 10.210661159917391,
+          "anova_p": 2.822203830595214e-07,
+          "range": 4.233333333333334,
+          "best_constitution": "harm-minimization",
+          "worst_constitution": "self-sovereignty",
+          "constitutions_differ": true
+        },
+        "deepseek-chat": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 91.68333333333334,
+              "community-order": 89.73333333333333,
+              "harm-minimization": 91.45,
+              "no-constitution": 90.48333333333333,
+              "self-sovereignty": 84.01666666666667,
+              "utilitarian": 90.0
+            },
+            "std": {
+              "balanced-justice": 1.1328430311977644,
+              "community-order": 2.4065567002493764,
+              "harm-minimization": 1.499393816907963,
+              "no-constitution": 3.7980457494811053,
+              "self-sovereignty": 5.388511910171546,
+              "utilitarian": 2.592296279363142
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 9.652241755107864,
+          "anova_p": 5.985219640234712e-07,
+          "range": 7.666666666666671,
+          "best_constitution": "balanced-justice",
+          "worst_constitution": "self-sovereignty",
+          "constitutions_differ": true
+        },
+        "gemini-2-5-pro": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 91.81666666666666,
+              "community-order": 88.01666666666667,
+              "harm-minimization": 90.11666666666667,
+              "no-constitution": 91.7,
+              "self-sovereignty": 84.10000000000001,
+              "utilitarian": 89.68333333333334
+            },
+            "std": {
+              "balanced-justice": 1.1676186592091344,
+              "community-order": 3.946421470679788,
+              "harm-minimization": 3.1304467683857804,
+              "no-constitution": 1.752919642404432,
+              "self-sovereignty": 5.789331881690983,
+              "utilitarian": 3.206196651750634
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 8.132989707698645,
+          "anova_p": 5.0239887059951685e-06,
+          "range": 7.716666666666654,
+          "best_constitution": "balanced-justice",
+          "worst_constitution": "self-sovereignty",
+          "constitutions_differ": true
+        },
+        "gpt-4o": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 87.58333333333333,
+              "community-order": 87.0,
+              "harm-minimization": 87.71666666666665,
+              "no-constitution": 87.46666666666665,
+              "self-sovereignty": 83.76666666666667,
+              "utilitarian": 87.56666666666666
+            },
+            "std": {
+              "balanced-justice": 2.863511300780385,
+              "community-order": 2.940624547145165,
+              "harm-minimization": 2.4203055154006465,
+              "no-constitution": 2.0024227749646077,
+              "self-sovereignty": 3.6886393976723437,
+              "utilitarian": 2.96013922686489
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 3.436136663909022,
+          "anova_p": 0.008059970284538923,
+          "range": 3.9499999999999886,
+          "best_constitution": "harm-minimization",
+          "worst_constitution": "self-sovereignty",
+          "constitutions_differ": true
+        },
+        "grok-3": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 91.91666666666667,
+              "community-order": 90.95,
+              "harm-minimization": 92.0,
+              "no-constitution": 91.10000000000001,
+              "self-sovereignty": 87.61666666666667,
+              "utilitarian": 89.3
+            },
+            "std": {
+              "balanced-justice": 1.3920771486806307,
+              "community-order": 2.0995670549381877,
+              "harm-minimization": 1.4447396745686503,
+              "no-constitution": 1.6744062719771333,
+              "self-sovereignty": 2.153151319824178,
+              "utilitarian": 1.9268438630899178
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 10.712852567573847,
+          "anova_p": 1.454510553925524e-07,
+          "range": 4.383333333333326,
+          "best_constitution": "harm-minimization",
+          "worst_constitution": "self-sovereignty",
+          "constitutions_differ": true
+        }
+      }
+    },
+    "value_transparency": {
+      "cell_means": {
+        "balanced-justice": {
+          "claude-sonnet-4-5": 93.46666666666665,
+          "deepseek-chat": 90.7,
+          "gemini-2-5-pro": 92.66666666666667,
+          "gpt-4o": 87.46666666666665,
+          "grok-3": 89.93333333333334
+        },
+        "community-order": {
+          "claude-sonnet-4-5": 94.35000000000001,
+          "deepseek-chat": 92.43333333333334,
+          "gemini-2-5-pro": 93.26666666666667,
+          "gpt-4o": 88.63333333333333,
+          "grok-3": 90.26666666666667
+        },
+        "harm-minimization": {
+          "claude-sonnet-4-5": 94.66666666666667,
+          "deepseek-chat": 93.11666666666667,
+          "gemini-2-5-pro": 94.10000000000001,
+          "gpt-4o": 90.0,
+          "grok-3": 92.8
+        },
+        "no-constitution": {
+          "claude-sonnet-4-5": 92.78333333333335,
+          "deepseek-chat": 92.11666666666667,
+          "gemini-2-5-pro": 93.58333333333333,
+          "gpt-4o": 87.89999999999999,
+          "grok-3": 91.21666666666665
+        },
+        "self-sovereignty": {
+          "claude-sonnet-4-5": 95.11666666666667,
+          "deepseek-chat": 93.76666666666667,
+          "gemini-2-5-pro": 94.0,
+          "gpt-4o": 90.41666666666667,
+          "grok-3": 93.39999999999999
+        },
+        "utilitarian": {
+          "claude-sonnet-4-5": 94.11666666666667,
+          "deepseek-chat": 92.89999999999999,
+          "gemini-2-5-pro": 94.8,
+          "gpt-4o": 90.21666666666665,
+          "grok-3": 92.7
+        }
+      },
+      "anova": {
+        "n_observations": 360,
+        "n_models": 5,
+        "n_constitutions": 6,
+        "dimension": "value_transparency",
+        "anova_table": {
+          "model_effect": {
+            "F": 112.37839320919275,
+            "p": 2.4368918791367527e-60,
+            "eta_sq": 0.4865977956798239,
+            "df": 4
+          },
+          "constitution_effect": {
+            "F": 23.024747978642043,
+            "p": 7.819978329608628e-20,
+            "eta_sq": 0.12462128275444824,
+            "df": 5
+          },
+          "interaction_effect": {
+            "F": 1.4575722141962304,
+            "p": 0.09410028585740145,
+            "eta_sq": 0.03155639648414318,
+            "df": 20
+          },
+          "residual": {
+            "df": 330
+          }
+        },
+        "model_r_squared": 0.6427754749184114,
+        "adjusted_r_squared": 0.6113830166536657,
+        "interpretation": {
+          "interaction_significant": false,
+          "model_effect_significant": true,
+          "constitution_effect_significant": true,
+          "interaction_strength": "small",
+          "model_strength": "large",
+          "constitution_strength": "medium"
+        }
+      },
+      "post_hoc": {
+        "models": {
+          "summary": "          Multiple Comparison of Means - Tukey HSD, FWER=0.05          \n=======================================================================\n      group1          group2     meandiff p-adj   lower   upper  reject\n-----------------------------------------------------------------------\nclaude-sonnet-4-5  deepseek-chat  -1.5778    0.0 -2.4181 -0.7375   True\nclaude-sonnet-4-5 gemini-2-5-pro  -0.3472  0.789 -1.1875  0.4931  False\nclaude-sonnet-4-5         gpt-4o  -4.9778    0.0 -5.8181 -4.1375   True\nclaude-sonnet-4-5         grok-3  -2.3639    0.0 -3.2042 -1.5236   True\n    deepseek-chat gemini-2-5-pro   1.2306 0.0007  0.3902  2.0709   True\n    deepseek-chat         gpt-4o     -3.4    0.0 -4.2403 -2.5597   True\n    deepseek-chat         grok-3  -0.7861 0.0792 -1.6264  0.0542  False\n   gemini-2-5-pro         gpt-4o  -4.6306    0.0 -5.4709 -3.7902   True\n   gemini-2-5-pro         grok-3  -2.0167    0.0  -2.857 -1.1763   True\n           gpt-4o         grok-3   2.6139    0.0  1.7736  3.4542   True\n-----------------------------------------------------------------------",
+          "significant_pairs": [
+            {
+              "group1": "claude-sonnet-4-5",
+              "group2": "deepseek-chat",
+              "mean_diff": -1.5778,
+              "p_adj": 0.0,
+              "ci_lower": -2.4181,
+              "ci_upper": -0.7375
+            },
+            {
+              "group1": "claude-sonnet-4-5",
+              "group2": "gpt-4o",
+              "mean_diff": -4.9778,
+              "p_adj": 0.0,
+              "ci_lower": -5.8181,
+              "ci_upper": -4.1375
+            },
+            {
+              "group1": "claude-sonnet-4-5",
+              "group2": "grok-3",
+              "mean_diff": -2.3639,
+              "p_adj": 0.0,
+              "ci_lower": -3.2042,
+              "ci_upper": -1.5236
+            },
+            {
+              "group1": "deepseek-chat",
+              "group2": "gemini-2-5-pro",
+              "mean_diff": 1.2306,
+              "p_adj": 0.0007,
+              "ci_lower": 0.3902,
+              "ci_upper": 2.0709
+            },
+            {
+              "group1": "deepseek-chat",
+              "group2": "gpt-4o",
+              "mean_diff": -3.4,
+              "p_adj": 0.0,
+              "ci_lower": -4.2403,
+              "ci_upper": -2.5597
+            },
+            {
+              "group1": "gemini-2-5-pro",
+              "group2": "gpt-4o",
+              "mean_diff": -4.6306,
+              "p_adj": 0.0,
+              "ci_lower": -5.4709,
+              "ci_upper": -3.7902
+            },
+            {
+              "group1": "gemini-2-5-pro",
+              "group2": "grok-3",
+              "mean_diff": -2.0167,
+              "p_adj": 0.0,
+              "ci_lower": -2.857,
+              "ci_upper": -1.1763
+            },
+            {
+              "group1": "gpt-4o",
+              "group2": "grok-3",
+              "mean_diff": 2.6139,
+              "p_adj": 0.0,
+              "ci_lower": 1.7736,
+              "ci_upper": 3.4542
+            }
+          ]
+        },
+        "constitutions": {
+          "summary": "           Multiple Comparison of Means - Tukey HSD, FWER=0.05            \n==========================================================================\n      group1            group2      meandiff p-adj   lower   upper  reject\n--------------------------------------------------------------------------\n balanced-justice   community-order   0.9433 0.2649 -0.3146  2.2013  False\n balanced-justice harm-minimization     2.09    0.0  0.8321  3.3479   True\n balanced-justice   no-constitution   0.6733 0.6427 -0.5846  1.9313  False\n balanced-justice  self-sovereignty   2.4933    0.0  1.2354  3.7513   True\n balanced-justice       utilitarian      2.1    0.0  0.8421  3.3579   True\n  community-order harm-minimization   1.1467  0.097 -0.1113  2.4046  False\n  community-order   no-constitution    -0.27 0.9899 -1.5279  0.9879  False\n  community-order  self-sovereignty     1.55 0.0062  0.2921  2.8079   True\n  community-order       utilitarian   1.1567 0.0917 -0.1013  2.4146  False\nharm-minimization   no-constitution  -1.4167 0.0171 -2.6746 -0.1587   True\nharm-minimization  self-sovereignty   0.4033 0.9416 -0.8546  1.6613  False\nharm-minimization       utilitarian     0.01    1.0 -1.2479  1.2679  False\n  no-constitution  self-sovereignty     1.82 0.0006  0.5621  3.0779   True\n  no-constitution       utilitarian   1.4267 0.0159  0.1687  2.6846   True\n self-sovereignty       utilitarian  -0.3933 0.9473 -1.6513  0.8646  False\n--------------------------------------------------------------------------",
+          "significant_pairs": [
+            {
+              "group1": "balanced-justice",
+              "group2": "harm-minimization",
+              "mean_diff": 2.09,
+              "p_adj": 0.0,
+              "ci_lower": 0.8321,
+              "ci_upper": 3.3479
+            },
+            {
+              "group1": "balanced-justice",
+              "group2": "self-sovereignty",
+              "mean_diff": 2.4933,
+              "p_adj": 0.0,
+              "ci_lower": 1.2354,
+              "ci_upper": 3.7513
+            },
+            {
+              "group1": "balanced-justice",
+              "group2": "utilitarian",
+              "mean_diff": 2.1,
+              "p_adj": 0.0,
+              "ci_lower": 0.8421,
+              "ci_upper": 3.3579
+            },
+            {
+              "group1": "community-order",
+              "group2": "self-sovereignty",
+              "mean_diff": 1.55,
+              "p_adj": 0.0062,
+              "ci_lower": 0.2921,
+              "ci_upper": 2.8079
+            },
+            {
+              "group1": "harm-minimization",
+              "group2": "no-constitution",
+              "mean_diff": -1.4167,
+              "p_adj": 0.0171,
+              "ci_lower": -2.6746,
+              "ci_upper": -0.1587
+            },
+            {
+              "group1": "no-constitution",
+              "group2": "self-sovereignty",
+              "mean_diff": 1.82,
+              "p_adj": 0.0006,
+              "ci_lower": 0.5621,
+              "ci_upper": 3.0779
+            },
+            {
+              "group1": "no-constitution",
+              "group2": "utilitarian",
+              "mean_diff": 1.4267,
+              "p_adj": 0.0159,
+              "ci_lower": 0.1687,
+              "ci_upper": 2.6846
+            }
+          ]
+        }
+      },
+      "simple_effects": {
+        "claude-sonnet-4-5": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 93.46666666666665,
+              "community-order": 94.35000000000001,
+              "harm-minimization": 94.66666666666667,
+              "no-constitution": 92.78333333333335,
+              "self-sovereignty": 95.11666666666667,
+              "utilitarian": 94.11666666666667
+            },
+            "std": {
+              "balanced-justice": 1.1260012379561524,
+              "community-order": 0.9385675739706171,
+              "harm-minimization": 0.7969639359164985,
+              "no-constitution": 1.919201222731305,
+              "self-sovereignty": 0.5874959703278914,
+              "utilitarian": 1.5122730232896788
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 5.61883575329692,
+          "anova_p": 0.00022513313597497426,
+          "range": 2.3333333333333286,
+          "best_constitution": "self-sovereignty",
+          "worst_constitution": "no-constitution",
+          "constitutions_differ": true
+        },
+        "deepseek-chat": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 90.7,
+              "community-order": 92.43333333333334,
+              "harm-minimization": 93.11666666666667,
+              "no-constitution": 92.11666666666667,
+              "self-sovereignty": 93.76666666666667,
+              "utilitarian": 92.89999999999999
+            },
+            "std": {
+              "balanced-justice": 1.4077706424763148,
+              "community-order": 1.1749919406557907,
+              "harm-minimization": 1.571237690099075,
+              "no-constitution": 1.5827670438670074,
+              "self-sovereignty": 1.3261930020882637,
+              "utilitarian": 1.905971477417038
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 5.806966579841939,
+          "anova_p": 0.0001672819454514238,
+          "range": 3.066666666666663,
+          "best_constitution": "self-sovereignty",
+          "worst_constitution": "balanced-justice",
+          "constitutions_differ": true
+        },
+        "gemini-2-5-pro": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 92.66666666666667,
+              "community-order": 93.26666666666667,
+              "harm-minimization": 94.10000000000001,
+              "no-constitution": 93.58333333333333,
+              "self-sovereignty": 94.0,
+              "utilitarian": 94.8
+            },
+            "std": {
+              "balanced-justice": 1.210058851561537,
+              "community-order": 1.445578420459084,
+              "harm-minimization": 1.2372991113344813,
+              "no-constitution": 1.888642289309893,
+              "self-sovereignty": 1.4522709489247925,
+              "utilitarian": 0.757987766751849
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 3.4570588392546786,
+          "anova_p": 0.007781075589889495,
+          "range": 2.1333333333333258,
+          "best_constitution": "utilitarian",
+          "worst_constitution": "balanced-justice",
+          "constitutions_differ": true
+        },
+        "gpt-4o": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 87.46666666666665,
+              "community-order": 88.63333333333333,
+              "harm-minimization": 90.0,
+              "no-constitution": 87.89999999999999,
+              "self-sovereignty": 90.41666666666667,
+              "utilitarian": 90.21666666666665
+            },
+            "std": {
+              "balanced-justice": 1.819756893520434,
+              "community-order": 1.8227518323744056,
+              "harm-minimization": 2.185905262856059,
+              "no-constitution": 2.0950157300342394,
+              "self-sovereignty": 2.27948691728218,
+              "utilitarian": 2.6566668567734997
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 4.1656995960337895,
+          "anova_p": 0.002379860678059307,
+          "range": 2.950000000000017,
+          "best_constitution": "self-sovereignty",
+          "worst_constitution": "balanced-justice",
+          "constitutions_differ": true
+        },
+        "grok-3": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 89.93333333333334,
+              "community-order": 90.26666666666667,
+              "harm-minimization": 92.8,
+              "no-constitution": 91.21666666666665,
+              "self-sovereignty": 93.39999999999999,
+              "utilitarian": 92.7
+            },
+            "std": {
+              "balanced-justice": 1.4803766924385,
+              "community-order": 1.6433520805372333,
+              "harm-minimization": 1.7077364071669952,
+              "no-constitution": 1.378954368902449,
+              "self-sovereignty": 1.0304456229312586,
+              "utilitarian": 1.7151729305869357
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 11.032765440282848,
+          "anova_p": 9.596097435480649e-08,
+          "range": 3.4666666666666544,
+          "best_constitution": "self-sovereignty",
+          "worst_constitution": "balanced-justice",
+          "constitutions_differ": true
+        }
+      }
+    },
+    "overall_score": {
+      "cell_means": {
+        "balanced-justice": {
+          "claude-sonnet-4-5": 93.26666666666667,
+          "deepseek-chat": 91.08333333333333,
+          "gemini-2-5-pro": 92.2,
+          "gpt-4o": 87.53333333333335,
+          "grok-3": 90.83333333333333
+        },
+        "community-order": {
+          "claude-sonnet-4-5": 93.81666666666666,
+          "deepseek-chat": 91.01666666666667,
+          "gemini-2-5-pro": 90.58333333333333,
+          "gpt-4o": 87.75,
+          "grok-3": 90.56666666666666
+        },
+        "harm-minimization": {
+          "claude-sonnet-4-5": 94.25,
+          "deepseek-chat": 92.33333333333333,
+          "gemini-2-5-pro": 92.16666666666667,
+          "gpt-4o": 88.78333333333335,
+          "grok-3": 92.36666666666667
+        },
+        "no-constitution": {
+          "claude-sonnet-4-5": 92.89999999999999,
+          "deepseek-chat": 91.26666666666667,
+          "gemini-2-5-pro": 92.63333333333333,
+          "gpt-4o": 87.68333333333334,
+          "grok-3": 91.06666666666666
+        },
+        "self-sovereignty": {
+          "claude-sonnet-4-5": 92.33333333333333,
+          "deepseek-chat": 88.83333333333333,
+          "gemini-2-5-pro": 89.06666666666666,
+          "gpt-4o": 87.06666666666666,
+          "grok-3": 90.46666666666665
+        },
+        "utilitarian": {
+          "claude-sonnet-4-5": 93.03333333333335,
+          "deepseek-chat": 91.58333333333333,
+          "gemini-2-5-pro": 92.33333333333333,
+          "gpt-4o": 88.88333333333333,
+          "grok-3": 91.06666666666666
+        }
+      },
+      "anova": {
+        "n_observations": 360,
+        "n_models": 5,
+        "n_constitutions": 6,
+        "dimension": "overall_score",
+        "anova_table": {
+          "model_effect": {
+            "F": 103.71327976978405,
+            "p": 4.2771286324530526e-57,
+            "eta_sq": 0.483911743865488,
+            "df": 4
+          },
+          "constitution_effect": {
+            "F": 15.370263906836044,
+            "p": 1.369215063298206e-13,
+            "eta_sq": 0.08964439302444988,
+            "df": 5
+          },
+          "interaction_effect": {
+            "F": 1.7793214843470708,
+            "p": 0.021737691814345268,
+            "eta_sq": 0.04151033331020809,
+            "df": 20
+          },
+          "residual": {
+            "df": 330
+          }
+        },
+        "model_r_squared": 0.6150664702001478,
+        "adjusted_r_squared": 0.5812389781874335,
+        "interpretation": {
+          "interaction_significant": true,
+          "model_effect_significant": true,
+          "constitution_effect_significant": true,
+          "interaction_strength": "small",
+          "model_strength": "large",
+          "constitution_strength": "medium"
+        }
+      },
+      "post_hoc": {
+        "models": {
+          "summary": "          Multiple Comparison of Means - Tukey HSD, FWER=0.05          \n=======================================================================\n      group1          group2     meandiff p-adj   lower   upper  reject\n-----------------------------------------------------------------------\nclaude-sonnet-4-5  deepseek-chat  -2.2472    0.0 -3.0616 -1.4328   True\nclaude-sonnet-4-5 gemini-2-5-pro  -1.7694    0.0 -2.5838 -0.9551   True\nclaude-sonnet-4-5         gpt-4o  -5.3167    0.0 -6.1311 -4.5023   True\nclaude-sonnet-4-5         grok-3  -2.2056    0.0 -3.0199 -1.3912   True\n    deepseek-chat gemini-2-5-pro   0.4778 0.4929 -0.3366  1.2922  False\n    deepseek-chat         gpt-4o  -3.0694    0.0 -3.8838 -2.2551   True\n    deepseek-chat         grok-3   0.0417 0.9999 -0.7727  0.8561  False\n   gemini-2-5-pro         gpt-4o  -3.5472    0.0 -4.3616 -2.7328   True\n   gemini-2-5-pro         grok-3  -0.4361 0.5838 -1.2505  0.3783  False\n           gpt-4o         grok-3   3.1111    0.0  2.2967  3.9255   True\n-----------------------------------------------------------------------",
+          "significant_pairs": [
+            {
+              "group1": "claude-sonnet-4-5",
+              "group2": "deepseek-chat",
+              "mean_diff": -2.2472,
+              "p_adj": 0.0,
+              "ci_lower": -3.0616,
+              "ci_upper": -1.4328
+            },
+            {
+              "group1": "claude-sonnet-4-5",
+              "group2": "gemini-2-5-pro",
+              "mean_diff": -1.7694,
+              "p_adj": 0.0,
+              "ci_lower": -2.5838,
+              "ci_upper": -0.9551
+            },
+            {
+              "group1": "claude-sonnet-4-5",
+              "group2": "gpt-4o",
+              "mean_diff": -5.3167,
+              "p_adj": 0.0,
+              "ci_lower": -6.1311,
+              "ci_upper": -4.5023
+            },
+            {
+              "group1": "claude-sonnet-4-5",
+              "group2": "grok-3",
+              "mean_diff": -2.2056,
+              "p_adj": 0.0,
+              "ci_lower": -3.0199,
+              "ci_upper": -1.3912
+            },
+            {
+              "group1": "deepseek-chat",
+              "group2": "gpt-4o",
+              "mean_diff": -3.0694,
+              "p_adj": 0.0,
+              "ci_lower": -3.8838,
+              "ci_upper": -2.2551
+            },
+            {
+              "group1": "gemini-2-5-pro",
+              "group2": "gpt-4o",
+              "mean_diff": -3.5472,
+              "p_adj": 0.0,
+              "ci_lower": -4.3616,
+              "ci_upper": -2.7328
+            },
+            {
+              "group1": "gpt-4o",
+              "group2": "grok-3",
+              "mean_diff": 3.1111,
+              "p_adj": 0.0,
+              "ci_lower": 2.2967,
+              "ci_upper": 3.9255
+            }
+          ]
+        },
+        "constitutions": {
+          "summary": "           Multiple Comparison of Means - Tukey HSD, FWER=0.05            \n==========================================================================\n      group1            group2      meandiff p-adj   lower   upper  reject\n--------------------------------------------------------------------------\n balanced-justice   community-order  -0.2367 0.9941 -1.4767  1.0033  False\n balanced-justice harm-minimization   0.9967 0.1955 -0.2433  2.2367  False\n balanced-justice   no-constitution   0.1267 0.9997 -1.1133  1.3667  False\n balanced-justice  self-sovereignty    -1.43 0.0133   -2.67   -0.19   True\n balanced-justice       utilitarian   0.3967 0.9421 -0.8433  1.6367  False\n  community-order harm-minimization   1.2333 0.0522 -0.0067  2.4733  False\n  community-order   no-constitution   0.3633 0.9599 -0.8767  1.6033  False\n  community-order  self-sovereignty  -1.1933 0.0669 -2.4333  0.0467  False\n  community-order       utilitarian   0.6333 0.6878 -0.6067  1.8733  False\nharm-minimization   no-constitution    -0.87 0.3384   -2.11    0.37  False\nharm-minimization  self-sovereignty  -2.4267    0.0 -3.6667 -1.1867   True\nharm-minimization       utilitarian     -0.6 0.7352   -1.84    0.64  False\n  no-constitution  self-sovereignty  -1.5567 0.0049 -2.7967 -0.3167   True\n  no-constitution       utilitarian     0.27 0.9892   -0.97    1.51  False\n self-sovereignty       utilitarian   1.8267 0.0004  0.5867  3.0667   True\n--------------------------------------------------------------------------",
+          "significant_pairs": [
+            {
+              "group1": "balanced-justice",
+              "group2": "self-sovereignty",
+              "mean_diff": -1.43,
+              "p_adj": 0.0133,
+              "ci_lower": -2.67,
+              "ci_upper": -0.19
+            },
+            {
+              "group1": "harm-minimization",
+              "group2": "self-sovereignty",
+              "mean_diff": -2.4267,
+              "p_adj": 0.0,
+              "ci_lower": -3.6667,
+              "ci_upper": -1.1867
+            },
+            {
+              "group1": "no-constitution",
+              "group2": "self-sovereignty",
+              "mean_diff": -1.5567,
+              "p_adj": 0.0049,
+              "ci_lower": -2.7967,
+              "ci_upper": -0.3167
+            },
+            {
+              "group1": "self-sovereignty",
+              "group2": "utilitarian",
+              "mean_diff": 1.8267,
+              "p_adj": 0.0004,
+              "ci_lower": 0.5867,
+              "ci_upper": 3.0667
+            }
+          ]
+        }
+      },
+      "simple_effects": {
+        "claude-sonnet-4-5": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 93.26666666666667,
+              "community-order": 93.81666666666666,
+              "harm-minimization": 94.25,
+              "no-constitution": 92.89999999999999,
+              "self-sovereignty": 92.33333333333333,
+              "utilitarian": 93.03333333333335
+            },
+            "std": {
+              "balanced-justice": 0.7152028743756189,
+              "community-order": 0.5356955263670755,
+              "harm-minimization": 0.47577687665925017,
+              "no-constitution": 1.032208576526347,
+              "self-sovereignty": 1.6675149356470682,
+              "utilitarian": 1.5251428149719617
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 4.66085052631578,
+          "anova_p": 0.001052808323648076,
+          "range": 1.9166666666666714,
+          "best_constitution": "harm-minimization",
+          "worst_constitution": "self-sovereignty",
+          "constitutions_differ": true
+        },
+        "deepseek-chat": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 91.08333333333333,
+              "community-order": 91.01666666666667,
+              "harm-minimization": 92.33333333333333,
+              "no-constitution": 91.26666666666667,
+              "self-sovereignty": 88.83333333333333,
+              "utilitarian": 91.58333333333333
+            },
+            "std": {
+              "balanced-justice": 0.888137308521539,
+              "community-order": 1.3058145025812464,
+              "harm-minimization": 1.148384900104436,
+              "no-constitution": 2.0650042189405897,
+              "self-sovereignty": 3.2539020864000774,
+              "utilitarian": 1.5850628512536133
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 4.6840466480646805,
+          "anova_p": 0.0010136336852029644,
+          "range": 3.5,
+          "best_constitution": "harm-minimization",
+          "worst_constitution": "self-sovereignty",
+          "constitutions_differ": true
+        },
+        "gemini-2-5-pro": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 92.2,
+              "community-order": 90.58333333333333,
+              "harm-minimization": 92.16666666666667,
+              "no-constitution": 92.63333333333333,
+              "self-sovereignty": 89.06666666666666,
+              "utilitarian": 92.33333333333333
+            },
+            "std": {
+              "balanced-justice": 0.6438520439863936,
+              "community-order": 2.191650823770364,
+              "harm-minimization": 1.6988409596135252,
+              "no-constitution": 1.1531248716843159,
+              "self-sovereignty": 3.624495785205123,
+              "utilitarian": 1.6255535187819046
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 5.525529127555499,
+          "anova_p": 0.00026105660705270337,
+          "range": 3.566666666666663,
+          "best_constitution": "no-constitution",
+          "worst_constitution": "self-sovereignty",
+          "constitutions_differ": true
+        },
+        "gpt-4o": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 87.53333333333335,
+              "community-order": 87.75,
+              "harm-minimization": 88.78333333333335,
+              "no-constitution": 87.68333333333334,
+              "self-sovereignty": 87.06666666666666,
+              "utilitarian": 88.88333333333333
+            },
+            "std": {
+              "balanced-justice": 1.6977703738798828,
+              "community-order": 1.532970971675588,
+              "harm-minimization": 1.3576941236277553,
+              "no-constitution": 1.7857177489143918,
+              "self-sovereignty": 1.8553771159589747,
+              "utilitarian": 1.5526126563332112
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 2.3502293750470082,
+          "anova_p": 0.050300845087942164,
+          "range": 1.8166666666666629,
+          "best_constitution": "utilitarian",
+          "worst_constitution": "self-sovereignty",
+          "constitutions_differ": false
+        },
+        "grok-3": {
+          "constitution_means": {
+            "mean": {
+              "balanced-justice": 90.83333333333333,
+              "community-order": 90.56666666666666,
+              "harm-minimization": 92.36666666666667,
+              "no-constitution": 91.06666666666666,
+              "self-sovereignty": 90.46666666666665,
+              "utilitarian": 91.06666666666666
+            },
+            "std": {
+              "balanced-justice": 1.081525297760981,
+              "community-order": 1.252875480523486,
+              "harm-minimization": 0.8127767593909537,
+              "no-constitution": 0.8584693919818556,
+              "self-sovereignty": 1.3891353316710982,
+              "utilitarian": 0.8238858408710991
+            },
+            "count": {
+              "balanced-justice": 12,
+              "community-order": 12,
+              "harm-minimization": 12,
+              "no-constitution": 12,
+              "self-sovereignty": 12,
+              "utilitarian": 12
+            }
+          },
+          "anova_F": 5.0258041329739465,
+          "anova_p": 0.0005816078224152745,
+          "range": 1.90000000000002,
+          "best_constitution": "harm-minimization",
+          "worst_constitution": "self-sovereignty",
+          "constitutions_differ": true
+        }
+      }
+    }
+  }
+}

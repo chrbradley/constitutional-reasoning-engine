@@ -118,7 +118,7 @@
 
 **Goal:** Understand what the data shows, identify best rubric for validation
 
-**Overall Status:** 🟢 **PARTIALLY COMPLETE** (2 of 4 analyses done: Rubric Comparison + Evaluator Agreement)
+**Overall Status:** 🟢 **MOSTLY COMPLETE** (3 of 4 analyses done: Rubric Comparison + Evaluator Agreement + Model×Constitution Interaction)
 
 **Tasks:**
 
@@ -158,13 +158,32 @@
      - `results/experiments/exp_20251028_134615/analysis/evaluator_agreement.json` - Full results
      - `results/experiments/exp_20251028_134615/analysis/consensus_scores.json` - Consensus dataset
 
-3. ⏸ **Analysis 1.2: Model × Constitution Interaction** (~3 hours) - **PENDING**
-   - Calculate: Mean Epistemic Integrity per Model × Constitution cell (5×6=30 cells)
-   - Two-way ANOVA: Test Model × Constitution interaction
-   - Post-hoc: Tukey HSD if interaction significant
-   - Visualize: Interaction plot (Model on X-axis, 6 lines for constitutions)
-   - Output: "Model A excels with Constitution X but struggles with Y"
-   - **Answers Q3 directly**
+3. ✅ **Analysis 1.2: Model × Constitution Interaction** (~3 hours) - **COMPLETED 2025-10-31**
+   - ✅ Script: `analysis/interaction_analysis.py` (created and tested)
+   - ✅ Notebook: `notebooks/03_model_constitution_interaction.ipynb` (comprehensive with visualizations)
+   - ✅ Load: consensus_scores.json with 360 trials (5 models × 6 constitutions = 30 cells)
+   - ✅ Calculate: Two-way ANOVA for all 3 dimensions (Epistemic Integrity, Value Transparency, Overall)
+   - ✅ Test: Model × Constitution interaction + main effects
+   - ✅ Post-hoc: Tukey HSD pairwise comparisons for significant effects
+   - ✅ Simple effects: Per-model constitution sensitivity analysis
+   - ✅ **KEY FINDING - Interaction Detected for Overall Score:**
+     - Overall Score: **Significant interaction** F(20,330)=1.78, p=0.022, η²=0.042 ✅
+     - Epistemic Integrity: No interaction F(20,330)=1.45, p=0.095 (marginal)
+     - Value Transparency: No interaction F(20,330)=1.46, p=0.094 (marginal)
+   - 📊 **Main Effects (Both Highly Significant):**
+     - Model effect: F(4,330)=103.7, p<0.001, η²=0.484 (large) - Models differ substantially
+     - Constitution effect: F(5,330)=15.4, p<0.001, η²=0.090 (medium) - Constitutions affect scores
+   - 📊 **Simple Effects Findings:**
+     - 4 of 5 models show significant constitution effects (p<0.01)
+     - GPT-4o: Only model with non-significant constitution effect (p=0.05)
+     - Self-sovereignty: Consistently produces lowest scores across models
+     - Harm-minimization: Tends to produce highest scores
+     - Ranges: 1.82-3.57 points per model (modest but significant variation)
+   - 📁 **Files Created:**
+     - `analysis/interaction_analysis.py` - Two-way ANOVA analysis script
+     - `notebooks/03_model_constitution_interaction.ipynb` - Full analysis with heatmaps and interaction plots
+     - `results/experiments/exp_20251028_134615/analysis/interaction_analysis.json` - Complete results
+   - **Answers Q3:** Yes - certain models perform differently across constitutions (interaction significant for overall score)
 
 4. ⏸ **Analysis 1.4: Dimensional Structure Validation** (~2 hours) - **PENDING**
    - Calculate: r(Epistemic Integrity, Value Transparency) per evaluator
@@ -175,18 +194,20 @@
    - **Supports Q6 (bias detection)**
 
 **Deliverables (Progress):**
-- ✅ 2 of 4 analysis notebooks complete (Rubric Comparison + Evaluator Agreement)
+- ✅ 3 of 4 analysis notebooks complete (Rubric Comparison + Evaluator Agreement + Model×Constitution)
 - ✅ Best rubric identified: **Likert (0-100 scale)**
 - ✅ Consensus evaluator scores generated: 360 trials × 4 methods
 - ✅ Evaluator reliability characterized: ICC(2,k)=0.69 (moderate ensemble reliability)
-- ⏸ Preliminary findings for Q3 (pending Analysis 1.2 - Model×Constitution)
+- ✅ **Q3 answered: Model×Constitution interaction significant** (p=0.022 for overall score)
 - ⏸ Dimensional independence validation (pending Analysis 1.4)
 
 **Current Status:**
+- **Week 1 is 75% complete** (3 of 4 analyses done)
 - Rubric comparison complete → Likert selected
 - Evaluator agreement complete → Consensus scores ready
-- **Next:** Model × Constitution interaction analysis (1.2) OR Dimensional structure validation (1.4)
-- Both 1.2 and 1.4 can use consensus_scores.json for their analyses
+- Model×Constitution complete → Interaction detected (models perform differently across constitutions)
+- **Next:** Dimensional structure validation (1.4) - Final Week 1 analysis
+- Estimated time remaining: ~2 hours
 
 ---
 
