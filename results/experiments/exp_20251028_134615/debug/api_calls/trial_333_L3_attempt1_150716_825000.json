@@ -1,0 +1,25 @@
+{
+  "trial_id": "trial_333",
+  "layer": 3,
+  "model_id": "grok-3",
+  "retry_attempt": 1,
+  "timestamp": "2025-10-28T15:07:16.824980",
+  "request": {
+    "model_id": "grok-3",
+    "api_model": "xai/grok-3",
+    "temperature": 0.3,
+    "max_tokens": 4000,
+    "timeout": 60,
+    "use_response_format": false,
+    "prompt_length": 10444,
+    "has_system_prompt": false
+  },
+  "http_status": 429,
+  "success": false,
+  "error": {
+    "type": "RateLimitError",
+    "message": "litellm.RateLimitError: RateLimitError: XaiException - {\"code\":\"Some resource has been exhausted\",\"error\":\"Your team 001c21cd-886c-4b4a-afe1-aab534fdf473 has either used all available credits or reached its monthly spending limit. To continue making API requests, please purchase more credits or raise your spending limit.\"}",
+    "module": "litellm.exceptions",
+    "response_body": "<Response [429 Too Many Requests]>"
+  }
+}

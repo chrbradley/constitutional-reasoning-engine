@@ -1,0 +1,25 @@
+{
+  "trial_id": "trial_121",
+  "layer": 3,
+  "model_id": "grok-3",
+  "retry_attempt": 1,
+  "timestamp": "2025-10-28T14:19:21.275863",
+  "request": {
+    "model_id": "grok-3",
+    "api_model": "xai/grok-3",
+    "temperature": 0.3,
+    "max_tokens": 4000,
+    "timeout": 60,
+    "use_response_format": false,
+    "prompt_length": 12768,
+    "has_system_prompt": false
+  },
+  "http_status": 429,
+  "success": false,
+  "error": {
+    "type": "RateLimitError",
+    "message": "litellm.RateLimitError: RateLimitError: XaiException - {\"code\":\"Some resource has been exhausted\",\"error\":\"Channel grok-3-0404-eapi-max-unified-vhb49-0 is overloaded: load=238407, num_requests=95\"}",
+    "module": "litellm.exceptions",
+    "response_body": "<Response [429 Too Many Requests]>"
+  }
+}
