@@ -47,7 +47,36 @@ This directory contains interactive Jupyter notebooks for deep-dive analysis of 
 poetry install
 ```
 
-### Launch Jupyter
+### One-Time Kernel Setup (Required)
+
+Before running notebooks, register the Poetry environment as a Jupyter kernel:
+
+```bash
+poetry run python -m ipykernel install --user --name constitution --display-name "Constitution Project"
+```
+
+**This only needs to be done once** per machine. The kernel will persist across sessions.
+
+Verify the kernel is registered:
+
+```bash
+jupyter kernelspec list
+```
+
+You should see `constitution` in the list.
+
+### Running Notebooks in Cursor/VS Code
+
+1. Open any `.ipynb` file in this directory
+2. Click **"Select Kernel"** in the top-right corner
+3. Choose **"Constitution Project"** from the list
+4. Run cells normally - all dependencies will be available
+
+**Troubleshooting**: If you see "ModuleNotFoundError", you're using the wrong kernel. Make sure "Constitution Project" is selected, not "Python 3".
+
+### Launch Jupyter (Alternative)
+
+If you prefer the browser interface:
 
 ```bash
 # From project root
@@ -184,6 +213,6 @@ Refer to:
 
 ---
 
-**Last Updated:** October 24, 2025
+**Last Updated:** October 31, 2025
 **Experiment:** exp_20251023_105245
 **Tests:** 480/480 (100% complete)
