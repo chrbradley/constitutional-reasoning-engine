@@ -1,0 +1,81 @@
+{
+  "experiment_id": "exp_20251028_134615",
+  "n_evaluations": 1800,
+  "n_trials": 360,
+  "n_evaluators": 5,
+  "independence_test": {
+    "threshold": 0.6,
+    "overall_correlation": {
+      "n": 1800,
+      "r": 0.4060074506154709,
+      "p": 2.1613541501594487e-72,
+      "ci_lower": 0.36668273528898826,
+      "ci_upper": 0.44388395810391107
+    },
+    "mean_evaluator_correlation": 0.16062245367906192,
+    "per_evaluator": {
+      "claude-sonnet-4-5": {
+        "n": 360,
+        "r": 0.25128606667594355,
+        "p": 1.3726281341721143e-06,
+        "ci_lower": 0.15186692914318312,
+        "ci_upper": 0.34567135525949594
+      },
+      "gpt-4o": {
+        "n": 360,
+        "r": -0.23686690762664647,
+        "p": 5.534820600069817e-06,
+        "ci_lower": -0.3320996724382737,
+        "ci_upper": -0.1368538531554246
+      },
+      "gemini-2-5-pro": {
+        "n": 360,
+        "r": 0.4554046377186704,
+        "p": 7.818620127139026e-20,
+        "ci_lower": 0.369430896274584,
+        "ci_upper": 0.53364828692803
+      },
+      "grok-3": {
+        "n": 360,
+        "r": 0.15999651862027806,
+        "p": 0.002328344018379157,
+        "ci_lower": 0.05758514431894079,
+        "ci_upper": 0.25907567607502624
+      },
+      "deepseek-chat": {
+        "n": 360,
+        "r": 0.17329195300706401,
+        "p": 0.000961481594855761,
+        "ci_lower": 0.07120365203251099,
+        "ci_upper": 0.2717873784564444
+      }
+    },
+    "dimensions_independent": true,
+    "interpretation": "Dimensions are moderately correlated but sufficiently independent"
+  },
+  "dimension_conflaters": [],
+  "pca": {
+    "n_trials": 360,
+    "variance_explained": {
+      "PC1": 0.5836344458114274,
+      "PC2": 0.41636555418857274,
+      "cumulative": 1.0000000000000002
+    },
+    "loadings": {
+      "PC1": {
+        "epistemic_integrity": 0.7071067811865478,
+        "value_transparency": 0.7071067811865474
+      },
+      "PC2": {
+        "epistemic_integrity": -0.7071067811865474,
+        "value_transparency": 0.7071067811865478
+      }
+    },
+    "interpretation": {
+      "pc1_dominant": false,
+      "dimensions_separate": false,
+      "cumulative_variance_captured": 1.0000000000000002,
+      "interpretation": "Two dimensions capture >90% variance. 2D structure justified."
+    }
+  }
+}
