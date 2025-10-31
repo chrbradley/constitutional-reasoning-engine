@@ -118,7 +118,7 @@
 
 **Goal:** Understand what the data shows, identify best rubric for validation
 
-**Overall Status:** 🟢 **PARTIALLY COMPLETE** (1 of 4 analyses done, with unexpected findings)
+**Overall Status:** 🟢 **PARTIALLY COMPLETE** (2 of 4 analyses done: Rubric Comparison + Evaluator Agreement)
 
 **Tasks:**
 
@@ -140,13 +140,23 @@
      - `results/experiments/exp_20251028_134615/analysis/rubric_comparison.json` - Results
      - `results/experiments/exp_20251028_134615/analysis/rubric_diagnostic.json` - Diagnostics
 
-2. ⏭ **Analysis 1.3: Evaluator Agreement Patterns** (~2 hours) - **NEXT**
-   - Calculate: Pairwise correlations for 5 evaluators using best rubric
-   - Identify: Outlier evaluator (if any) - test if Gemini still outlier at n=360
-   - Create: Consensus scores (mean/median across evaluators, with/without outlier)
-   - Stratified reliability: By constitution, scenario, dimension
-   - Output: "Use all 5 evaluators" OR "Exclude Gemini (outlier)"
-   - **Decision:** Which evaluator scores to trust for Q1/Q2/Q3
+2. ✅ **Analysis 1.3: Evaluator Agreement Patterns** (~3 hours) - **COMPLETED 2025-10-31**
+   - ✅ Script: `analysis/evaluator_agreement.py` (created and tested)
+   - ✅ Notebook: `notebooks/02_inter_rater_reliability.ipynb` (comprehensive analysis)
+   - ✅ Load: layer3/ Likert data (360 trials × 5 evaluators)
+   - ✅ Calculate: Pairwise correlations (10 evaluator pairs), ICC metrics
+   - ✅ Metrics: Mean r=0.34-0.41, ICC(2,1)=0.31, ICC(2,k)=0.69
+   - ✅ Outlier detection: Gemini and GPT-4o show lower agreement (r<0.30)
+   - ✅ Consensus scores: Generated 4 methods (mean_all, median_all, trimmed_mean, mean_excluding_outlier)
+   - ✅ Stratified reliability: Identified problematic subgroups (utilitarian constitution, election-misinformation scenario)
+   - ✅ High-disagreement trials: 36 trials identified for manual review
+   - ✅ **Decision:** Use mean_all (all 5 evaluators) - no strong outlier, ensemble improves reliability
+   - 📊 **Key Finding:** Individual evaluators show fair agreement (r≈0.34-0.41), but ensemble achieves moderate reliability (ICC≈0.69)
+   - 📁 **Files Created:**
+     - `analysis/evaluator_agreement.py` - Core analysis script
+     - `notebooks/02_inter_rater_reliability.ipynb` - Full analysis with visualizations
+     - `results/experiments/exp_20251028_134615/analysis/evaluator_agreement.json` - Full results
+     - `results/experiments/exp_20251028_134615/analysis/consensus_scores.json` - Consensus dataset
 
 3. ⏸ **Analysis 1.2: Model × Constitution Interaction** (~3 hours) - **PENDING**
    - Calculate: Mean Epistemic Integrity per Model × Constitution cell (5×6=30 cells)
@@ -165,12 +175,18 @@
    - **Supports Q6 (bias detection)**
 
 **Deliverables (Progress):**
-- ✅ 1 of 4 analysis notebooks complete (Rubric Comparison)
+- ✅ 2 of 4 analysis notebooks complete (Rubric Comparison + Evaluator Agreement)
 - ✅ Best rubric identified: **Likert (0-100 scale)**
-- ⏸ Consensus evaluator scores (pending Analysis 1.3)
-- ⏸ Preliminary findings for Q3 (pending Analysis 1.2)
+- ✅ Consensus evaluator scores generated: 360 trials × 4 methods
+- ✅ Evaluator reliability characterized: ICC(2,k)=0.69 (moderate ensemble reliability)
+- ⏸ Preliminary findings for Q3 (pending Analysis 1.2 - Model×Constitution)
+- ⏸ Dimensional independence validation (pending Analysis 1.4)
 
-**Current Status:** Rubric comparison complete and validated. Likert rubric selected for human validation. Ready to proceed with evaluator agreement analysis (1.3).
+**Current Status:**
+- Rubric comparison complete → Likert selected
+- Evaluator agreement complete → Consensus scores ready
+- **Next:** Model × Constitution interaction analysis (1.2) OR Dimensional structure validation (1.4)
+- Both 1.2 and 1.4 can use consensus_scores.json for their analyses
 
 ---
 
