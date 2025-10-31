@@ -118,17 +118,29 @@
 
 **Goal:** Understand what the data shows, identify best rubric for validation
 
+**Overall Status:** 🟢 **PARTIALLY COMPLETE** (1 of 4 analyses done, with unexpected findings)
+
 **Tasks:**
 
-1. **Analysis 1.1: Rubric Comparison** (~3 hours)
-   - Script: `scripts/compare_rubric_strategies.py`
-   - Load: layer3/, layer3_binary/, layer3_ternary/ (360 trials each)
-   - Calculate: Pairwise correlations (Pearson r) for all 10 evaluator pairs per rubric
-   - Metrics: Mean inter-rater reliability (r̄), ICC, 95% CI
-   - Output: "Binary r̄=0.XX vs Ternary r̄=0.YY vs Likert r̄=0.ZZ"
-   - **Decision:** Which rubric to use for human validation (expected: Binary or Ternary)
+1. ✅ **Analysis 1.1: Rubric Comparison** (~3 hours) - **COMPLETED 2025-10-31**
+   - ✅ Script: `analysis/rubric_comparison.py` (created and tested)
+   - ✅ Notebook: `notebooks/01_rubric_comparison.ipynb` (comprehensive with diagnostics)
+   - ✅ Load: layer3/, layer3_binary/, layer3_ternary/ (360 trials each)
+   - ✅ Calculate: Pairwise correlations (Pearson r) for all 10 evaluator pairs per rubric
+   - ✅ Metrics: Mean inter-rater reliability (r̄), ICC, 95% CI
+   - ✅ Output: "Likert r̄=0.40 vs Ternary r̄=0.29 vs Binary r̄=0.10"
+   - ✅ **Decision:** Use Likert (0-100) for human validation
+   - ⚠️ **UNEXPECTED:** Likert won (contradicts literature expecting Binary/Ternary)
+   - ✅ **Validated:** Diagnostic analysis confirmed ceiling effects in discrete rubrics
+   - 📊 **Key Finding:** Granularity gradient - Binary < Ternary < Likert for frontier AI evaluation
+   - 📁 **Files Created:**
+     - `analysis/rubric_comparison.py` - Core analysis script
+     - `analysis/rubric_diagnostic.py` - Methodology validation
+     - `notebooks/01_rubric_comparison.ipynb` - Full analysis with visualizations
+     - `results/experiments/exp_20251028_134615/analysis/rubric_comparison.json` - Results
+     - `results/experiments/exp_20251028_134615/analysis/rubric_diagnostic.json` - Diagnostics
 
-2. **Analysis 1.3: Evaluator Agreement Patterns** (~2 hours)
+2. ⏭ **Analysis 1.3: Evaluator Agreement Patterns** (~2 hours) - **NEXT**
    - Calculate: Pairwise correlations for 5 evaluators using best rubric
    - Identify: Outlier evaluator (if any) - test if Gemini still outlier at n=360
    - Create: Consensus scores (mean/median across evaluators, with/without outlier)
@@ -136,7 +148,7 @@
    - Output: "Use all 5 evaluators" OR "Exclude Gemini (outlier)"
    - **Decision:** Which evaluator scores to trust for Q1/Q2/Q3
 
-3. **Analysis 1.2: Model × Constitution Interaction** (~3 hours)
+3. ⏸ **Analysis 1.2: Model × Constitution Interaction** (~3 hours) - **PENDING**
    - Calculate: Mean Epistemic Integrity per Model × Constitution cell (5×6=30 cells)
    - Two-way ANOVA: Test Model × Constitution interaction
    - Post-hoc: Tukey HSD if interaction significant
@@ -144,7 +156,7 @@
    - Output: "Model A excels with Constitution X but struggles with Y"
    - **Answers Q3 directly**
 
-4. **Analysis 1.4: Dimensional Structure Validation** (~2 hours)
+4. ⏸ **Analysis 1.4: Dimensional Structure Validation** (~2 hours) - **PENDING**
    - Calculate: r(Epistemic Integrity, Value Transparency) per evaluator
    - Test: Are dimensions independent (target: r < 0.60)
    - PCA: Do 2 dimensions capture >90% variance?
@@ -152,13 +164,13 @@
    - Output: "Dimensions are [independent/correlated], 2D rubric [justified/redundant]"
    - **Supports Q6 (bias detection)**
 
-**Deliverables:**
-- 4 analysis reports (Jupyter notebooks or markdown)
-- Best rubric identified (for validation)
-- Consensus evaluator scores (for Q1/Q2/Q3)
-- Preliminary findings for Q3 (Model × Constitution)
+**Deliverables (Progress):**
+- ✅ 1 of 4 analysis notebooks complete (Rubric Comparison)
+- ✅ Best rubric identified: **Likert (0-100 scale)**
+- ⏸ Consensus evaluator scores (pending Analysis 1.3)
+- ⏸ Preliminary findings for Q3 (pending Analysis 1.2)
 
-**Status at End of Week 1:** Ready to design validation rubric, know which rubric to use, have preliminary constitutional adherence findings
+**Current Status:** Rubric comparison complete and validated. Likert rubric selected for human validation. Ready to proceed with evaluator agreement analysis (1.3).
 
 ---
 
