@@ -395,9 +395,9 @@ High-disagreement trials identified (max SD > 10 points):
 **Constitution Performance Rankings:**
 1. Harm Minimization: Highest scores across models (mean ~92)
 2. Utilitarian: Second highest (~91)
-3. Balanced Justice: Mid-range (~90)
-4. Community Order: Mid-range (~90)
-5. No-Constitution (baseline): Mid-range (~89)
+3. No-Constitution (baseline): Mid-range (~91)
+4. Balanced Justice: Mid-range (~90)
+5. Community Order: Mid-range (~90)
 6. Self-Sovereignty: Lowest scores across models (mean ~87)
 
 **Simple Effects Analysis (Per-Model Constitution Sensitivity):**
