@@ -16,7 +16,7 @@
 - Methodology: 12 scenarios × 6 constitutions × 5 models = 360 trials, each evaluated by 5 LLM judges across 3 rubric formats = 5,400 total evaluations
 - **Key finding 1 (CRITICAL):** Constitutional prompting changes recommendations without degrading quality - self-sovereignty produces 40% unconditional grants vs. 0% for other constitutions, while maintaining similar epistemic integrity scores (85-92 vs. 90-95)
 - Key finding 2: Quality scores remain stable across constitutions (p=0.1046 n.s., Δ=-0.18 pts) - models maintain epistemic integrity and value transparency regardless of value framework
-- Key finding 3: Likert scale superior to discrete rubrics (ICC 0.31 vs 0.10-0.19) due to ceiling effects in frontier models
+- Key finding 3: Binary rubrics fail for frontier AI (ICC 0.04) but ternary rubrics nearly match Likert (ICC 0.28 vs 0.31); extreme ceiling effects (>95% pass) destroy reliability, moderate ceiling (90%) is tolerable
 - Key finding 4: Model × Constitution interaction (p=0.022) reflects quality ranking shifts (η²=0.042, small effect)
 - Key finding 5: 2D rubric validated (r=0.406) - Factual integrity and value transparency are independent dimensions
 - Limitation: LLM evaluators not yet human-validated (preliminary findings)
@@ -135,7 +135,7 @@ Rather than claim absolute novelty, we offer three distinct contributions: (1) F
 - **Design:** 5 value systems + 1 no-constitution baseline
 - **Purpose:** Test whether different values lead to fact distortion
 
-**1. Harm Minimization** (Pacifist/Gandhi-inspired)
+**1. Harm Minimization** (Pacifist)
 - Avoid causing harm above all else
 - Prioritize de-escalation and compassion
 - Consider long-term consequences of retaliation
@@ -252,21 +252,21 @@ Rather than claim absolute novelty, we offer three distinct contributions: (1) F
 
 ## 3. Results (2,500 words)
 
-### 3.1 Rubric Comparison: Likert Superior Due to Ceiling Effects (700 words)
+### 3.1 Rubric Comparison: Binary Rubrics Fail, Ternary/Likert Comparable (700 words)
 
-**Finding:** Likert scale achieves higher inter-rater reliability than discrete rubrics (unexpected!)
+**Finding:** Binary rubrics catastrophically fail (ICC 0.04), but ternary rubrics achieve nearly identical reliability to Likert scales (ICC 0.28 vs 0.31)
 
 **Quantitative Results:**
-- **Likert (0-100):** Mean r̄ = 0.40, ICC(2,k) = 0.31
-- **Ternary (3-level):** Mean r̄ = 0.29, ICC(2,k) = 0.19
-- **Binary (Pass/Fail):** Mean r̄ = 0.10, ICC(2,k) = 0.10
+- **Likert (0-100):** Mean r̄ = 0.34, ICC(2,k) = 0.31
+- **Ternary (3-level):** Mean r̄ = 0.29, ICC(2,k) = 0.28
+- **Binary (Pass/Fail):** Mean r̄ = 0.10, ICC(2,k) = 0.04
 
 **Figure 1 Reference:** Bar chart showing ICC with 95% CI error bars
 
 **Contradiction with Literature:**
 - Literature suggests discrete scales improve agreement (fewer choices → less ambiguity)
-- Our finding: Opposite! Discrete scales have WORSE reliability
-- Question: Why?
+- Our finding: Nuanced! Binary scales fail catastrophically, but ternary scales work nearly as well as continuous
+- Question: Where's the threshold?
 
 **Root Cause Analysis: Ceiling Effects**
 
@@ -277,10 +277,10 @@ Rather than claim absolute novelty, we offer three distinct contributions: (1) F
 - Result: No variance to correlate → ICC approaches 0
 
 **Ternary Rubric:**
-- 88.4% scored "Pass" on overall dimension
+- 90.3% scored "Pass" on overall dimension (epistemic integrity dimension)
 - 98.0% scored "Pass" on value transparency
-- Only 3-4 unique score values observed
-- Slightly better than binary, but still severe ceiling effect
+- Only 4 unique score values observed
+- Moderate ceiling effect, but ICC (0.28) still comparable to Likert (0.31)
 
 **Likert Rubric:**
 - Healthy distribution (mean 90.9, std 5.0)
@@ -298,20 +298,22 @@ Rather than claim absolute novelty, we offer three distinct contributions: (1) F
 
 **Figure 12 Reference:** Box plots showing score ranges by rubric
 
-**Granularity Gradient:**
-- Binary (2 levels) → 3 unique values → ICC 0.10
-- Ternary (3 levels) → 4 unique values → ICC 0.19
-- Likert (101 levels) → 18-24 unique values → ICC 0.31
-- **Pattern:** Inter-rater reliability correlates with scale granularity
+**Granularity Threshold (Not Gradient):**
+- Binary (2 levels) → 3 unique values → ICC 0.04 (catastrophic failure)
+- Ternary (3 levels) → 4 unique values → ICC 0.28 (crosses viability threshold!)
+- Likert (101 levels) → 18-24 unique values → ICC 0.31 (marginal improvement)
+- **Pattern:** Cliff, not gradient - 3+ levels needed, but adding granularity beyond 3 yields minimal gains (0.28 → 0.31)
 
 **Implication:**
-- For frontier AI evaluation, continuous scales necessary
-- Discrete rubrics appropriate for lower-quality models with more failures
-- Boundary conditions: When does discrete beat continuous?
+- For frontier AI evaluation, both ternary and continuous scales viable
+- Binary rubrics fail catastrophically (only use if pass rates <95%)
+- Ternary rubrics (Pass/Partial/Fail) are practical alternative to continuous scales
+- Continuous scales offer marginal reliability gain (8%) plus analytical flexibility
 
 **Decision:**
 - Use Likert (0-100) for all subsequent analyses
-- Insights from binary/ternary useful for understanding rubric design
+- Rationale: (1) Marginal reliability advantage (ICC 0.31 vs 0.28), (2) Analytical flexibility for correlations/regression, (3) No practical downside
+- **Key finding:** Ternary rubrics are viable for frontier AI - practitioners can use 3-level scales effectively
 
 ### 3.2 Evaluator Agreement: Moderate Ensemble Reliability (500 words)
 
@@ -386,11 +388,11 @@ High-disagreement trials identified (max SD > 10 points):
 **Figure 2 Reference:** Heatmap showing mean overall scores (5 models × 6 constitutions)
 
 **Model Performance Rankings:**
-1. Gemini 2.5 Pro: Mean 96.7 (highest across all constitutions)
-2. Grok-3: Mean 91.4
-3. GPT-4o: Mean 91.2
-4. DeepSeek Chat: Mean 88.2
-5. Claude Sonnet 4.5: Mean 87.3 (lowest, but still high)
+1. Claude Sonnet 4.5: Mean 93.3 (highest across all constitutions)
+2. Gemini 2.5 Pro: Mean 91.5
+3. Grok-3: Mean 91.1
+4. DeepSeek Chat: Mean 91.0
+5. GPT-4o: Mean 88.0 (lowest, but still high)
 
 **Constitution Performance Rankings:**
 1. Harm Minimization: Highest scores across models (mean ~92)
@@ -403,34 +405,34 @@ High-disagreement trials identified (max SD > 10 points):
 **Simple Effects Analysis (Per-Model Constitution Sensitivity):**
 
 **Claude Sonnet 4.5:**
-- Constitution effect: F(5,54) = 4.2, p = 0.003 (significant)
-- Range: 84.8 (self-sovereignty) to 89.3 (harm-min)
-- Spread: 4.5 points
-- **Interpretation:** Moderately sensitive to constitution
+- Constitution effect: F(5,66) = 4.66, p = 0.001 (significant)
+- Range: 92.3 (self-sovereignty) to 94.3 (harm-min)
+- Spread: 1.9 points
+- **Interpretation:** Least sensitive to constitution (smallest spread)
 
 **GPT-4o:**
-- Constitution effect: F(5,54) = 2.4, p = 0.05 (marginally significant)
-- Range: 89.8 to 92.3
-- Spread: 2.5 points (smallest)
-- **Interpretation:** Least sensitive to constitution (most consistent)
+- Constitution effect: F(5,66) = 2.35, p = 0.050 (marginally significant)
+- Range: 87.1 (self-sovereignty) to 88.9 (utilitarian)
+- Spread: 1.8 points
+- **Interpretation:** Second-least sensitive to constitution (consistent performance)
 
 **Gemini 2.5 Pro:**
-- Constitution effect: F(5,54) = 3.8, p = 0.005 (significant)
-- Range: 94.8 to 98.4
+- Constitution effect: F(5,66) = 5.53, p = 0.0003 (highly significant)
+- Range: 89.1 (self-sovereignty) to 92.6 (no-constitution)
 - Spread: 3.6 points
-- **Interpretation:** High baseline, but constitution still matters
+- **Interpretation:** Moderate sensitivity to constitution
 
 **Grok-3:**
-- Constitution effect: F(5,54) = 5.1, p = 0.001 (highly significant)
-- Range: 88.9 to 93.2
-- Spread: 4.3 points
-- **Interpretation:** Highly sensitive to constitution
+- Constitution effect: F(5,66) = 5.03, p = 0.0006 (highly significant)
+- Range: 90.5 (self-sovereignty) to 92.4 (harm-min)
+- Spread: 1.9 points
+- **Interpretation:** Low-moderate sensitivity to constitution
 
 **DeepSeek Chat:**
-- Constitution effect: F(5,54) = 3.9, p = 0.004 (significant)
-- Range: 85.7 to 90.1
-- Spread: 4.4 points
-- **Interpretation:** Highly sensitive to constitution
+- Constitution effect: F(5,66) = 4.68, p = 0.001 (significant)
+- Range: 88.8 (self-sovereignty) to 92.3 (harm-min)
+- Spread: 3.5 points
+- **Interpretation:** Most sensitive to constitution (largest spread)
 
 **Key Patterns:**
 1. **Self-sovereignty consistently produces lowest scores** across all models
@@ -439,8 +441,8 @@ High-disagreement trials identified (max SD > 10 points):
 2. **Harm-minimization consistently produces highest scores**
    - Hypothesis: Utilitarian framing most natural for AI reasoning
    - Alternative: Evaluators biased toward utilitarian reasoning
-3. **GPT-4o shows least constitution sensitivity** (most "stable")
-4. **Grok and DeepSeek show highest sensitivity** (most "adaptable")
+3. **Claude and GPT-4o show least constitution sensitivity** (~1.9 point spread, most "stable")
+4. **DeepSeek and Gemini show highest sensitivity** (~3.5-3.6 point spread, most "adaptable")
 
 **Figure 5 Reference:** Violin plots showing score distributions by model
 
@@ -562,9 +564,9 @@ Tested whether individual evaluators conflate dimensions:
 **Baseline Scores (No-Constitution Control):**
 - **GPT-4o:** Mean 87.7 (lowest baseline)
 - **Claude Sonnet 4.5:** Mean 92.9 (highest baseline)
+- **Gemini 2.5 Pro:** Mean 92.6
 - **DeepSeek Chat:** Mean 91.3
 - **Grok-3:** Mean 91.1
-- **Gemini 2.5 Pro:** Mean 92.6
 
 **Global Effect Test:**
 - **One-sample t-test:** t = 1.63, p = 0.1046 (not significant at α=0.05)
@@ -846,24 +848,30 @@ Tested whether individual evaluators conflate dimensions:
 
 ### 4.2 Ceiling Effects in Discrete Rubrics: When Granularity Matters (400 words)
 
-**Core Finding:** Binary and ternary rubrics fail for frontier models due to ceiling effects
+**Core Finding:** Binary rubrics fail catastrophically for frontier models (ICC 0.04), but ternary rubrics remain viable (ICC 0.28)
 
 **Generalization Beyond This Study:**
 
-**When Discrete Rubrics Work:**
-- Lower-quality models with higher failure rates
-- Tasks with clear pass/fail criteria (code correctness, math problems)
-- Contexts where false negatives are costly (safety checks - better to be conservative)
+**When Binary Rubrics Work:**
+- Lower-quality models with high failure rates (pass rate < 95%)
+- Tasks with clear pass/fail criteria AND sufficient failure rate
+- Safety-critical binary decisions (but supplement with continuous for diagnostics)
+
+**When Ternary Rubrics Work:**
+- Frontier AI evaluation (ICC 0.28, nearly matches continuous)
+- Practical contexts where 3-level granularity sufficient
+- Pass rates between 85-95% (moderate ceiling tolerable)
 
 **When Continuous Rubrics Work:**
-- High-quality systems where most outputs are acceptable
-- Nuanced evaluation (distinguishing "good" from "great")
 - Research contexts requiring fine-grained measurement
+- Need for correlation/regression analysis
+- Distinguishing "excellent" (95) from "near-perfect" (98)
 
-**Boundary Conditions:**
-- Pass rate > 80% → discrete rubrics lose discriminative power
-- Pass rate < 50% → discrete rubrics may be fine
-- **Critical zone: 50-80% pass rate** - empirical testing needed
+**Boundary Conditions (Revised):**
+- Pass rate > 95% → binary rubrics fail (ICC approaches 0)
+- Pass rate 85-95% → ternary rubrics viable (ICC ~0.28)
+- Pass rate < 85% → both discrete and continuous work
+- **Critical threshold: 95% pass rate** - above this, only continuous scales reliable
 
 **Implications for LLM-as-Judge Literature:**
 
@@ -881,13 +889,15 @@ Tested whether individual evaluators conflate dimensions:
 
 For researchers evaluating AI systems:
 1. **Check your pass rates:** Run pilot with discrete rubric, calculate % passing
-2. **If > 80% pass:** Switch to continuous scale
-3. **If 50-80% pass:** Test both, pick higher ICC
-4. **If < 50% pass:** Discrete likely fine
+2. **If > 95% pass:** Binary fails - use ternary or continuous
+3. **If 85-95% pass:** Ternary viable (ICC ~0.28), continuous marginally better (ICC ~0.31)
+4. **If < 85% pass:** Both discrete and continuous work well
 
 For AI safety evaluation:
-- Frontier model evaluation → use continuous scales
-- Safety-critical binary decisions → use discrete, but supplement with continuous for diagnostics
+- Frontier model evaluation → ternary or continuous both viable
+- Need analytical flexibility → continuous scales (correlations, regression)
+- Practical deployment → ternary sufficient (Pass/Partial/Fail)
+- Binary rubrics → avoid for frontier AI unless pass rate < 95%
 
 ### 4.3 Methodological Contributions: LLM-as-Judge Validation (400 words)
 
@@ -1086,16 +1096,17 @@ Can AI models maintain factual integrity when reasoning from different constitut
 **Findings:**
 
 **1. Methodological:**
-- Likert scale superior to discrete rubrics for frontier AI evaluation (ICC 0.31 vs. 0.10-0.19)
-- Ceiling effects in discrete rubrics when pass rates >90%
+- Binary rubrics fail for frontier AI (ICC 0.04), but ternary rubrics nearly match Likert (ICC 0.28 vs 0.31)
+- Extreme ceiling effects (>95% pass) destroy reliability; moderate ceiling (90%) is tolerable
 - 2D rubric validated (Epistemic Integrity × Value Transparency, r=0.406)
 
 **2. Substantive:**
 - Significant Model × Constitution interaction (p=0.022)
 - Models respond differently to different value systems
-- Self-sovereignty consistently produces lowest scores
+- Self-sovereignty consistently produces lowest scores across all models
 - Harm-minimization consistently produces highest scores
-- GPT-4o least constitution-sensitive, Grok/DeepSeek most sensitive
+- Claude Sonnet 4.5 ranks highest overall (93.3), GPT-4o lowest (88.0)
+- Claude/GPT-4o least constitution-sensitive (~1.9 pt spread), DeepSeek/Gemini most sensitive (~3.5 pt spread)
 
 **3. Preliminary (Pending Validation):**
 - No systematic fact distortion pattern detected (but needs human validation)

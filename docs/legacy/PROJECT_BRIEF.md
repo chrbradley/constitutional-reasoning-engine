@@ -294,7 +294,7 @@ MODELS = [
 
 ## Constitutional Frameworks
 
-### 1. Harm Minimization (Pacifist/Gandhi-Inspired)
+### 1. Harm Minimization (Pacifist)
 
 ```
 CONSTITUTION_HARM_MINIMIZATION = """

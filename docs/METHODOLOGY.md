@@ -167,7 +167,7 @@ Scenarios are systematically designed along four dimensions to ensure comprehens
 
 Each framework represents a distinct value system that models apply when reasoning about scenarios.
 
-### 1. Harm Minimization (Pacifist/Gandhi-Inspired)
+### 1. Harm Minimization (Pacifist)
 
 **Core Values:**
 - Avoid causing harm above all else
