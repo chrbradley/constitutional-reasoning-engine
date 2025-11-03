@@ -7,6 +7,144 @@
 
 ## November 3, 2025
 
+### Entry 53: Phase 2.1 Visualization Implementation (5 Publication-Quality Figures)
+**Time:** Evening
+**Category:** Phase 2.1 Publication Preparation / Visualization
+**Summary:** Implemented 5 publication-quality figures (Figures 5, 6, 9, 10, 12) bringing total progress to 7/12 figures (58%). Core visualizations now complete for research report writing.
+
+**Context:**
+After strategic pivot to web app (Entry 52), began Phase 2.1 visualization work. Previously implemented infrastructure (visualization_config.py + generate_figures.py) and Figures 1-2 earlier in session. User selected Option A: implement 5 "easy" figures to reach 58% completion, sufficient for report writing.
+
+**Problem:**
+Needed to implement 5 figures with straightforward data requirements:
+- Figure 5: Score distributions by model (violin plots)
+- Figure 6: Score distributions by constitution (violin plots)
+- Figure 9: Dimensional scatter (Integrity × Transparency)
+- Figure 10: Ceiling effect evidence (histograms)
+- Figure 12: Score range comparison (box plots)
+
+**Solution:**
+
+1. **Fixed Data Loading Infrastructure**
+   - **Issue:** `load_consensus_scores()` assumed consensus_scores.json had trial metadata directly
+   - **Root Cause:** JSON structure is `{'consensus_scores': [list of scores]}` without metadata
+   - **Solution:** Modified function to:
+     - Load consensus scores from JSON
+     - Load trial metadata from layer3/ trial files (360 JSONs)
+     - Join on trial_id to create complete DataFrame with scenario_id, constitution, layer2_model
+   - **Code:** `generate_figures.py:62-101`
+
+2. **Figure 5: Score Distributions by Model**
+   - **Type:** 3 violin subplots (Epistemic Integrity, Value Transparency, Overall Score)
+   - **Data:** 360 consensus scores grouped by 5 models
+   - **Styling:** Model-specific colors from shared config (colorblind-friendly)
+   - **Features:** Mean (red) and median (blue) lines, rotated labels
+   - **Insight:** Reveals model performance ranges and variability
+   - **Code:** `generate_figures.py:268-347`
+
+3. **Figure 6: Score Distributions by Constitution**
+   - **Type:** 3 violin subplots (same dimensions as Figure 5)
+   - **Data:** 360 consensus scores grouped by 6 constitutions
+   - **Styling:** Constitution-specific colors (green=harm-min, blue=liberty, etc.)
+   - **Insight:** Shows which value systems produce higher/lower scores
+   - **Code:** `generate_figures.py:350-429`
+
+4. **Figure 9: Dimensional Scatter**
+   - **Type:** Scatter plot with regression line
+   - **Data:** 360 trials as (Epistemic Integrity, Value Transparency) points
+   - **Statistics:** r=0.406, 95% CI [0.367, 0.444], p<0.001
+   - **Validation:** Confirms dimensional independence (r < 0.60 threshold)
+   - **Features:** Text box with correlation stats, regression line
+   - **Code:** `generate_figures.py:312-372`
+
+5. **Figure 10: Ceiling Effect Evidence**
+   - **Type:** 3 histograms (Binary, Ternary, Likert)
+   - **Data Challenge:** Evaluations stored as dict {evaluator_name: result}, not list
+   - **Solution:** Changed iteration from `for eval in evaluations` to `for name, eval in evaluations.items()`
+   - **Key Extraction:** `eval['response_parsed']['overallScore']` (note camelCase!)
+   - **Findings:** Binary 96.2% PASS, Ternary 88.4% PASS, Likert healthy distribution
+   - **Visual:** Pass threshold lines (red dashed) for Binary/Ternary
+   - **Code:** `generate_figures.py:517-616`
+
+6. **Figure 12: Score Range Comparison**
+   - **Type:** 3 box plots (Binary, Ternary, Likert)
+   - **Data Challenge:** rubric_comparison.json has nested structure `rubrics.likert.dimensions.overall_score.icc`
+   - **Solution:** Fixed ICC path from `rubric_comp['likert']['icc_2_k']` to correct nested path
+   - **Features:** ICC annotations, mean/median lines, color-coded boxes
+   - **Findings:** Binary ICC=0.19, Ternary ICC=0.31, Likert ICC=0.31
+   - **Code:** `generate_figures.py:630-756`
+
+**Implementation Challenges:**
+
+1. **Consensus Scores Structure Mismatch**
+   - **Expected:** Dict with trial_id keys containing metadata
+   - **Actual:** List of score dicts without metadata
+   - **Impact:** Figures 5, 6, 9 failed with KeyError: 'trials'
+   - **Fix:** Load metadata separately from layer3/ trial files and join
+
+2. **Binary/Ternary Evaluations Structure**
+   - **Expected:** `evaluations` as list of dicts
+   - **Actual:** `evaluations` as dict with evaluator names as keys
+   - **Impact:** Figures 10, 12 failed with "'str' object has no attribute 'get'"
+   - **Fix:** Changed iteration to `for name, eval in evaluations.items()`
+
+3. **Rubric Comparison Nested Structure**
+   - **Expected:** `rubric_comp['likert']['icc_2_k']`
+   - **Actual:** `rubric_comp['rubrics']['likert']['dimensions']['overall_score']['icc']`
+   - **Impact:** Figure 12 failed with KeyError: 'likert'
+   - **Fix:** Used correct nested path
+
+**Outputs Generated:**
+
+- **Figures:** 7 PNG + 7 SVG files in `docs/figures/` (total 1.5 MB PNG, 246 KB SVG)
+  - 01_rubric_comparison (109 KB)
+  - 02_model_constitution_heatmap (292 KB)
+  - 05_score_distributions_by_model (243 KB)
+  - 06_score_distributions_by_constitution (308 KB)
+  - 09_dimensional_scatter (302 KB)
+  - 10_ceiling_effect_evidence (191 KB)
+  - 12_rubric_score_ranges (120 KB)
+
+- **Web Data:** 7 JSON files in `results/experiments/exp_20251028_134615/web_data/`
+  - Structured for Next.js web app consumption
+  - All include `generated` timestamp field
+  - Statistics: means, medians, std, correlations, ICC values
+
+**Testing:**
+
+- Initial run: 5 errors (data structure mismatches)
+- After fixes: All 7 figures generating successfully
+- Warning: Matplotlib 3.9+ renamed `labels` to `tick_labels` in boxplot (non-breaking)
+
+**Impact:**
+
+- **Phase 2.1 Progress:** 58% complete (7/12 figures)
+- **Report Writing:** Sufficient figures for comprehensive research report
+  - Rubric comparison (Figure 1)
+  - Model × Constitution interaction (Figure 2)
+  - Score distributions (Figures 5, 6)
+  - Dimensional structure (Figure 9)
+  - Ceiling effects (Figure 10)
+  - Score ranges (Figure 12)
+- **Complex Figures Deferred:** Figures 3, 4, 7, 8, 11 (heatmaps, PCA, forest plots) can be added as needed during report writing
+- **Web App Ready:** 7 JSON exports ready for Next.js integration
+
+**Files Modified:**
+- `analysis/generate_figures.py` (+450 lines implementing 5 figures)
+  - Fixed `load_consensus_scores()` to join with trial metadata
+  - Implemented 5 figure generation functions
+  - Fixed evaluation iteration for Binary/Ternary data
+  - Fixed ICC path for Figure 12
+- `docs/ANALYSIS_AND_PUBLICATION_PLAN.md` (Session 3 entry)
+- `PROJECT_JOURNAL.md` (this entry)
+
+**Status:**
+- ✅ Phase 2.1 (Visualization) - 58% complete
+- ⏭️ Ready for Phase 2.2 (Research Report Writing)
+- ⏭️ Remaining 5 figures can be implemented as needed
+
+---
+
 ### Entry 52: Strategic Pivot - Public Crowdsourced Validation via Web Application
 **Time:** Afternoon
 **Category:** Phase 1.5 Strategic Planning / Publication Preparation
