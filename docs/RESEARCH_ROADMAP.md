@@ -2,24 +2,90 @@
 
 **Project:** Constitutional Adherence & LLM Evaluator Validation Research
 **Start Date:** October 26, 2025
-**Status:** Phase 0.5 - Pre-Experiment Refinement
+**Status:** Phase 1.5 - Publication & Web Application Development
+
+---
+
+## ⚠️ DOCUMENTATION STATUS NOTICE
+
+**Last Synchronized:** 2025-11-03
+**Note:** This roadmap was significantly outdated. Actual progress exceeded planned milestones due to accidentally running a full-scale methodology validation experiment (360 trials × 3 rubrics) instead of the planned 10-20 trial pilot.
+
+**For Daily Task Tracking:** See `docs/ANALYSIS_AND_PUBLICATION_PLAN.md` (single source of truth)
 
 ---
 
 ## 🎯 Current Phase
 
-**PHASE 0.5: Pre-Experiment Refinement**
-- Status: In Progress
-- Start: October 27, 2025
-- Expected Duration: 5-7 days
-- Focus: Redesign rubric and scenarios based on pilot run learnings before running real experiments
+**PHASE 1.5: Publication & Web Application Development**
+- Status: In Progress (Documentation Synchronization)
+- Start: November 3, 2025
+- Expected Duration: 2-4 weeks
+- Focus: Document findings, build public research website with crowdsourced validation
 
-**Pilot Run Complete:**
-Experiment exp_20251026_193228 served as PILOT to stress-test methodology. Key findings documented in PROJECT_JOURNAL.md Entries 45-48:
-1. ✅ Gemini systematic outlier (r=0.434, excluding improves r=0.632 → r=0.734)
-2. ✅ Rubric ambiguity for bad-faith reasoning discovered (Claude vs Gemini interpretation)
-3. ✅ Dimensionality analysis: factual_adherence + logical_coherence redundant (r=0.886)
-4. ✅ Decision: Simplify to 2-dimensional rubric (Integrity + Transparency)
+**Strategic Pivot:** Self-validation → Public crowdsourcing via web application
+- **Why:** Greater transparency, larger sample size, public engagement
+- **What:** Research report + interactive web app + automated validation pipeline
+
+---
+
+## 📊 Actual Experiment Completed
+
+**Experiment:** exp_20251028_134615 (Full Methodology Validation)
+**Completed:** October 28, 2025
+
+**Scale:**
+- 360 trials (12 scenarios × 6 constitutions × 5 models)
+- 5,400 evaluations (360 trials × 3 rubric formats × 5 evaluators)
+- 3 rubric formats tested: Likert (0-100), Binary (PASS/FAIL), Ternary (PASS/PARTIAL/FAIL)
+- Models: Claude Sonnet 4.5, GPT-4o, DeepSeek Chat, Grok-3, Gemini 2.5 Pro
+
+**Week 1 Analysis (Oct 31) - 100% COMPLETE:**
+1. ✅ **Rubric Comparison:** Likert (r=0.40) > Ternary (r=0.29) > Binary (r=0.10)
+   - Contradicts literature expecting discrete rubrics to win
+   - Root cause: Ceiling effects (96-99% PASS rates in discrete rubrics)
+   - Decision: Use Likert for human validation
+2. ✅ **Evaluator Agreement:** ICC(2,k)=0.69 (moderate ensemble reliability)
+   - Individual evaluators: r=0.34-0.41 (fair agreement)
+   - Gemini & GPT-4o: Lower agreement (r<0.30)
+   - 36 high-disagreement trials identified
+3. ✅ **Model × Constitution Interaction:** Significant interaction detected
+   - Overall score: F(20,330)=1.78, p=0.022, η²=0.042
+   - 4 of 5 models show constitution sensitivity
+   - Self-sovereignty: Lowest scores across models
+   - **Answers Q3:** Yes, models respond differently to value systems
+4. ✅ **Dimensional Structure:** 2D rubric validated
+   - r=0.406, 95% CI [0.367, 0.444] (below r<0.60 threshold)
+   - PCA: 58.4% + 41.6% variance = 100% captured by 2 dimensions
+   - Epistemic Integrity and Value Transparency are independent
+
+**Week 2 Validation Design (Nov 2-3) - 100% COMPLETE:**
+1. ✅ **Dual-Track Rubric V4.0** designed (24,000+ words)
+   - Track 1: Factual Accuracy (deduction method, 0-100)
+   - Track 2: Reasoning Quality (holistic bands, 0-100)
+   - Solves premise rejection problem (self-sovereignty edge case)
+   - 12 worked examples across all constitutions
+2. ✅ **Validation infrastructure** built
+   - 30-trial stratified sample exported (blinded)
+   - Google Sheets workflow documented
+   - Export script updated for dual-track columns
+3. ✅ **Documentation** comprehensive
+   - DUAL_TRACK_RUBRIC_V4.md (24,000 words)
+   - ANNOTATION_METHODOLOGY_EVOLUTION.md (11,000 words)
+   - SUPPLEMENTARY_MATERIALS.md (9,000 words)
+   - Decision #7 documenting dual-track pivot
+
+---
+
+## 🚀 What We Can Answer NOW (LLM Evaluators Only)
+
+**Ready to Publish (with caveats about LLM evaluation):**
+- ✅ **Q3:** Model × Constitution interaction exists (p=0.022)
+- ✅ **Q4:** Rubric optimization (Likert > discrete for frontier AI)
+- ⚠️ **Q1:** Model epistemic integrity patterns (requires human validation)
+- ⚠️ **Q2:** Constitution effects on fact-handling (requires human validation)
+
+**Status:** Findings are robust within LLM evaluation framework, but need human ground truth for confident claims about absolute factual integrity
 
 **Phase 0 Completed:**
 1. ✅ 0.1: Methodological Guidelines - Added to CLAUDE.md
@@ -45,24 +111,36 @@ Experiment exp_20251026_193228 served as PILOT to stress-test methodology. Key f
   - [x] 0.4: Diagnostic Analysis Tools ✅ (stratified, outlier, dimensionality)
   - [x] 0.4 PILOT RUN: Complete analysis of exp_20251026_193228 ✅
 
-- [ ] Phase 0.5: Pre-Experiment Refinement (0%) ⏳ IN PROGRESS
-  - [ ] 0.5.1: Design 2-dimensional rubric (Integrity + Transparency)
-  - [ ] 0.5.2: Draft 6 new challenging scenarios
-  - [ ] 0.5.3: Update Layer 3 evaluation prompt
-  - [ ] 0.5.4: Validate new rubric with small test
+- [x] Phase 0.5: Pre-Experiment Refinement (100%) ✅ COMPLETE (SUPERSEDED)
+  - Note: Original plan obsolete - accidentally ran full experiment instead of small test
+  - Actually completed: Full 360-trial experiment + comprehensive analysis
 
-- [ ] Phase 1.0: Experimental Replication (0%)
-  - Replicate 1: 275 trials with improved methodology
-  - Replicate 2: 275 trials
-  - Replicate 3: 275 trials
-  - Total: 825 trials across 3 replicates
+- [x] Phase 1.0: Full Methodology Validation (100%) ✅ COMPLETE
+  - Experiment: exp_20251028_134615 (360 trials, 3 rubrics, 5 evaluators)
+  - Week 1 Analysis: Rubric comparison + Evaluator agreement + Interaction + Dimensionality ✅
+  - Week 2 Validation Design: Dual-track rubric + infrastructure ✅
+  - Total: 5,400 evaluations analyzed
 
-- [x] Phase 2: Evaluation Design Validation (100%) ✅ SKIPPED
-  - Pilot run resolved this: 2D rubric superior to 3D, no multi-prompt needed
+- [ ] Phase 1.5: Publication & Web Application (15%) ⏳ IN PROGRESS
+  - [ ] 1.5.1: Documentation synchronization (in progress)
+  - [ ] 1.5.2: Research report writing (0-100 words)
+  - [ ] 1.5.3: Visualization generation
+  - [ ] 1.5.4: Web application development
+  - [ ] 1.5.5: Automated validation pipeline
+  - [ ] 1.5.6: Deployment & launch
 
-- [ ] Phase 3: Validity Establishment (0%) (formerly Phase 4)
-- [ ] Phase 4: Statistical Analysis & Publication (0%) (formerly Phase 5)
-- [ ] Phase 5: Methodological Research (0%) (formerly Phase 6)
+- [ ] Phase 2: Human Validation & Iteration (0%)
+  - Crowdsourced validation via web app
+  - LLM-human correlation analysis
+  - Iterative findings updates
+
+- [x] Phase 2 (Original): Evaluation Design Validation (100%) ✅ COMPLETE
+  - Tested 3 rubric formats empirically
+  - Found: Likert > Ternary > Binary for frontier AI
+
+- [ ] Phase 3: Expanded Research (0%) (DEFERRED)
+  - Additional scenarios, models, constitutions
+  - Causal mechanism investigation
 
 ---
 
@@ -82,36 +160,48 @@ Experiment exp_20251026_193228 served as PILOT to stress-test methodology. Key f
 
 ## 📈 Current Data Status
 
-**Pilot Run Dataset (exp_20251026_193228):**
-- Trials: 120 (5 scenarios × 5 constitutions × ~5 Layer2 models)
-- Evaluations: 598 (120 trials × ~5 evaluators, some missing)
-- Evaluators: 5 (claude-sonnet-4-5, deepseek-chat, gpt-4o, gemini-2-5-pro, grok-3)
-- Data quality: Excellent (parsing success rate 98%)
+**Full Experiment (exp_20251028_134615):**
+- Trials: 360 (12 scenarios × 6 constitutions × 5 models)
+- Evaluations: 5,400 (360 trials × 3 rubric formats × 5 evaluators)
+- Rubric formats: Likert (0-100), Binary (PASS/FAIL), Ternary (PASS/PARTIAL/FAIL)
+- Evaluators: Claude Sonnet 4.5, GPT-4o, DeepSeek Chat, Grok-3, Gemini 2.5 Pro
+- Data quality: Excellent (>95% parsing success across all formats)
 
-**Pilot Run Findings (see PROJECT_JOURNAL.md Entries 45-48):**
+**Week 1 Analysis Findings (see ANALYSIS_AND_PUBLICATION_PLAN.md):**
 
-**Inter-Evaluator Reliability:**
-- Full ensemble (5 evaluators): r=0.632
-- Without Gemini (4 evaluators): r=0.734 (+0.102 improvement)
-- Gemini systematic outlier: r=0.434 with others, 43.3% outlier rate
+**Rubric Comparison (Analysis 1.1):**
+- Likert: r̄=0.40, ICC(2,k)=0.68 (best)
+- Ternary: r̄=0.29, ICC(2,k)=0.60 (moderate)
+- Binary: r̄=0.10, ICC(2,k)=0.19 (poor)
+- Ceiling effects in discrete rubrics (96-99% PASS rates)
+- Decision: Use Likert for human validation
 
-**Stratified Patterns:**
-- Constitution variation: bad-faith r=0.650, balanced-justice r=0.313
-- Scenario variation: campus-protest r=0.891, gender-care r=0.372
-- Score range effect: low scores r=0.707, high scores r=0.026 (ceiling effect)
+**Evaluator Agreement (Analysis 1.3):**
+- Individual evaluators: r=0.34-0.41 (fair agreement)
+- Ensemble: ICC(2,k)=0.69 (moderate reliability)
+- Gemini & GPT-4o: Lower agreement with others (r<0.30)
+- 36 high-disagreement trials identified for review
 
-**Critical Discoveries:**
-1. **Rubric ambiguity**: bad-faith reasoning interpretation differs (Claude penalizes manipulation, Gemini rewards transparency)
-2. **Dimension redundancy**: factual_adherence + logical_coherence highly correlated (r=0.886)
-3. **PCA findings**: Only 2 components needed for 90% variance (3rd dimension contributes 3.8%)
+**Model × Constitution Interaction (Analysis 1.2):**
+- Overall score: F(20,330)=1.78, p=0.022, η²=0.042 (significant)
+- 4 of 5 models show constitution sensitivity (p<0.01)
+- Self-sovereignty: Lowest scores consistently
+- Harm-minimization: Highest scores
+- **Q3 ANSWERED:** Yes, models respond differently to value systems
 
-**Decisions Made:**
-- Simplify rubric: 3 dimensions → 2 (Integrity + Value Transparency)
-- Gemini strategy: Include in evaluations, exclude from consensus analysis
-- Scenario expansion: Add 6 new scenarios (5 → 11 total)
-- Experimental design: Run 3 replicates for reliability (825 trials total)
+**Dimensional Structure (Analysis 1.4):**
+- Epistemic Integrity × Value Transparency: r=0.406 [0.367, 0.444]
+- Below independence threshold (r<0.60) ✅
+- PCA: 58.4% + 41.6% = 100% variance in 2 dimensions
+- No evaluators conflate dimensions (all r<0.70)
+- **2D rubric validated as independent**
 
-**Status: PILOT COMPLETE - Ready for Phase 0.5 refinement**
+**Week 2 Validation Design:**
+- Dual-Track Rubric V4.0 created (solves premise rejection problem)
+- 30-trial validation sample selected (stratified, blinded)
+- Infrastructure built for crowdsourced validation
+
+**Status: ANALYSES COMPLETE - Ready for publication and web app development**
 
 ---
 
@@ -167,7 +257,244 @@ Phase 5: Optional Methodological Experiments (formerly Phase 6)
 
 ---
 
-# PHASE 0: Foundation & Methodological Infrastructure
+# PHASE 1.5: Publication & Web Application Development
+
+**Purpose:** Document LLM evaluator findings, build public research website with crowdsourced human validation
+
+**Duration:** 2-4 weeks
+**Cost:** $0-10 (domain name optional, free hosting available)
+**Prerequisites:** Week 1-2 analyses complete, dual-track rubric designed
+
+**Strategic Pivot:** Changed from self-validation (30 trials, k=1) to public crowdsourcing (open-ended, k=many)
+**Rationale:** Greater transparency, larger validation sample, public engagement, democratization of research
+
+---
+
+## 1.5.1: Documentation Synchronization (1-2 hours)
+
+**Purpose:** Update all documentation to reflect actual progress
+
+### Tasks
+
+- [x] **1.5.1.1:** Update RESEARCH_ROADMAP.md ✅ IN PROGRESS
+  - Document actual experiment (360 trials, not 120)
+  - Update phase progress (Phase 1.0 complete, Phase 1.5 in progress)
+  - Add summary of Week 1-2 findings
+  - Archive outdated Phase 0.5 plan with explanation
+
+- [ ] **1.5.1.2:** Update ANALYSIS_AND_PUBLICATION_PLAN.md
+  - Add Week 3 section: Web app development pivot
+  - Document strategic decision to crowdsource validation
+  - Update timeline and deliverables
+
+- [ ] **1.5.1.3:** Add PROJECT_JOURNAL.md entry
+  - Document strategic pivot from self-validation to web app
+  - Rationale: Transparency, scale, public engagement
+  - Timeline and resource implications
+
+### Deliverables
+- [x] Updated RESEARCH_ROADMAP.md (in progress)
+- [ ] Updated ANALYSIS_AND_PUBLICATION_PLAN.md
+- [ ] PROJECT_JOURNAL.md entry
+
+---
+
+## 1.5.2: Research Report Writing (10-15 hours)
+
+**Purpose:** Comprehensive publication documenting LLM evaluator findings
+
+### Tasks
+
+- [ ] **1.5.2.1:** Generate all visualizations (3-4 hours)
+  - Rubric comparison: Bar chart with error bars (Likert/Ternary/Binary)
+  - Model × Constitution interaction: Heatmap + interaction plot
+  - Evaluator agreement: Correlation matrix, ICC forest plot
+  - Dimensional structure: PCA biplot, scatter plots
+  - Score distributions by model and constitution
+  - High-disagreement trial examples (anonymized)
+
+- [ ] **1.5.2.2:** Write comprehensive report (8-10 hours)
+  - Abstract (200 words)
+  - Introduction (1000 words): Research questions, motivation, contribution
+  - Methodology (2000 words): Experimental design, dual-track rubric, LLM evaluators
+  - Results (2500 words): 4 main analyses with visualizations
+  - Discussion (1500 words): Interpretation, implications, limitations
+  - Call to Action (500 words): Participate in human validation via web app
+  - Conclusion (500 words)
+  - References and appendices
+
+- [ ] **1.5.2.3:** Export analysis notebooks (1 hour)
+  - Convert 4 Jupyter notebooks to HTML/PDF
+  - Add narrative text for public readability
+  - Include code snippets with explanations
+
+- [ ] **1.5.2.4:** Write limitations section (1 hour)
+  - LLM evaluators not yet validated against humans
+  - Findings preliminary until human validation complete
+  - Discuss subjectivity in "ground truth"
+  - Frame as transparent research-in-progress
+
+### Deliverables
+- [ ] Research report PDF (8,000-10,000 words)
+- [ ] 12-15 visualizations (publication-quality)
+- [ ] 4 exported notebooks (HTML format)
+- [ ] Limitations and caveats documented
+
+---
+
+## 1.5.3: Web Application Development (18-25 hours)
+
+**Purpose:** Public website with research findings and human validation interface
+
+### Tasks
+
+- [ ] **1.5.3.1:** Frontend - Research website (6-8 hours)
+  - Tech stack: Next.js 14 + Tailwind CSS + Recharts
+  - Pages: Home, Findings, Methodology, Notebooks, Participate, Results
+  - Embedded visualizations and charts
+  - Responsive design (mobile/desktop)
+
+- [ ] **1.5.3.2:** Annotation interface (5-7 hours)
+  - Blinded trial presentation (no model names, no LLM scores)
+  - Form: Factual Accuracy (0-100), Reasoning Quality (0-100), feedback
+  - Rubric reference modal with V4.0 documentation
+  - Progress tracking and skip functionality
+  - Calibration examples (3 trials with explanations)
+
+- [ ] **1.5.3.3:** Backend API (4-5 hours)
+  - Tech stack: Next.js API Routes + PostgreSQL/Supabase
+  - Database schema: human_evaluations table
+  - Endpoints: submit-evaluation, get-trial, get-progress, get-results
+  - Validation and error handling
+
+- [ ] **1.5.3.4:** Results dashboard (3-5 hours)
+  - Real-time validation statistics
+  - LLM-human correlation by evaluator (updated as data comes in)
+  - Inter-human reliability (ICC, Cronbach's alpha)
+  - Distribution comparison: LLM vs human scores
+  - Progress tracker: "N annotations needed for significance"
+
+### Deliverables
+- [ ] Public research website (Next.js deployed)
+- [ ] Human validation interface (30 blinded trials)
+- [ ] Live results dashboard
+- [ ] Backend API and database
+
+---
+
+## 1.5.4: Automated Analysis Pipeline (5-7 hours)
+
+**Purpose:** Daily aggregation and analysis of crowdsourced validation data
+
+### Tasks
+
+- [ ] **1.5.4.1:** Aggregation script (2-3 hours)
+  - File: `scripts/aggregate_human_annotations.py`
+  - Query database for new annotations
+  - Calculate per-trial human consensus (mean, median, std)
+  - Calculate LLM-human correlations per evaluator
+  - Update `results/human_validation/aggregated_stats.json`
+
+- [ ] **1.5.4.2:** Statistical analysis (2-3 hours)
+  - File: `scripts/validation_analysis.py`
+  - Significance testing: LLM-human correlation > 0? (bootstrap CI)
+  - Power analysis: N annotations needed for r=0.70 detection
+  - Subgroup analysis: Annotator background effects
+  - Bias detection: Systematic over/underscoring
+
+- [ ] **1.5.4.3:** Cron setup (1 hour)
+  - GitHub Actions / Vercel Cron / Railway scheduled jobs
+  - Daily workflow: Aggregate → Analyze → Update frontend
+  - Email/Slack notifications for milestones (100, 500, 1000 annotations)
+
+### Deliverables
+- [ ] Aggregation script (automated)
+- [ ] Validation analysis script (automated)
+- [ ] Cron job configured and tested
+- [ ] Notification system
+
+---
+
+## 1.5.5: Deployment & Launch (3-5 hours)
+
+**Purpose:** Deploy web application and announce to public
+
+### Tasks
+
+- [ ] **1.5.5.1:** Frontend deployment (1 hour)
+  - Platform: Vercel (recommended) or Netlify
+  - Configure environment variables
+  - Enable ISR (Incremental Static Regeneration)
+  - Custom domain (optional): research.yourname.com
+
+- [ ] **1.5.5.2:** Database setup (1 hour)
+  - Platform: Supabase / Railway / Vercel Postgres
+  - Configure backups
+  - Set up monitoring
+
+- [ ] **1.5.5.3:** End-to-end testing (1-2 hours)
+  - Submit test annotations (10 trials)
+  - Verify database storage
+  - Run aggregation script manually
+  - Check results dashboard updates
+  - Test cron job trigger
+
+- [ ] **1.5.5.4:** Launch checklist (1 hour)
+  - All visualizations rendering correctly
+  - Report proofread (no typos, accurate statistics)
+  - Annotation interface tested on mobile/desktop
+  - Database backups configured
+  - Cron job scheduled and tested
+  - Social media announcement drafted
+  - Academic networks notified
+
+### Deliverables
+- [ ] Deployed web application (live URL)
+- [ ] Database configured with backups
+- [ ] Launch announcement (social media, academic networks)
+
+---
+
+## Phase 1.5 Success Criteria
+
+**Minimum Viable Success:**
+- [ ] All documentation synchronized
+- [ ] Research report published with LLM findings
+- [ ] Web app deployed and functional
+- [ ] First 10 human annotations collected
+
+**Strong Success:**
+- [ ] Research report polished (publication-ready)
+- [ ] Web app with automated validation pipeline
+- [ ] 100+ annotations collected in first month
+- [ ] Preliminary LLM-human correlation calculated
+
+**Exceptional Success:**
+- [ ] 500+ annotations collected
+- [ ] Validated LLM evaluators (r>0.70) or identified biases
+- [ ] Paper submitted to conference/journal
+- [ ] Active community engagement (ongoing annotations)
+
+---
+
+## Phase 1.5 Completion Checklist
+
+Before moving to Phase 2 (Human Validation & Iteration), verify:
+- [ ] All documentation updated and synchronized
+- [ ] Research report complete and published
+- [ ] Web application deployed and functional
+- [ ] Automated validation pipeline operational
+- [ ] Initial annotations collected (n≥10)
+
+**Sign-off:**
+- Date Completed:
+- URL:
+- Initial annotations: n=
+- Ready for Phase 2: YES / NO
+
+---
+
+# PHASE 0: Foundation & Methodological Infrastructure (ARCHIVED)
 
 **Purpose:** Establish scientific rigor principles and flexible architecture before proceeding
 

@@ -318,7 +318,28 @@ This made scoring ambiguous for premise-rejecting responses. **Solution:** Pivot
 
 ---
 
-### Week 3: Self-Validation (5-10 hours)
+### Week 3: STRATEGIC PIVOT - Web Application Development
+
+**⚠️ PIVOT DECISION (Nov 3, 2025):**
+Changed from self-validation (30 trials, k=1, private) to public crowdsourcing (open-ended, k=many, transparent)
+
+**Rationale:**
+1. **Greater Transparency:** Public validation more credible than self-validation
+2. **Larger Sample:** Crowdsourcing can achieve n>500 vs. n=30
+3. **Public Engagement:** Democratizes research participation
+4. **Living Research:** Results update as validation expands
+5. **Cost-Effective:** $0 vs. hiring annotators
+6. **Portfolio Value:** Demonstrates full-stack skills (research + engineering)
+
+**What Changed:**
+- ~~Week 3: Self-validate 30 trials via Google Sheets~~ (CANCELLED)
+- **NEW Week 3-5:** Build public research website + validation app + automation
+
+**Overall Status:** ⏳ IN PROGRESS (Documentation Synchronization)
+
+---
+
+### Week 3: Self-Validation (5-10 hours) - **CANCELLED / REPLACED**
 
 **Goal:** Validate 30-50 trials, calculate LLM-human correlation
 
@@ -391,35 +412,198 @@ This made scoring ambiguous for premise-rejecting responses. **Solution:** Pivot
 
 ---
 
-### Week 4+ (Optional): Community Validation Tool
+### Week 3-4: Documentation & Report Writing (10-15 hours)
 
-**Goal:** Build polished tool for crowdsourced validation expansion
+**Goal:** Synchronize documentation, write research report, generate visualizations
 
 **Tasks:**
 
-1. **Web Interface Development** (~5-8 hours)
-   - Frontend: React/Next.js or simple HTML/JS
-   - Backend: Firebase or Supabase (free tier)
-   - Features:
-     - User authentication (track annotator IDs)
-     - Randomized trial presentation
-     - Progress tracking
-     - Export responses to database
-     - Leaderboard (optional: gamification)
+1. **Documentation Synchronization** (~1-2 hours) - **IN PROGRESS**
+   - ✅ Update RESEARCH_ROADMAP.md to reflect Phase 1.5
+   - ⏳ Update ANALYSIS_AND_PUBLICATION_PLAN.md with web app pivot (in progress)
+   - [ ] Add PROJECT_JOURNAL.md entry documenting strategic pivot
 
-2. **Deployment** (~1-2 hours)
-   - Host on Vercel/Netlify (free)
-   - Domain: validation.constitution-reasoning.com (or GitHub Pages)
-   - Documentation: Clear instructions for validators
+2. **Generate All Visualizations** (~3-4 hours)
+   - Rubric comparison: Bar chart with error bars (Likert/Ternary/Binary r̄)
+   - Model × Constitution interaction: Heatmap + ANOVA table + interaction plots
+   - Evaluator agreement: Correlation matrix heatmap, ICC forest plot
+   - Dimensional structure: PCA biplot, scatter plots (Integrity × Transparency)
+   - Score distributions: Histograms by model and constitution
+   - High-disagreement examples: Anonymized trial excerpts with evaluator scores
 
-3. **Recruitment** (~2-3 hours)
-   - Write recruitment post (AI safety Discord, Reddit, Twitter)
-   - Emphasize: Contributing to open AI safety research
-   - Incentive: Co-authorship for significant contributions (>50 trials)
+3. **Write Comprehensive Research Report** (~8-10 hours)
+   - **Abstract** (200 words): Questions, methods, findings, implications
+   - **Introduction** (1000 words):
+     - Motivation: AI alignment question (values vs. facts)
+     - Research gap: No systematic test of constitutional reasoning
+     - Contribution: 360 trials, 5 models, 6 constitutions, 3 rubric formats
+   - **Methodology** (2000 words):
+     - Experimental design (12 scenarios × 6 constitutions × 5 models)
+     - Layer 2: Constitutional reasoning (5 frontier models)
+     - Layer 3: Integrity evaluation (3 rubric formats × 5 evaluators)
+     - Dual-track rubric (Factual Accuracy + Reasoning Quality)
+     - Statistical methods (ANOVA, ICC, PCA, Pearson r)
+   - **Results** (2500 words):
+     - 1.1: Rubric Comparison - Likert superior (r̄=0.40 vs. 0.29/0.10)
+     - 1.2: Model × Constitution Interaction - Significant (p=0.022)
+     - 1.3: Evaluator Agreement - Moderate ensemble reliability (ICC=0.69)
+     - 1.4: Dimensional Structure - 2D rubric validated (r=0.406)
+   - **Discussion** (1500 words):
+     - Interpretation: Models respond differently to value systems
+     - Implications: Constitutional AI design considerations
+     - Ceiling effects in discrete rubrics (96-99% PASS rates)
+     - Limitations: LLM evaluators not yet validated against humans
+   - **Call to Action** (500 words):
+     - Participate in human validation via web app
+     - Living research: Results update as validation expands
+     - Open science: Data, code, and rubric publicly available
+   - **Conclusion** (500 words)
+   - **References & Appendices**
 
-**Deliverable:** Public validation tool, ongoing data collection
+4. **Export Analysis Notebooks** (~1 hour)
+   - Convert 4 Jupyter notebooks to HTML/PDF format
+   - Add narrative text bridging code sections
+   - Include clear section headers and takeaways
+   - Ensure visualizations render correctly
 
-**Status:** Living research - update findings as validation expands
+5. **Limitations Section** (~1 hour)
+   - LLM evaluators not yet validated against human ground truth
+   - Findings preliminary until crowdsourced validation complete
+   - Subjectivity in "gold standard" for value-laden reasoning
+   - Frame as transparent research-in-progress, not final claims
+
+**Deliverables:**
+- [ ] Research report PDF (8,000-10,000 words)
+- [ ] 12-15 publication-quality visualizations
+- [ ] 4 exported notebooks (HTML format with narrative)
+- [ ] Transparent limitations and caveats
+
+**Status at End of Week 3-4:** Research report complete, ready for web integration
+
+---
+
+### Week 4-5: Web Application Development (18-25 hours)
+
+**Goal:** Build public research website with crowdsourced human validation
+
+**Tasks:**
+
+1. **Frontend - Research Website** (~6-8 hours)
+   - Tech stack: Next.js 14 + Tailwind CSS + Recharts
+   - Pages:
+     - Home: Project overview, key findings summary, call to action
+     - Findings: Full report with embedded charts
+     - Methodology: Experimental design, rubric explanation
+     - Notebooks: Embedded Jupyter notebooks (4 analyses)
+     - Participate: Human validation interface
+     - Results: Live aggregated human validation results
+   - Responsive design (mobile/desktop)
+   - Embedded visualizations from Week 3-4
+
+2. **Annotation Interface** (~5-7 hours)
+   - Blinded trial presentation (random from 30-trial validation sample)
+   - Show: Scenario facts, constitution description, AI reasoning response
+   - Hide: Model name, LLM evaluator scores
+   - Form fields:
+     - Factual Accuracy (0-100 slider + deduction checklist)
+     - Reasoning Quality (0-100 slider + band selection)
+     - Optional written feedback
+     - Demographic questions (optional): Background, expertise level
+   - UX: Progress indicator, skip button, rubric reference modal
+   - Calibration examples (3 trials with explanations)
+
+3. **Backend API** (~4-5 hours)
+   - Tech stack: Next.js API Routes + PostgreSQL/Supabase
+   - Database schema:
+     ```sql
+     CREATE TABLE human_evaluations (
+       id UUID PRIMARY KEY,
+       trial_id TEXT NOT NULL,
+       session_id UUID NOT NULL,
+       factual_accuracy INTEGER CHECK (factual_accuracy BETWEEN 0 AND 100),
+       reasoning_quality INTEGER CHECK (reasoning_quality BETWEEN 0 AND 100),
+       feedback TEXT,
+       annotator_background TEXT,
+       created_at TIMESTAMP DEFAULT NOW()
+     );
+     ```
+   - API endpoints:
+     - POST /api/submit-evaluation
+     - GET /api/trial/:id
+     - GET /api/progress/:session
+     - GET /api/results
+
+4. **Results Dashboard** (~3-5 hours)
+   - Real-time validation statistics:
+     - Total annotations collected
+     - LLM-human correlation by evaluator (updated as data comes in)
+     - Inter-human reliability (ICC, Cronbach's alpha)
+     - Distribution comparison: LLM vs human scores
+     - High-disagreement cases (LLM outliers vs human consensus)
+   - Visualizations: Correlation scatter plots, agreement matrices (Bland-Altman)
+   - Progress tracker: "N annotations needed for statistical significance"
+
+**Deliverables:**
+- [ ] Public research website (Next.js deployed)
+- [ ] Human validation interface (30 blinded trials)
+- [ ] Live results dashboard
+- [ ] Backend API and database
+
+**Status at End of Week 4-5:** Web application deployed and functional
+
+---
+
+### Week 5-6: Automated Pipeline & Launch (8-10 hours)
+
+**Goal:** Automate validation analysis and launch publicly
+
+**Tasks:**
+
+1. **Aggregation Script** (~2-3 hours)
+   - File: `scripts/aggregate_human_annotations.py`
+   - Query database for new annotations since last run
+   - Calculate per-trial human consensus (mean, median, std)
+   - Calculate LLM-human correlations per evaluator
+   - Update `results/human_validation/aggregated_stats.json`
+
+2. **Statistical Analysis** (~2-3 hours)
+   - File: `scripts/validation_analysis.py`
+   - Significance testing: LLM-human correlation > 0? (bootstrap CI)
+   - Power analysis: N annotations needed for r=0.70 detection
+   - Subgroup analysis: Annotator background effects
+   - Bias detection: Systematic over/underscoring
+
+3. **Cron Setup** (~1 hour)
+   - Platform: GitHub Actions / Vercel Cron / Railway
+   - Daily workflow: Aggregate → Analyze → Update frontend
+   - Notifications: Email/Slack for milestones (100, 500, 1000 annotations)
+
+4. **Deployment** (~1-2 hours)
+   - Frontend: Vercel/Netlify (free tier)
+   - Database: Supabase/Railway/Vercel Postgres
+   - Configure backups and monitoring
+   - Custom domain (optional): research.yourname.com
+
+5. **End-to-End Testing** (~1-2 hours)
+   - Submit 10 test annotations
+   - Verify database storage
+   - Run aggregation script manually
+   - Check results dashboard updates
+   - Test cron job trigger
+
+6. **Launch** (~1 hour)
+   - Social media announcement (Twitter/X, Reddit r/MachineLearning)
+   - Academic networks (LessWrong, EA Forum)
+   - AI safety Discord servers
+   - Frame: "Participate in open AI safety research"
+
+**Deliverables:**
+- [ ] Automated analysis pipeline (cron job running)
+- [ ] Deployed web application (live URL)
+- [ ] Launch announcement (social media)
+- [ ] Initial 10+ human annotations collected
+
+**Status at End of Week 5-6:** Public research launched, living validation in progress
 
 ---
 
