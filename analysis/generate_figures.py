@@ -16,6 +16,11 @@ import sys
 import json
 from pathlib import Path
 from datetime import datetime
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+import seaborn as sns
 
 # Import configuration
 from visualization_config import (
@@ -27,14 +32,57 @@ from visualization_config import (
     save_figure,
     JSON_INDENT,
     JSON_ENSURE_ASCII,
+    MODEL_COLORS,
+    MODEL_DISPLAY_NAMES,
+    CONSTITUTION_COLORS,
+    CONSTITUTION_DISPLAY_NAMES,
+    RUBRIC_COLORS,
+    RUBRIC_DISPLAY_NAMES,
+    FIGURE_SIZE,
+    FIGURE_SIZE_WIDE,
+    FIGURE_SIZE_SQUARE,
 )
 
-# Import existing analysis modules
-# (We'll add these as we extract visualization code)
-# from rubric_comparison import RubricComparisonAnalyzer
-# from evaluator_agreement import EvaluatorAgreementAnalyzer
-# from interaction_analysis import InteractionAnalyzer
-# from dimensional_analysis import DimensionalAnalyzer
+
+# ============================================================================
+# Data Loading Utilities
+# ============================================================================
+
+def load_analysis_results(experiment_id: str, analysis_name: str) -> dict:
+    """Load analysis results JSON file."""
+    results_path = Path("results/experiments") / experiment_id / "analysis" / f"{analysis_name}.json"
+
+    if not results_path.exists():
+        raise FileNotFoundError(f"Analysis results not found: {results_path}")
+
+    with open(results_path) as f:
+        return json.load(f)
+
+
+def load_consensus_scores(experiment_id: str) -> pd.DataFrame:
+    """Load consensus scores as DataFrame."""
+    scores_path = Path("results/experiments") / experiment_id / "analysis" / "consensus_scores.json"
+
+    if not scores_path.exists():
+        raise FileNotFoundError(f"Consensus scores not found: {scores_path}")
+
+    with open(scores_path) as f:
+        data = json.load(f)
+
+    # Convert to DataFrame
+    records = []
+    for trial_id, trial_data in data["trials"].items():
+        records.append({
+            'trial_id': trial_id,
+            'scenario_id': trial_data['scenario_id'],
+            'constitution': trial_data['constitution'],
+            'layer2_model': trial_data['layer2_model'],
+            'epistemic_integrity': trial_data['consensus']['mean_all']['epistemic_integrity'],
+            'value_transparency': trial_data['consensus']['mean_all']['value_transparency'],
+            'overall_score': trial_data['consensus']['mean_all']['overall_score'],
+        })
+
+    return pd.DataFrame(records)
 
 
 def setup_environment():
@@ -142,8 +190,57 @@ def generate_figure_02_model_constitution_heatmap(experiment_id: str):
     """
     print("\n📊 Generating Figure 2: Model × Constitution Heatmap...")
 
-    # TODO: Extract from interaction_analysis.py
-    print("⏭️  Figure 2 - TODO: Extract from interaction_analysis.py")
+    # Load interaction analysis results
+    interaction_data = load_analysis_results(experiment_id, 'interaction_analysis')
+    cell_means = interaction_data['dimensions']['overall_score']['cell_means']
+
+    # Convert to DataFrame for heatmap
+    # Rows = constitutions, Columns = models
+    constitutions = sorted(cell_means.keys())
+    models = sorted(list(cell_means[constitutions[0]].keys()))
+
+    # Build matrix
+    matrix = []
+    for const in constitutions:
+        row = [cell_means[const][model] for model in models]
+        matrix.append(row)
+
+    df = pd.DataFrame(
+        matrix,
+        index=[CONSTITUTION_DISPLAY_NAMES.get(c, c) for c in constitutions],
+        columns=[MODEL_DISPLAY_NAMES.get(m, m) for m in models]
+    )
+
+    # Create heatmap
+    fig, ax = plt.subplots(figsize=FIGURE_SIZE_WIDE)
+
+    sns.heatmap(df, annot=True, fmt='.1f', cmap='RdYlGn', center=90,
+                vmin=80, vmax=100, cbar_kws={'label': 'Mean Overall Score'},
+                linewidths=0.5, linecolor='gray', ax=ax)
+
+    ax.set_title('Model × Constitution Interaction', fontsize=14, fontweight='bold')
+    ax.set_xlabel('Model', fontsize=12)
+    ax.set_ylabel('Constitution', fontsize=12)
+
+    # Rotate x-axis labels for readability
+    plt.xticks(rotation=45, ha='right')
+    plt.yticks(rotation=0)
+
+    plt.tight_layout()
+    save_figure(fig, '02_model_constitution_heatmap')
+    plt.close(fig)
+
+    # Export data for web app
+    web_data = {
+        'constitutions': constitutions,
+        'models': models,
+        'cell_means': cell_means,
+        'generated': datetime.now().isoformat(),
+    }
+
+    export_web_data('model_constitution_matrix.json', web_data)
+
+    print("✅ Figure 2 complete")
 
 
 def generate_figure_03_evaluator_agreement_matrix(experiment_id: str):
