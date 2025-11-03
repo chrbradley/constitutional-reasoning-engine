@@ -13,13 +13,14 @@
 **Key elements:**
 - Research question: Can AI models maintain factual integrity when reasoning from different constitutional frameworks (value systems)?
 - Motivation: AI alignment challenge - do values require motivated reasoning (fact distortion)?
-- Methodology: 360 trials × 5 frontier models × 6 constitutional frameworks × 3 rubric formats = 5,400 evaluations
-- Key finding 1: Likert scale superior to discrete rubrics (ICC 0.31 vs 0.10-0.19) due to ceiling effects
-- Key finding 2: Significant Model × Constitution interaction (p=0.022) - models respond differently to value systems
-- Key finding 3: 2D rubric validated (r=0.406) - Factual integrity and value transparency are independent
+- Methodology: 360 trials × 5 frontier models × 6 constitutional frameworks (+ no-constitution control) × 3 rubric formats = 5,400 evaluations
+- **Key finding 1 (CRITICAL):** Constitutional prompting produces weak steering effects - models differ more from each other (5.2 pts) than from constitutions (≤1.56 pts, p=0.1046 n.s.)
+- Key finding 2: Likert scale superior to discrete rubrics (ICC 0.31 vs 0.10-0.19) due to ceiling effects in frontier models
+- Key finding 3: Significant Model × Constitution interaction (p=0.022) reflects relative ranking shifts, not absolute behavioral changes
+- Key finding 4: 2D rubric validated (r=0.406) - Factual integrity and value transparency are independent dimensions
 - Limitation: LLM evaluators not yet human-validated (preliminary findings)
 - Call to action: Open crowdsourced validation via web app
-- Contribution: First systematic test of constitutional reasoning with rigorous methodological validation
+- Contribution: First systematic test of constitutional reasoning with baseline control, revealing limits of prompt-based steering
 
 ---
 
@@ -498,58 +499,216 @@ Tested whether individual evaluators conflate dimensions:
 - No evaluators conflate dimensions systematically
 - Design enables detection of motivated reasoning vs. opaque reasoning
 
+### 3.5 Constitutional Effect Sizes: No Significant Steering Effect (600 words)
+
+**Research Question:** Do constitutions actually change model behavior, or do they just reveal pre-existing model tendencies?
+
+**Methodological Innovation:** 60 "no-constitution" control trials (12 scenarios × 5 models) to establish baseline scores
+
+**Finding:** Constitutions do NOT significantly change model behavior (p=0.1046, mean delta=-0.18 points)
+
+**Quantitative Results:**
+
+**Baseline Scores (No-Constitution Control):**
+- **GPT-4o:** Mean 87.7 (lowest baseline)
+- **Claude Sonnet 4.5:** Mean 92.9 (highest baseline)
+- **DeepSeek Chat:** Mean 91.3
+- **Grok-3:** Mean 91.1
+- **Gemini 2.5 Pro:** Mean 92.6
+
+**Global Effect Test:**
+- **One-sample t-test:** t = 1.63, p = 0.1046 (not significant at α=0.05)
+- **Mean delta from baseline:** -0.18 points (95% CI: [-0.39, +0.04])
+- **Interpretation:** Constitutions do not produce significant changes in overall scores
+
+**Figure X Reference:** Bar chart comparing baseline vs. constitution-averaged scores by model
+
+**Constitutional Effect Sizes (Delta from Baseline):**
+1. **Harm-minimization:** +0.87 ± 1.32 points (largest positive effect, but not significant)
+2. **Utilitarian:** +0.27 ± 1.48 points (small positive effect)
+3. **Balanced-justice:** -0.13 ± 1.06 points (near zero)
+4. **Community-order:** -0.36 ± 1.70 points (small negative effect)
+5. **Self-sovereignty:** -1.56 ± 2.71 points (largest negative effect, high variance)
+
+**Figure Y Reference:** Effect size plot showing deltas with 95% CI error bars
+
+**Model Constitutional Sensitivity (Absolute Mean Delta):**
+- **Claude Sonnet 4.5:** 1.10 ± 0.74 points (least sensitive)
+- **Grok-3:** 1.02 ± 0.73 points (least sensitive)
+- **GPT-4o:** 1.43 ± 0.97 points (moderate)
+- **DeepSeek Chat:** 1.39 ± 1.61 points (moderate)
+- **Gemini 2.5 Pro:** 1.90 ± 2.06 points (most sensitive, highest variance)
+
+**Figure Z Reference:** Bar chart showing model sensitivity with error bars
+
+**Key Patterns:**
+
+1. **Effect sizes are small relative to standard deviations:**
+   - Largest effect: Self-sovereignty -1.56 ± 2.71 (Cohen's d ≈ 0.58, medium effect)
+   - Most effects: <1 point with SD >1 point (overlapping distributions)
+   - Conclusion: Constitutional framing produces weak steering effects
+
+2. **Baseline differences exceed constitutional effects:**
+   - Model baseline range: 87.7 to 92.9 (5.2 points)
+   - Constitutional effect range: -1.56 to +0.87 (2.4 points)
+   - **Models differ more from each other than from constitutions**
+
+3. **Harm-minimization shows consistent positive trend:**
+   - Only constitution with positive effect across most models
+   - But still not statistically significant (p>0.05)
+   - Hypothesis: Utilitarian framing most aligned with base model tendencies
+
+4. **Self-sovereignty shows high variance:**
+   - Largest absolute effect (-1.56 points)
+   - But also highest standard deviation (2.71)
+   - Suggests: Some scenarios/models react strongly, others don't
+
+**Interpretation:**
+
+**Primary Interpretation: Pre-existing Model Tendencies Dominate**
+- The 5.2-point baseline spread (GPT 87.7 vs. Claude 92.9) is 2.2× larger than the largest constitutional effect (1.56 points)
+- Constitutional framing produces statistically insignificant effects (p=0.1046)
+- **Conclusion:** Results primarily reflect what models already do, not what constitutions change
+
+**Implication for Section 3.3 (Model × Constitution Interaction):**
+- The significant interaction (p=0.022) may reflect:
+  - **Relative rankings shift** (Constitution A ranks models differently than Constitution B)
+  - **BUT absolute score changes are small** (effect sizes <2 points)
+- Interaction is statistically real but practically small
+
+**Alternative Interpretations:**
+
+1. **Insufficient statistical power:**
+   - n=60 constitutional trials per constitution (12 scenarios × 5 models)
+   - May need larger sample to detect small effects
+   - Current study powered for medium effects (d≥0.5), not small effects (d<0.3)
+
+2. **Prompt design insufficiently directive:**
+   - Constitutional system prompts may be too subtle
+   - Models may ignore or underweight constitutional framing
+   - More explicit prompting (e.g., "YOU MUST prioritize...") might increase effects
+
+3. **Ceiling effects mask changes:**
+   - High baseline scores (87.7-92.9) near top of scale
+   - Limited room for upward movement
+   - Constitutional changes may be present but compressed
+
+4. **Constitutions reveal rather than steer:**
+   - Constitutional framing activates latent model tendencies
+   - Not changing behavior, but making pre-existing biases visible
+   - This is still valuable for alignment research!
+
+**Practical Implications:**
+
+1. **For Constitutional AI Safety:**
+   - **WARNING:** Simple constitutional framing may not reliably steer model behavior
+   - Stronger interventions may be needed (fine-tuning, RLHF, etc.)
+   - Cannot rely on prompt-based constitutional steering alone
+
+2. **For This Study's Interpretation:**
+   - Findings primarily characterize base model behavior, not constitutional effects
+   - Model × Constitution interaction reflects relative shifts, not absolute steering
+   - Results are still valuable for understanding model differences
+
+3. **For Human Validation:**
+   - Baseline analysis should be included in crowdsourced validation
+   - Ask humans: "Do YOU see differences between baseline and constitutional responses?"
+   - May validate or contradict LLM evaluator findings
+
+**Conclusion:**
+- **Major methodological finding:** Constitutional prompting produces weak effects (p=0.1046, mean Δ=-0.18)
+- **Baseline differences dominate:** Models differ more from each other (5.2 points) than from constitutions (≤1.56 points)
+- **Study remains valuable:** Characterizes how frontier models reason about values, even if steering is weak
+- **Future work needed:** Test stronger constitutional interventions (fine-tuning, retrieval-augmented prompting)
+
 ---
 
 ## 4. Discussion (1,500 words)
 
-### 4.1 Interpretation: Models Respond Differently to Value Systems (400 words)
+### 4.1 Interpretation: Constitutional Steering Effects Are Weak (500 words)
 
 **Core Finding Recap:**
-- Significant Model × Constitution interaction (p = 0.022)
-- Not just "some models better than others"
-- **Heterogeneous response:** Different models succeed/struggle with different value frameworks
+- Constitutions produce statistically insignificant effects (p=0.1046, mean Δ=-0.18 points)
+- Models differ more from each other (5.2 points) than from constitutions (≤1.56 points)
+- Model × Constitution interaction (p=0.022) reflects relative ranking shifts, not absolute behavioral changes
+
+**Reframing the Model × Constitution Interaction:**
+
+**Initial Interpretation (Before Baseline Analysis):**
+- Interaction suggested models respond differently to constitutional steering
+- Implied: Constitutions meaningfully change behavior in model-specific ways
+
+**Revised Interpretation (After Baseline Analysis):**
+- Interaction is statistically real but **practically small** (η²=0.042, small effect)
+- Reflects **relative ranking shifts:** Constitution A ranks Claude higher than GPT, Constitution B reverses this
+- Does NOT reflect **absolute steering:** Neither model's behavior changes substantially from baseline
+- **Analogy:** Like measuring different brands of thermometers - they rank temperatures slightly differently, but none actually change the room temperature
 
 **What This Means for Constitutional AI:**
 
-1. **Value Steering is Model-Dependent**
-   - Claude responds differently to self-sovereignty than GPT-4o does
-   - Implication: Can't assume constitutional steering generalizes across models
-   - Recommendation: Test constitutional frameworks per-model before deployment
+1. **Prompt-Based Constitutional Steering is Weak**
+   - Constitutional system prompts (200-300 words) produce <2 point effects
+   - Models mostly preserve baseline behavior regardless of constitution
+   - **Implication:** Cannot rely on simple prompting for value alignment
+   - **Recommendation:** Stronger interventions needed (fine-tuning, RLHF, reward modeling)
 
-2. **Some Values are Harder Than Others**
-   - Self-sovereignty consistently produces lowest scores (all models)
-   - Harm-minimization consistently produces highest scores
-   - Question: Is this a limitation of models, or evaluators, or the value framework itself?
-   - Hypothesis: Premise-rejection cases (self-sovereignty) penalized by rubric design
+2. **Baseline Differences Dominate**
+   - GPT-4o baseline: 87.7 (lowest)
+   - Claude baseline: 92.9 (highest)
+   - 5.2-point spread exceeds largest constitutional effect (1.56 points)
+   - **Implication:** Model selection matters more than constitutional framing
+   - **Recommendation:** Choose base model carefully - cannot "fix" it with prompting
 
-3. **GPT-4o Shows Least Constitution Sensitivity**
-   - Smallest spread (2.5 points) across constitutions
-   - Two interpretations:
-     - Positive: GPT-4o most "stable" / "robust" to value variation
-     - Negative: GPT-4o least "responsive" to constitutional steering
-   - Depends on use case: Do you want consistency or adaptability?
+3. **Study Still Valuable Despite Null Finding**
+   - Characterizes how models reason about values (descriptive)
+   - Reveals limits of prompt-based steering (prescriptive)
+   - Prevents overconfidence in constitutional prompting for safety
 
-4. **Grok and DeepSeek Show Highest Sensitivity**
-   - Largest spreads (4.3-4.4 points) across constitutions
-   - Interpretation: Most responsive to value steering
-   - Implication: Best candidates for constitutional AI applications?
+4. **Harm-Minimization Shows Positive Trend**
+   - Only constitution with consistent positive effect (+0.87 points)
+   - Still not statistically significant (p>0.05)
+   - Hypothesis: Utilitarian framing most aligned with RLHF training objectives
+   - Alternative: All models have utilitarian "priors" from pre-training
 
-**Implications for AI Alignment:**
+**Alternative Explanations (Why Steering is Weak):**
 
-**Positive Signal:**
-- Models CAN reason from different value systems
-- Interaction suggests genuine value adaptation (not just "same answer, different words")
-- No evidence of systematic fact distortion by constitution (separate analysis needed)
+1. **Insufficient statistical power:**
+   - May need larger sample (n>60 per constitution) to detect small effects
+   - Current study powered for medium effects (d≥0.5), not small (d<0.3)
 
-**Concern:**
-- Self-sovereignty underperformance suggests some value systems harder to implement
-- Risk: Constitutional AI might work for "easy" values (utilitarian) but fail for "hard" values (self-sovereignty)
-- Need more investigation into why self-sovereignty scores lower
+2. **Prompt design too subtle:**
+   - Models may not weight constitutional framing heavily
+   - More directive prompting ("YOU MUST prioritize...") might work better
+   - Trade-off: More directive = less natural reasoning
 
-**Future Research:**
-- Qualitative analysis: Read self-sovereignty responses to understand failure modes
-- Human validation: Do LLM evaluators underrate self-sovereignty, or are responses genuinely lower quality?
-- Expanded constitutions: Test more diverse value systems
+3. **Ceiling effects compress changes:**
+   - High baselines (87.7-92.9) leave limited upward room
+   - Constitutional effects may exist but compressed by scale ceiling
+   - Alternative scaling (e.g., logit transform) might reveal effects
+
+4. **Constitutions reveal rather than steer:**
+   - Framing activates latent model tendencies
+   - Does not create new behaviors, just surfaces existing ones
+   - **This is still valuable:** Makes alignment-relevant tendencies visible
+
+**Implications for Future Work:**
+
+1. **Test stronger interventions:**
+   - Compare prompting vs. fine-tuning vs. RLHF
+   - Hypothesis: Fine-tuning produces larger effects than prompting
+
+2. **Qualitative analysis:**
+   - Do responses SOUND different even if scores don't change?
+   - May reveal subtle framing effects not captured by rubric
+
+3. **Human validation critical:**
+   - Humans may perceive constitutional differences LLM evaluators miss
+   - Validate both: "Do scores change?" AND "Do responses feel different?"
+
+**Conclusion:**
+- **Major finding:** Simple constitutional prompting does NOT reliably steer behavior
+- **Study value:** Establishes baseline for comparison, prevents overconfidence in prompting
+- **Practical guidance:** Use stronger interventions for value alignment, not just system prompts
 
 ### 4.2 Ceiling Effects in Discrete Rubrics: When Granularity Matters (400 words)
 

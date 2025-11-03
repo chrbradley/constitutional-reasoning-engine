@@ -1099,6 +1099,148 @@ During pilot annotation testing, discovered V2.0 rubric had fundamental ambiguit
 
 ---
 
+### Session 4: 2025-11-03 (Baseline Analysis + Research Report Refinement)
+
+**Duration:** ~2 hours
+**Goal:** Analyze "no-constitution" baseline data to measure absolute constitutional effects + refine research report outline
+
+**Context:**
+- User requested plain-language Statistical Guide for beginners (completed in prior session)
+- Reviewing research report outline revealed methodological validity concern: Do constitutions actually change behavior, or just reveal base model tendencies?
+- **Critical Discovery:** Trial registry contains 60 "no-constitution" control trials (12 scenarios × 5 models)
+
+**What We Built:**
+
+1. **Baseline Analysis Script** (`analysis/baseline_analysis.py` - 348 lines)
+   - Loads trial registry + consensus scores
+   - Filters 60 "no-constitution" trials
+   - Calculates baseline scores per model
+   - Computes deltas: (constitution score - baseline score)
+   - Runs one-sample t-test: "Do constitutions change behavior?"
+   - Calculates model constitutional sensitivity (absolute mean delta)
+   - Generates visualization data for web app
+
+**Key Findings (MAJOR METHODOLOGICAL DISCOVERY):**
+
+**Global Effect Test:**
+- **One-sample t-test:** t = 1.63, **p = 0.1046** (NOT significant at α=0.05)
+- **Mean delta from baseline:** -0.18 points (95% CI: [-0.39, +0.04])
+- **Interpretation:** Constitutions do NOT produce significant changes in overall scores
+
+**Baseline Scores (No-Constitution Control):**
+- GPT-4o: Mean 87.7 (lowest baseline)
+- Claude Sonnet 4.5: Mean 92.9 (highest baseline)
+- DeepSeek Chat: Mean 91.3
+- Grok-3: Mean 91.1
+- Gemini 2.5 Pro: Mean 92.6
+- **Baseline spread: 5.2 points**
+
+**Constitutional Effect Sizes (Delta from Baseline):**
+- Harm-minimization: **+0.87 ± 1.32** (largest positive, but not significant)
+- Utilitarian: +0.27 ± 1.48
+- Balanced-justice: -0.13 ± 1.06 (near zero)
+- Community-order: -0.36 ± 1.70
+- Self-sovereignty: **-1.56 ± 2.71** (largest negative, high variance)
+- **Effect size range: 2.4 points (SMALLER than baseline spread!)**
+
+**Model Constitutional Sensitivity:**
+- Claude Sonnet 4.5: 1.10 ± 0.74 (least sensitive)
+- Grok-3: 1.02 ± 0.73 (least sensitive)
+- GPT-4o: 1.43 ± 0.97 (moderate)
+- DeepSeek Chat: 1.39 ± 1.61 (moderate)
+- Gemini 2.5 Pro: 1.90 ± 2.06 (most sensitive, highest variance)
+
+**Critical Pattern:**
+- **Baseline differences (5.2 points) exceed constitutional effects (≤1.56 points)**
+- **Models differ more from each other than from constitutions**
+- Constitutional framing produces weak steering effects (p=0.1046 n.s.)
+
+**Interpretation:**
+
+**Primary: Pre-existing Model Tendencies Dominate**
+- Results primarily reflect what models already do, not what constitutions change
+- Constitutional prompting (200-300 words) insufficient for reliable behavioral steering
+- Model selection matters more than constitutional framing
+
+**Reframes Model × Constitution Interaction (Section 3.3):**
+- Interaction (p=0.022) is statistically real but **practically small** (η²=0.042)
+- Reflects **relative ranking shifts** (Constitution A ranks models differently than B)
+- Does NOT reflect **absolute steering** (neither model changes substantially from baseline)
+- **Analogy:** Like different thermometers ranking temperatures slightly differently, but none change the room temperature
+
+**What We Updated:**
+
+1. **Research Report Abstract** (lines 11-23)
+   - Made constitutional effect sizes KEY FINDING #1 (moved to top)
+   - Updated all finding numbers to reflect priority
+   - Changed contribution statement to emphasize "limits of prompt-based steering"
+
+2. **Results Section 3.5: Constitutional Effect Sizes** (lines 501-622)
+   - NEW SECTION added before Discussion
+   - 121 lines documenting baseline analysis
+   - Includes quantitative results, key patterns, interpretation, alternative explanations
+   - Practical implications for constitutional AI safety
+
+3. **Discussion Section 4.1: Constitutional Steering Effects Are Weak** (lines 628-711)
+   - COMPLETE REWRITE of previous "Models Respond Differently" section
+   - Reframes Model × Constitution interaction with baseline context
+   - Adds alternative explanations (power, prompt design, ceiling effects, reveal vs. steer)
+   - Practical guidance: Use stronger interventions (fine-tuning, RLHF), not just prompts
+
+**Implications for Study Interpretation:**
+
+**Previous Interpretation (Before Baseline):**
+- Model × Constitution interaction suggests constitutional steering works
+- Different models respond differently to value systems
+- Implied: Constitutions meaningfully change behavior
+
+**Revised Interpretation (After Baseline):**
+- Constitutional steering effects are weak (p=0.1046 n.s.)
+- Interaction reflects relative shifts, not absolute changes
+- **Study still valuable:** Characterizes base model behavior + reveals prompt-steering limits
+- **WARNING for AI safety:** Cannot rely on simple prompting for value alignment
+
+**Why This Matters:**
+
+1. **Prevents Overconfidence:**
+   - Could have published claiming "constitutional steering works"
+   - Baseline reveals effects are weak/insignificant
+   - Honesty about limitations strengthens credibility
+
+2. **Changes Practical Recommendations:**
+   - Don't use prompt-based constitutional framing alone
+   - Need stronger interventions (fine-tuning, RLHF)
+   - Model selection more important than prompt engineering
+
+3. **Still Publishable:**
+   - Null findings are valuable (especially with controls)
+   - Characterizes frontier model reasoning about values
+   - Methodological contribution (importance of baseline controls)
+
+**Files Created:**
+- `analysis/baseline_analysis.py` (348 lines)
+- `results/experiments/exp_20251028_134615/analysis/baseline_analysis.json`
+
+**Files Modified:**
+- `docs/RESEARCH_REPORT_OUTLINE.md`:
+  - Abstract updated (lines 11-23)
+  - Section 3.5 added (lines 501-622)
+  - Section 4.1 completely rewritten (lines 628-711)
+
+**Output Data:**
+- Baseline scores by model (5 data points)
+- Constitutional effect sizes (5 constitutions × 3 dimensions)
+- Model sensitivity rankings (5 models)
+- Figure data for 3 new visualizations
+
+**Status at End of Session:**
+- ✅ Baseline analysis complete (all 8 todo tasks)
+- ✅ Research report outline updated with major finding
+- ✅ Abstract and Discussion sections revised
+- ⏭️ Ready to continue with report writing (Phase 2.2)
+
+---
+
 ## Quick Commands for Resuming
 
 ```bash
@@ -1114,6 +1256,7 @@ poetry run python analysis/rubric_diagnostic.py exp_20251028_134615
 poetry run python analysis/evaluator_agreement.py exp_20251028_134615
 poetry run python analysis/interaction_analysis.py exp_20251028_134615
 poetry run python analysis/dimensional_analysis.py exp_20251028_134615
+poetry run python analysis/baseline_analysis.py
 
 # Check experiment status
 poetry run python -m src.inspector
