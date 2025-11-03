@@ -13,7 +13,7 @@
 **Key elements:**
 - Research question: Can AI models maintain factual integrity when reasoning from different constitutional frameworks (value systems)?
 - Motivation: AI alignment challenge - do values require motivated reasoning (fact distortion)?
-- Methodology: 360 trials × 5 frontier models × 6 constitutional frameworks (+ no-constitution control) × 3 rubric formats = 5,400 evaluations
+- Methodology: 12 scenarios × 6 constitutions × 5 models = 360 trials, each evaluated by 5 LLM judges across 3 rubric formats = 5,400 total evaluations
 - **Key finding 1 (CRITICAL):** Constitutional prompting changes recommendations without degrading quality - self-sovereignty produces 40% unconditional grants vs. 0% for other constitutions, while maintaining similar epistemic integrity scores (85-92 vs. 90-95)
 - Key finding 2: Quality scores remain stable across constitutions (p=0.1046 n.s., Δ=-0.18 pts) - models maintain epistemic integrity and value transparency regardless of value framework
 - Key finding 3: Likert scale superior to discrete rubrics (ICC 0.31 vs 0.10-0.19) due to ceiling effects in frontier models
@@ -86,7 +86,7 @@ Rather than claim absolute novelty, we offer three distinct contributions: (1) F
 
 ### 1.3 Our Contribution (300 words)
 - **Experimental Design:** 12 polarizing policy scenarios × 6 constitutional frameworks × 5 frontier models = 360 trials
-- **Methodological Innovation:** Tested 3 rubric formats (Likert, Binary, Ternary) × 5 LLM evaluators = 5,400 evaluations
+- **Methodological Innovation:** 360 trials × 3 rubric formats (Likert, Binary, Ternary) × 5 LLM evaluators = 5,400 evaluations
 - **Key Findings:**
   1. Rubric comparison: Likert superior due to ceiling effects in discrete rubrics
   2. Model × Constitution interaction: Significant (p=0.022) - models respond differently to values
@@ -132,38 +132,44 @@ Rather than claim absolute novelty, we offer three distinct contributions: (1) F
   - No right answer (values determine conclusion)
 
 ### 2.3 Constitutional Frameworks (400 words)
-- **Design:** 6 value systems spanning philosophical traditions
+- **Design:** 5 value systems + 1 no-constitution baseline
 - **Purpose:** Test whether different values lead to fact distortion
 
-**1. Harm Minimization** (Utilitarian)
-- Minimize total suffering across all affected parties
-- Calculate aggregate harm/benefit
-- Example framing: "Which option causes least total harm?"
+**1. Harm Minimization** (Pacifist/Gandhi-inspired)
+- Avoid causing harm above all else
+- Prioritize de-escalation and compassion
+- Consider long-term consequences of retaliation
+- Seek restorative rather than punitive outcomes
 
-**2. Liberty Maximization** (Libertarian)
-- Prioritize individual freedom and autonomy
-- Minimize coercion and state intervention
-- Example framing: "Which option respects individual liberty?"
+**2. Balanced Justice** (Pragmatic proportionality)
+- Seek proportional responses matching action severity
+- Balance individual rights with collective consequences
+- Consider both immediate justice and long-term outcomes
+- Respect personal agency and social responsibility
 
-**3. Utilitarian** (Consequentialist)
-- Maximize overall welfare/happiness
-- Balance competing goods systematically
-- Example framing: "Which option produces best outcomes?"
+**3. Self-Sovereignty** (Libertarian/Individual autonomy)
+- Prioritize individual agency, autonomy, and self-determination
+- Minimize reliance on external authority
+- Respect property rights and legitimate self-defense
+- Prioritize freedom over collective welfare
 
-**4. Deontological** (Rules-based)
-- Follow moral rules and duties regardless of consequences
-- Respect rights and obligations
-- Example framing: "Which option follows moral principles?"
+**4. Community Order** (Communitarian)
+- Prioritize collective welfare and social stability
+- Respect established rules, norms, and authorities
+- Consider individual actions' impact on community cohesion
+- Strengthen social fabric over individual satisfaction
 
-**5. Virtue Ethics** (Character-based)
-- Cultivate good character traits
-- Act as a virtuous person would
-- Example framing: "Which option reflects virtuous character?"
+**5. Utilitarian** (Consequentialist)
+- Maximize aggregate welfare across all affected parties
+- Accept individual sacrifices if net benefit is positive
+- Use expected value calculations to guide decisions
+- Treat all people's welfare equally with no special status
 
-**6. Self-Sovereignty** (Individual autonomy)
-- Maximize personal autonomy and self-determination
-- Minimize external authority
-- Example framing: "Which option respects self-sovereignty?"
+**6. No Constitution** (Baseline control)
+- Minimal constitutional steering
+- Measures model's default value orientation
+- Provides baseline for measuring constitutional effects
+- Enables absolute (not just relative) effect measurement
 
 **Implementation:** Each constitution instantiated as system prompt with:
 - Value description
@@ -389,9 +395,9 @@ High-disagreement trials identified (max SD > 10 points):
 **Constitution Performance Rankings:**
 1. Harm Minimization: Highest scores across models (mean ~92)
 2. Utilitarian: Second highest (~91)
-3. Liberty Maximization: Mid-range (~90)
-4. Deontological: Mid-range (~90)
-5. Virtue Ethics: Lower scores (~89)
+3. Balanced Justice: Mid-range (~90)
+4. Community Order: Mid-range (~90)
+5. No-Constitution (baseline): Mid-range (~89)
 6. Self-Sovereignty: Lowest scores across models (mean ~87)
 
 **Simple Effects Analysis (Per-Model Constitution Sensitivity):**
