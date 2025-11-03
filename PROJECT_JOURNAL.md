@@ -5,6 +5,142 @@
 
 ---
 
+## November 3, 2025
+
+### Entry 51: Documentation System Streamlining + Dual-Track Rubric Implementation
+**Time:** Morning
+**Category:** Phase 2A Human Validation / Documentation Architecture
+**Summary:** Streamlined redundant documentation mechanisms, merged progress tracking into single source of truth (ANALYSIS_AND_PUBLICATION_PLAN.md), and documented dual-track rubric implementation from Nov 2-3.
+
+**Context:**
+User flagged that documentation was "getting out of control" with 3-4 different mechanisms for logging progress (PROGRESS_LOG.md, WEEK2_DAY1_SUMMARY.md, PROJECT_JOURNAL.md, ANALYSIS_AND_PUBLICATION_PLAN.md, plus RESEARCH_ROADMAP.md and DECISION_LOG.md). Requested analysis of existing documentation to establish clear workflow that uses established processes instead of inventing new ones each session.
+
+**Problem:**
+- WEEK2_DAY1_SUMMARY.md was 90% redundant with ANALYSIS_AND_PUBLICATION_PLAN.md
+- PROGRESS_LOG.md tracked session history, but ANALYSIS plan also has weekly task tracking
+- No single source of truth for "what to work on next"
+- New documents being created instead of updating existing ones
+
+**Analysis:**
+Used Task agent to comprehensively analyze 5 documents:
+1. **PROGRESS_LOG.md** - Session-by-session progress (last updated 2025-10-31)
+2. **DECISION_LOG.md** - Formal strategic decisions (7 decisions documented)
+3. **RESEARCH_ROADMAP.md** - Big-picture phase tracking (~26KB)
+4. **WEEK2_DAY1_SUMMARY.md** - Day-level summary (created by mistake Nov 1)
+5. **PROJECT_JOURNAL.md** - Implementation details (~50KB, ~4,100 lines)
+
+**Discovery:**
+ANALYSIS_AND_PUBLICATION_PLAN.md already exists and is PERFECT for daily task tracking - just wasn't being used consistently! It has week-by-week breakdown with checkboxes, shows completed work, and tracks deliverables. This should be the primary task tracker.
+
+**Solution - 4-Document System:**
+
+1. **ANALYSIS_AND_PUBLICATION_PLAN.md** - Daily task tracker (single source of truth)
+   - Update frequency: Real-time (check tasks as completed, add findings inline)
+   - Purpose: "What should I work on next?" + session history
+   - Format: Weekly breakdown with checkboxes + session narratives
+
+2. **PROJECT_JOURNAL.md** - Implementation details (this document)
+   - Update frequency: After completing significant work
+   - Purpose: Technical decisions, bugs fixed, implementation notes
+   - Format: Chronological dated entries (newest at top)
+
+3. **DECISION_LOG.md** - Major strategic pivots
+   - Update frequency: Only for major strategic changes
+   - Purpose: Formal decision records with evidence and rationale
+   - Format: Structured template (Decision #X, Context, Options, Evidence, Rationale, Impact)
+
+4. **RESEARCH_ROADMAP.md** - Big-picture phase tracking
+   - Update frequency: Weekly or at phase boundaries
+   - Purpose: Overall project timeline and milestone tracking
+   - Format: Phases → Tasks → Subtasks with checkboxes
+
+**Implementation Actions:**
+
+1. **Archived Redundant Documents:**
+   - Moved `docs/WEEK2_DAY1_SUMMARY.md` → `docs/archive/WEEK2_DAY1_SUMMARY.md`
+   - Moved `docs/PROGRESS_LOG.md` → `docs/archive/PROGRESS_LOG.md`
+
+2. **Merged Content:**
+   - Copied "Session History" section from PROGRESS_LOG.md to bottom of ANALYSIS_AND_PUBLICATION_PLAN.md
+   - Added "Quick Commands for Resuming" section to ANALYSIS plan
+   - Preserved all session narratives (no information lost)
+
+3. **Updated ANALYSIS_AND_PUBLICATION_PLAN.md:**
+   - Added Week 2 completion status (100% complete)
+   - Documented dual-track rubric work from Nov 2-3 session
+   - Added Session 2 to session history (11 hours across 2 days)
+   - Updated "Last Updated" to 2025-11-03
+   - Updated "Next Review" to "End of Week 2"
+
+4. **Updated CLAUDE.md:**
+   - Added "Documentation Workflow" section with 8-step loop
+   - Documented 4-document system with update frequencies
+   - Clear guidance on when to update which document
+   - Emphasized ANALYSIS plan as single source of truth for daily tasks
+
+**Dual-Track Rubric Implementation Summary (Nov 2-3):**
+
+**Problem Discovered:** V2.0 rubric's "Epistemic Integrity" dimension conflated two orthogonal constructs:
+- **Fact-handling:** Did model cite facts correctly when referenced?
+- **Frame-engagement:** Did model work within scenario constraints?
+
+This made scoring ambiguous for premise-rejecting responses (e.g., self-sovereignty constitution rejecting vaccine mandate on principled grounds).
+
+**Solution:** Dual-Track Rubric V4.0
+- **Track 1: Factual Accuracy (0-100)** - Deduction method, only scores cited facts
+- **Track 2: Reasoning Quality (0-100)** - Holistic bands, frame-agnostic quality assessment
+
+**Files Created:**
+- `docs/DUAL_TRACK_RUBRIC_V4.md` (24,000+ words, 12 worked examples)
+- `docs/ANNOTATION_METHODOLOGY_EVOLUTION.md` (11,000+ words, V1.0 → V4.0 timeline)
+- `docs/SUPPLEMENTARY_MATERIALS.md` (9,000+ words, academic appendix)
+- `results/experiments/exp_20251028_134615/analysis/GOOGLE_SHEETS_INSTRUCTIONS.md`
+- `results/experiments/exp_20251028_134615/analysis/validation_sample_for_sheets.csv`
+- Updated `analysis/export_to_google_sheets.py` for dual-track columns
+- Decision #7 in `docs/DECISION_LOG.md` (130+ lines)
+- Archived `docs/archive/RUBRIC_V2_ORIGINAL.md`
+
+**Workflow Established (8-Step Loop):**
+1. Check ANALYSIS_AND_PUBLICATION_PLAN.md for next task
+2. Work on it
+3. Take notes during work
+4. Update ANALYSIS plan (check task, add findings)
+5. Add PROJECT_JOURNAL entry if significant implementation
+6. Add DECISION_LOG entry if major strategic change
+7. Commit with journal reference
+8. Check ANALYSIS plan for next task
+
+**Impact:**
+- Single source of truth established (ANALYSIS plan)
+- Reduced documentation burden (4 documents instead of 6+)
+- Clear workflow prevents inventing new processes
+- All information preserved (nothing deleted, just reorganized)
+- User can now reliably expect established processes to be followed
+
+**Status:**
+- ✅ Documentation streamlining complete
+- ✅ Week 2 validation design complete (dual-track rubric + infrastructure)
+- ✅ Ready for Week 3 self-validation (user will annotate 30 trials async)
+- ⏭ Next: User validates 30 trials via Google Sheets on their own time
+
+**Files Modified:**
+- `docs/ANALYSIS_AND_PUBLICATION_PLAN.md` - Merged PROGRESS_LOG, added Week 2 progress, Session 2 history
+- `CLAUDE.md` - Added 4-document workflow section
+- `PROJECT_JOURNAL.md` - This entry
+
+**Files Moved:**
+- `docs/WEEK2_DAY1_SUMMARY.md` → `docs/archive/`
+- `docs/PROGRESS_LOG.md` → `docs/archive/`
+
+**Lessons Learned:**
+- Always check existing documentation before creating new files
+- ANALYSIS_AND_PUBLICATION_PLAN.md is the daily task tracker - use it!
+- PROJECT_JOURNAL.md for implementation details after work is complete
+- DECISION_LOG.md only for major strategic pivots (not routine updates)
+- Document proliferation creates confusion - maintain minimal sustainable set
+
+---
+
 ## October 27, 2025
 
 ### Entry 33: Phase 0.4 Implementation - Diagnostic Analysis Tools

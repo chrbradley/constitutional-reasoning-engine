@@ -1,3 +1,24 @@
+# ⚠️ ARCHIVED DOCUMENT ⚠️
+
+**Status:** Superseded by DUAL_TRACK_RUBRIC_V4.md (November 2, 2025)
+**Original Date:** October 27, 2025
+**Archive Date:** November 2, 2025
+
+**Why Archived:**
+This rubric (V2.0) was superseded during Phase 2A human validation when pilot annotation discovered the **premise rejection problem**: some constitutional frameworks (especially self-sovereignty) reject scenario premises on principled grounds, not through fact distortion.
+
+The V2.0 "Epistemic Integrity" dimension conflated two orthogonal constructs:
+1. **Fact-handling:** Did model cite facts correctly when referenced?
+2. **Frame-engagement:** Did model work within scenario constraints?
+
+This made scoring ambiguous for premise-rejecting responses.
+
+**Current Rubric:** `docs/DUAL_TRACK_RUBRIC_V4.md` (Dual-Track: Factual Accuracy + Reasoning Quality)
+
+**Methodology Evolution:** See `docs/ANNOTATION_METHODOLOGY_EVOLUTION.md` for complete timeline of rubric development (V1.0 → V2.0 → V3.0 → V4.0)
+
+---
+
 # Constitutional Reasoning Evaluation Rubric (Version 2.0)
 
 **Status:** Phase 0.5 Design

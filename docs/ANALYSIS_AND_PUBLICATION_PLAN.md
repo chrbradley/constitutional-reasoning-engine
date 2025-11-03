@@ -237,48 +237,84 @@
 
 **Goal:** Create clear rubric and tooling for self-validation
 
-**Tasks:**
+**Overall Status:** ✅ **100% COMPLETE** - Dual-track rubric created, validation infrastructure built
 
-1. **Design Validation Instructions** (~2 hours)
-   - Use winning rubric from Week 1 (Binary or Ternary expected)
-   - Write evaluation criteria with concrete examples:
-     - What counts as "fact distortion"?
-     - What counts as "value transparency"?
-     - Edge cases and how to handle them
-   - Test on 2-3 trials yourself, refine wording based on confusion points
-   - Output: 1-2 page rubric guide with examples
+**What Happened:**
+During pilot annotation testing on Nov 2-3, discovered the **premise rejection problem** - some constitutional frameworks (especially self-sovereignty) reject scenario premises on principled grounds, not through fact distortion. The V2.0 rubric's "Epistemic Integrity" dimension conflated two orthogonal constructs:
+1. **Fact-handling:** Did model cite facts correctly when referenced?
+2. **Frame-engagement:** Did model work within scenario constraints?
 
-2. **Build Simple Validation Tool** (~1-3 hours)
-   - **Option A: Google Sheets** (recommended for Week 2 - 1 hour)
-     - Template columns: Trial ID, Scenario, Constitution, Model, Layer 2 Response
-     - Evaluation columns: Epistemic Integrity score, Value Transparency score, Notes
-     - Randomization: Use RAND() to shuffle trial order
-     - Simple, no coding required
+This made scoring ambiguous for premise-rejecting responses. **Solution:** Pivoted to dual-track rubric (V4.0).
 
-   - **Option B: Simple Web Form** (if time permits - 3 hours)
-     - HTML/JavaScript single-page app
-     - Load trials from JSON
-     - Randomize presentation order
-     - Export responses to CSV
-     - Advantage: Looks more polished for portfolio
+**Tasks Completed:**
 
-   **Recommendation:** Start with Google Sheets (fastest), build web version Week 4+ if recruiting volunteers
+1. ✅ **Design Dual-Track Validation Rubric** (~6 hours) - **COMPLETED 2025-11-02**
+   - ✅ Created: `docs/DUAL_TRACK_RUBRIC_V4.md` (24,000+ words)
+   - ✅ **Track 1: Factual Accuracy (0-100)**
+     - Deduction-based scoring: Start at 100, subtract violations
+     - 3 severity levels: -5 (vague), -15 (imprecise), -30 (distortion)
+     - Only penalizes facts that are mentioned (omission ≠ inaccuracy)
+   - ✅ **Track 2: Reasoning Quality (0-100)**
+     - Holistic bands: 90-100, 70-89, 50-69, 30-49, 0-29
+     - Assesses: Value transparency + logical coherence + justification completeness
+     - Given model's chosen frame, does it reason coherently from values?
+   - ✅ Handles premise rejection fairly (high Track 2 score if coherent, Track 1 only assesses cited facts)
+   - ✅ 12 worked examples across all 5 constitutions
+   - ✅ Includes premise-rejecting examples (self-sovereignty refusing vaccine mandate)
+   - 📁 **Decision Rationale:** Documented in Decision #7 (DECISION_LOG.md)
+   - 📁 **Methodology Evolution:** Documented in ANNOTATION_METHODOLOGY_EVOLUTION.md (V1.0 → V4.0 timeline)
 
-3. **Sample Selection for Validation** (~30 minutes)
-   - Use Analysis 1.3 results (evaluator agreement patterns)
-   - Stratified sample:
-     - 6 constitutions × 5 trials each = 30 trials (minimal)
-     - OR 6 constitutions × 8 trials = 48 trials (better)
-   - Include: High-agreement trials (consensus) + High-disagreement trials (outliers)
-   - Include: Range of scenarios (avoid all vaccine mandates)
-   - Export: Selected trials to validation tool
+2. ✅ **Build Validation Infrastructure** (~2 hours) - **COMPLETED 2025-11-03**
+   - ✅ Updated: `analysis/export_to_google_sheets.py`
+     - Column headers updated for dual-track (Factual Accuracy, Reasoning Quality)
+     - Exports stratified sample with blinding (no model names, no LLM scores)
+   - ✅ Created: `results/experiments/exp_20251028_134615/analysis/GOOGLE_SHEETS_INSTRUCTIONS.md`
+     - Step-by-step annotation workflow
+     - Blinding methodology (prevents anchoring bias)
+     - References dual-track rubric guide
+     - 15-20 min/trial estimate after calibration
+   - ✅ Exported: Validation sample CSV for Google Sheets import
+   - ✅ **Tool Decision:** Google Sheets (fastest, no coding, familiar interface)
+
+3. ✅ **Sample Selection for Validation** (~30 minutes) - **COMPLETED 2025-11-03**
+   - ✅ Stratified sample: 6 constitutions × 5 trials = 30 trials
+   - ✅ Selection criteria:
+     - Balanced across all 6 constitutions
+     - Mix of scenarios (avoid clustering)
+     - Include both high/low agreement trials (from Analysis 1.3)
+   - ✅ Exported to: `validation_sample_for_sheets.csv`
+   - ✅ Blinded: Model names removed, LLM scores hidden, sample group not indicated
+
+4. ✅ **Documentation & Supplementary Materials** (~3 hours) - **COMPLETED 2025-11-02**
+   - ✅ Created: `docs/SUPPLEMENTARY_MATERIALS.md` (9,000+ words)
+     - Academic appendix format
+     - Full scenario texts, constitutional prompts, rubric details
+     - Ready for publication submission
+   - ✅ Created: `docs/ANNOTATION_METHODOLOGY_EVOLUTION.md` (11,000+ words)
+     - Documents rubric evolution V1.0 → V2.0 → V3.0 → V4.0
+     - Frames iterative refinement as research strength
+     - Methodological insights and lessons learned
+   - ✅ Archived: `docs/archive/RUBRIC_V2_ORIGINAL.md`
+     - Preserved original rubric with explanatory header
+     - Documents why it was superseded (premise rejection problem)
+   - ✅ Updated: `docs/DECISION_LOG.md` (Decision #7)
+     - 130+ lines documenting dual-track pivot
+     - 5 options considered, evidence-based selection
+     - Impact on validation timeline and methodology
 
 **Deliverables:**
-- Validation rubric guide (1-2 pages with examples)
-- Validation tool (Google Sheets or web form)
-- 30-50 trials selected for validation
+- ✅ Dual-track validation rubric (Track 1: Factual Accuracy, Track 2: Reasoning Quality)
+- ✅ Comprehensive rubric guide with 12 worked examples (24,000 words)
+- ✅ Validation tool infrastructure (Google Sheets)
+- ✅ 30 trials selected and exported (stratified, blinded)
+- ✅ Complete annotation instructions (GOOGLE_SHEETS_INSTRUCTIONS.md)
+- ✅ Supplementary materials for publication (9,000 words)
+- ✅ Methodology evolution documentation (11,000 words)
 
-**Status at End of Week 2:** Ready to start self-validation
+**Key Decision:**
+✅ **Dual-Track Rubric (V4.0)** solves premise rejection problem - separates fact-handling from reasoning quality
+
+**Status at End of Week 2:** ✅ Ready to start self-validation (async on user's own time)
 
 ---
 
@@ -622,7 +658,190 @@
 
 ---
 
+## Session History
+
+### Session 1: 2025-10-31 (Rubric Comparison Analysis)
+
+**Duration:** ~4 hours
+**Goal:** Compare three rubric formats to select best for human validation
+
+**What We Built:**
+
+1. **Core Analysis Script** (`analysis/rubric_comparison.py`)
+   - Loads data from 3 rubric formats (Likert, Binary, Ternary)
+   - Calculates inter-rater reliability (Pearson r, ICC)
+   - Analyzes score distributions
+   - Handles all 360 trials × 3 formats × 5 evaluators
+
+2. **Diagnostic Validation Script** (`analysis/rubric_diagnostic.py`)
+   - Validates methodology when results contradicted literature
+   - Tests for ceiling effects, evaluator bias, data integrity
+   - Confirms finding is legitimate, not methodological error
+
+3. **Comprehensive Notebook** (`notebooks/01_rubric_comparison.ipynb`)
+   - Full analysis with 3 visualizations
+   - Diagnostic section validating unexpected results
+   - Side-by-side prompt comparisons
+   - Root cause analysis (ceiling effects)
+   - Research implications and boundary conditions
+
+**Key Findings:**
+
+- **Unexpected Result:** Likert (r=0.40) > Ternary (r=0.29) > Binary (r=0.10)
+  - Contradicts literature expecting Binary/Ternary to win
+  - Validated through comprehensive diagnostics
+
+- **Root Cause:** Ceiling effects in discrete rubrics
+  - Binary: 96-99% PASS rate → no variance
+  - Ternary: 88-98% PASS/PARTIAL → limited variance
+  - Likert: 67-76% high scores → healthy variance
+
+- **Granularity Gradient:** Inter-rater reliability correlates with scale granularity
+  - Binary (2 levels): 3 unique values, r=0.10
+  - Ternary (3 levels): 3-4 unique values, r=0.29
+  - Likert (101 levels): 18-24 unique values, r=0.40
+
+- **Evaluator Generosity:** All 5 evaluators showed generosity in discrete rubrics
+  - Grok-3: 100% PASS (Binary)
+  - GPT-4o: 99.4% PASS
+  - Gemini: 98.3% PASS
+  - DeepSeek: 96.9% PASS
+  - Claude: 86.7% PASS (most discriminating)
+
+**Decision Made:**
+✅ Use **Likert (0-100 scale)** for Week 2-3 human validation
+
+**Why This Matters:**
+- Discovered boundary condition for when discrete rubrics fail
+- Shows rubric design must match sample characteristics
+- For frontier AI evaluation, continuous scales are necessary
+
+**Files Created:**
+- `analysis/rubric_comparison.py` (529 lines)
+- `analysis/rubric_diagnostic.py` (338 lines)
+- `notebooks/01_rubric_comparison.ipynb` (comprehensive)
+- `results/experiments/exp_20251028_134615/analysis/rubric_comparison.json`
+- `results/experiments/exp_20251028_134615/analysis/rubric_diagnostic.json`
+
+**Issues Resolved:**
+- Fixed data loading for Binary/Ternary (missing metadata)
+- Fixed NaN handling in score variance calculations
+- Added Ternary analysis throughout (was initially understated)
+- Ensured all three rubrics covered in diagnostics
+
+---
+
+### Session 2: 2025-11-02 to 2025-11-03 (Dual-Track Rubric Design)
+
+**Duration:** ~11 hours across 2 days
+**Goal:** Create human validation rubric and infrastructure
+
+**Critical Discovery: Premise Rejection Problem**
+
+During pilot annotation testing, discovered V2.0 rubric had fundamental ambiguity:
+- "Epistemic Integrity" conflated two orthogonal constructs:
+  1. **Fact-handling:** Accuracy when facts are cited
+  2. **Frame-engagement:** Working within scenario constraints
+
+**Problem:** Self-sovereignty constitution rejects vaccine mandate premise on principled grounds ("state lacks authority"). This is philosophically coherent (high reasoning quality) but doesn't engage with scenario facts (low epistemic integrity under V2.0 definition).
+
+**Solution:** Dual-track rubric separating these dimensions.
+
+**What We Built:**
+
+1. **Dual-Track Rubric V4.0** (`docs/DUAL_TRACK_RUBRIC_V4.md` - 24,000+ words)
+   - **Track 1: Factual Accuracy (0-100)**
+     - Deduction method: Start at 100, subtract violations
+     - 3 severity levels: -5 vague, -15 imprecise, -30 distortion
+     - Only scores facts that are mentioned (omission ≠ inaccuracy)
+   - **Track 2: Reasoning Quality (0-100)**
+     - Holistic bands: 90-100, 70-89, 50-69, 30-49, 0-29
+     - Assesses: Value transparency + logical coherence + completeness
+     - Frame-agnostic: "Given model's frame, does it reason well?"
+   - 12 worked examples covering all 5 constitutions
+   - Handles premise rejection fairly (can score high on Track 2 if coherent)
+
+2. **Methodology Documentation** (`docs/ANNOTATION_METHODOLOGY_EVOLUTION.md` - 11,000+ words)
+   - Chronicles V1.0 (pilot) → V2.0 (epistemic integrity) → V3.0 (premise engagement) → V4.0 (dual-track)
+   - Frames iterative refinement as research strength
+   - Documents decision rationale at each pivot point
+   - Shows scientific rigor in methodology development
+
+3. **Supplementary Materials** (`docs/SUPPLEMENTARY_MATERIALS.md` - 9,000+ words)
+   - Academic appendix format
+   - Full scenario texts, constitutional prompts, rubric details
+   - Ready for publication submission
+
+4. **Validation Infrastructure**
+   - Updated `analysis/export_to_google_sheets.py` for dual-track columns
+   - Created `GOOGLE_SHEETS_INSTRUCTIONS.md` with annotation workflow
+   - Exported 30-trial stratified sample (blinded)
+   - Blinding: No model names, no LLM scores, no sample group indicators
+
+5. **Decision Documentation** (`docs/DECISION_LOG.md` - Decision #7)
+   - 130+ lines documenting dual-track pivot
+   - 5 options considered (single-track variations, dual-track, triple-track, premise-aware single-track, abandon validation)
+   - Evidence-based selection with clear rationale
+   - Impact assessment on timeline and methodology
+
+**Key Decision:**
+✅ **Dual-Track Rubric V4.0** - Separates fact-handling from reasoning quality, resolves premise rejection ambiguity
+
+**Why This Matters:**
+- Discovered edge case that would have invalidated human validation
+- Early detection (pilot testing) prevented wasted annotation effort
+- Dual-track approach is more rigorous than original plan
+- Shows research maturity (iterative refinement based on evidence)
+
+**Files Created:**
+- `docs/DUAL_TRACK_RUBRIC_V4.md` (24,000+ words)
+- `docs/ANNOTATION_METHODOLOGY_EVOLUTION.md` (11,000+ words)
+- `docs/SUPPLEMENTARY_MATERIALS.md` (9,000+ words)
+- `docs/archive/RUBRIC_V2_ORIGINAL.md` (archived with explanation)
+- `results/experiments/exp_20251028_134615/analysis/GOOGLE_SHEETS_INSTRUCTIONS.md`
+- `results/experiments/exp_20251028_134615/analysis/validation_sample_for_sheets.csv`
+- Updated `analysis/export_to_google_sheets.py`
+- Decision #7 in `docs/DECISION_LOG.md`
+
+**Documentation Streamlining (2025-11-03):**
+- Archived redundant `docs/WEEK2_DAY1_SUMMARY.md`
+- Merged `docs/PROGRESS_LOG.md` into this document (ANALYSIS_AND_PUBLICATION_PLAN.md)
+- Established 4-document system:
+  1. **ANALYSIS_AND_PUBLICATION_PLAN.md** - Daily task tracker and session history
+  2. **PROJECT_JOURNAL.md** - Implementation details and technical decisions
+  3. **DECISION_LOG.md** - Major strategic pivots
+  4. **RESEARCH_ROADMAP.md** - Big-picture phase tracking
+
+**Status:**
+- ✅ Week 2 validation design complete (100%)
+- ✅ Ready for Week 3 self-validation (async on user's time)
+- ✅ Documentation system streamlined (single source of truth established)
+
+---
+
+## Quick Commands for Resuming
+
+```bash
+# Navigate to project
+cd /Users/chris.bradley/Code/constitution
+
+# Activate environment and start Jupyter
+poetry run jupyter notebook notebooks/
+
+# Run analysis scripts
+poetry run python analysis/rubric_comparison.py exp_20251028_134615
+poetry run python analysis/rubric_diagnostic.py exp_20251028_134615
+poetry run python analysis/evaluator_agreement.py exp_20251028_134615
+poetry run python analysis/interaction_analysis.py exp_20251028_134615
+poetry run python analysis/dimensional_analysis.py exp_20251028_134615
+
+# Check experiment status
+poetry run python -m src.inspector
+```
+
+---
+
 **Document Status:** Living document - will be updated as analyses complete and findings emerge.
 
-**Last Updated:** 2025-10-31
-**Next Review:** End of Week 1 (after Tier 1 analyses complete)
+**Last Updated:** 2025-11-03
+**Next Review:** End of Week 2 (after human validation design complete)

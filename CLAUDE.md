@@ -215,6 +215,106 @@ Models return JSON in different formats:
 
 **Always check PROJECT_JOURNAL.md for recent architectural changes before modifying core systems.**
 
+## Documentation Workflow
+
+**CRITICAL:** Use the established 4-document system - DO NOT create new progress tracking files.
+
+### 4-Document System
+
+The project uses exactly **4 core documentation files** with distinct purposes and update frequencies:
+
+1. **`docs/ANALYSIS_AND_PUBLICATION_PLAN.md`** - **Daily task tracker (SINGLE SOURCE OF TRUTH)**
+   - **Update frequency:** Real-time (check tasks as completed, add findings inline)
+   - **Purpose:** "What should I work on next?" + session history
+   - **Format:** Weekly breakdown with checkboxes + detailed session narratives
+   - **Use when:** Starting work, completing tasks, tracking progress
+   - **THIS IS THE PRIMARY TASK TRACKER - CHECK THIS FIRST!**
+
+2. **`PROJECT_JOURNAL.md`** - **Implementation details**
+   - **Update frequency:** After completing significant work (daily/weekly)
+   - **Purpose:** Technical decisions, bugs fixed, implementation notes
+   - **Format:** Chronological dated entries (newest at top)
+   - **Use when:** Documenting completed work with technical depth
+
+3. **`docs/DECISION_LOG.md`** - **Major strategic pivots**
+   - **Update frequency:** Only for major strategic changes
+   - **Purpose:** Formal decision records with evidence and rationale
+   - **Format:** Structured template (Decision #X, Context, Options, Evidence, Rationale, Impact)
+   - **Use when:** Making research methodology changes, architectural pivots
+
+4. **`docs/RESEARCH_ROADMAP.md`** - **Big-picture phase tracking**
+   - **Update frequency:** Weekly or at phase boundaries
+   - **Purpose:** Overall project timeline and milestone tracking
+   - **Format:** Phases → Tasks → Subtasks with checkboxes
+   - **Use when:** Completing major phases, updating overall timeline
+
+### 8-Step Workflow Loop
+
+**Follow this loop for ALL work sessions:**
+
+1. **Check ANALYSIS_AND_PUBLICATION_PLAN.md for next task**
+   - This is the single source of truth for "what to work on next"
+   - Look at current week's tasks and identify next unchecked item
+
+2. **Work on the task**
+   - Take notes during work for later documentation
+
+3. **Update ANALYSIS plan immediately**
+   - Check the task as completed (✅)
+   - Add key findings inline in the task section
+   - Add deliverables/files created
+
+4. **Add SESSION to ANALYSIS plan when session is complete**
+   - Add detailed session narrative to "Session History" section at bottom
+   - Document what was built, findings, decisions, files created
+
+5. **Add PROJECT_JOURNAL entry if significant implementation**
+   - Only for substantial technical work with implementation details
+   - Include: Context, Problem, Solution, Implementation, Impact, Files Modified
+   - Use when: New features, bug fixes, architectural changes
+
+6. **Add DECISION_LOG entry if major strategic change**
+   - Only for major research methodology or architectural pivots
+   - Use structured template with evidence and rationale
+   - Examples: Changing rubric design, adding/removing experiments
+
+7. **Commit work with journal reference**
+   - Concise commit message (1-2 lines)
+   - Reference PROJECT_JOURNAL entry number if applicable
+   - See "Commit Message Guidelines" below
+
+8. **Return to step 1** - Check ANALYSIS plan for next task
+
+### Common Mistakes to Avoid
+
+❌ **DO NOT:**
+- Create new `WEEK{N}_DAY{M}_SUMMARY.md` files (redundant with ANALYSIS plan)
+- Create new `PROGRESS_LOG.md` files (redundant with ANALYSIS plan)
+- Invent new documentation mechanisms
+- Update multiple documents with the same information
+- Skip updating ANALYSIS plan after completing tasks
+
+✅ **DO:**
+- Always check ANALYSIS_AND_PUBLICATION_PLAN.md first
+- Update ANALYSIS plan in real-time as tasks complete
+- Add detailed session narratives to ANALYSIS plan after each work session
+- Use PROJECT_JOURNAL for technical implementation details
+- Use DECISION_LOG only for major strategic changes
+- Follow the 8-step workflow loop consistently
+
+### Which Document to Update?
+
+**Ask yourself:**
+
+- **"What's next?"** → Check `ANALYSIS_AND_PUBLICATION_PLAN.md`
+- **"Did I complete a task?"** → Update `ANALYSIS_AND_PUBLICATION_PLAN.md` (check the box)
+- **"Did I have a significant work session?"** → Add session narrative to `ANALYSIS_AND_PUBLICATION_PLAN.md`
+- **"Did I implement something technical?"** → Add entry to `PROJECT_JOURNAL.md`
+- **"Did I make a major strategic decision?"** → Add entry to `DECISION_LOG.md`
+- **"Did I complete a major phase?"** → Update `RESEARCH_ROADMAP.md`
+
+**When in doubt:** Update ANALYSIS_AND_PUBLICATION_PLAN.md - it's the daily workhorse document.
+
 ## Research Context
 
 This is **Phase 1** of a 3-phase research program:
